@@ -19,7 +19,7 @@ Video 60 giây hai khổ, mỗi khổ 1 bản nháp và 1 bản cuối: khoảng
 
 1. **Bước 2, biên kịch**: trường `visual` của mỗi cảnh mô tả **một** bức tranh (bối cảnh, người, hành động, góc nhìn, màu chủ đạo); thêm `focus` (0 đến 1) là vị trí ngang của chủ thể chính, dùng khi cắt tranh ngang cho khổ dọc. Chữ trên hình (`on_screen.title`) chỉ là nhãn ngắn (mốc thời gian, địa danh). Không có chữ trong tranh.
 2. **Bước 3c, tranh** (sau khi duyệt kịch bản): viết `cau-lenh-tranh.md` theo mẫu dưới, gửi người dùng, dừng chờ. Người dùng tạo ảnh, gửi lại; lưu vào `<PROJECT>/tranh/<id>.jpg` (ngang 16:9, bắt buộc) và `<id>-doc.jpg` (dọc 9:16, không bắt buộc).
-3. **Soát tranh** (điều phối viên, trước khi dựng): xem từng ảnh. Trả lại người dùng để tạo lại nếu: có chữ hay chữ ký trong tranh; chi tiết chuyên môn sai so với `kiem-chung.md` (trang phục, thao tác y tế, đồ bảo hộ, quầy, phương tiện); nhân vật lặp lại trông khác hẳn giữa các cảnh; người thật có thể nhận ra; logo, nhân vật có bản quyền. Gom các ảnh cần làm lại vào một lần hỏi, kèm câu lệnh đã sửa.
+3. **Soát tranh** (điều phối viên, trước khi dựng): xem từng ảnh. Lỗi nhỏ ở một vùng nhỏ (ký hiệu lạc thời đại trên lá cờ, chữ giả trên tờ giấy) có thể tự xóa bằng cách tô lấp từ màu xung quanh (Python, numpy và scipy có sẵn), xem kỹ vùng đã sửa và báo người dùng đã sửa gì; lỗi lớn thì nhờ tạo lại. Trả lại người dùng để tạo lại nếu: có chữ hay chữ ký trong tranh; chi tiết chuyên môn sai so với `kiem-chung.md` (trang phục, thao tác y tế, đồ bảo hộ, quầy, phương tiện); nhân vật lặp lại trông khác hẳn giữa các cảnh; người thật có thể nhận ra; logo, nhân vật có bản quyền. Gom các ảnh cần làm lại vào một lần hỏi, kèm câu lệnh đã sửa.
 4. **Bước 5**: `new_project.sh <PROJECT> <khổ> vetay` cho từng khổ, rồi `python3 SKILL/scripts/ve_tay_anh.py <PROJECT>` (cắt, phóng tranh cho đúng khung và tạo bản phác chì vào `build/<khổ>/img/`). Chưa có đủ tranh thì script báo cảnh thiếu.
 
 ## Câu lệnh tạo tranh (`cau-lenh-tranh.md`)
@@ -38,6 +38,8 @@ Mẫu gửi người dùng, mỗi cảnh một khối:
 (Ba anh em dựng cờ khởi nghĩa dưới gốc cây lớn)
 <câu lệnh tiếng Anh>
 ```
+
+Ảnh gửi qua ứng dụng chat thường bị nén nhỏ (đã gặp 1168x784 với tranh tạo bằng Grok): nhắc người dùng gửi dạng tệp nếu muốn nét hơn; `ve_tay_anh.py` vẫn phóng được, tranh màu nước chịu mờ nhẹ tốt.
 
 Kèm hướng dẫn: dán từng câu lệnh vào công cụ tạo ảnh, chọn khổ ngang 16:9 nếu công cụ có tùy chọn, tải ảnh về đúng tên file, gửi lại cả bộ. Muốn khổ dọc đẹp hơn thì tạo thêm bản dọc (thay câu cuối bằng `Tall 9:16 portrait image.`) và lưu `<id>-doc.jpg`.
 
@@ -103,7 +105,7 @@ tl.from("#sc-s07 .tag", { y: -40, opacity: 0, duration: 0.5, ease: "back.out(2)"
 - **Tất định**: vệt cọ sinh từ hạt giống cố định; không dùng `Math.random`, `Date.now`.
 - Không thêm `filter` SVG hay CSS lên tranh (blur, grayscale): bản phác chì đã làm sẵn bằng `ve_tay_anh.py` để render không chậm.
 - Bỏ mặt nạ sau khi vẽ xong không làm render nhanh hơn (đã thử: 74 so với 73 giây), nên mép tranh luôn giữ đường vệt cọ.
-- Khổ dọc: chữ nhãn nằm dưới mép trên 230 px, phụ đề cách đáy 380 px (chừa giao diện TikTok). Chủ thể chính của tranh nên ở giữa khung (ghi rõ trong câu lệnh và `focus`).
+- Khổ dọc: chữ nhãn nằm dưới mép trên 230 px, dòng nguồn ngay dưới nhãn (top 410 px) để không chồng lên phụ đề cách đáy 380 px (chừa giao diện TikTok). Chủ thể chính của tranh nên ở giữa khung (ghi rõ trong câu lệnh và `focus`).
 
 ## Kiểm tra
 
