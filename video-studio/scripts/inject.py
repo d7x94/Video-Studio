@@ -19,6 +19,10 @@ Phu de duoc chia theo cau va dau phay, toi da --max-chars ky tu mot dong.
 Dong hien duoi 1,2 giay duoc gop voi dong ke ben.
 Thoi gian moi dong chia theo ty le so ky tu trong do dai tieng doc cua canh;
 du chinh xac cho cau doc deu, co the lech vai tram ms o cau dai.
+
+Phu de lay truong "subtitle" cua canh trong PROJECT/scenes.json neu co (chu viet
+dang chuan: "iOS 27.2.1", "iPhone 11"), khong thi lay "narration" (viet theo cach
+doc cho TTS). "Wi-Fi" trong phu de dot chu duoc giu khong ngat dong.
 """
 import argparse
 import html
@@ -115,8 +119,14 @@ def merge_short(chunks, scene_dur, max_chars):
 
 def build_captions(timeline, max_chars):
     caps = []
+    try:
+        _sub = {x["id"]: x["subtitle"] for x in json.load(open(Path(timeline.get("_project", ".")) / "scenes.json"))["scenes"] if x.get("subtitle")}
+        for _sc in timeline["scenes"]:
+            if _sc["id"] in _sub: _sc["subtitle"] = _sub[_sc["id"]]
+    except Exception:
+        pass
     for sc in timeline["scenes"]:
-        chunks = merge_short(split_text(sc["narration"], max_chars), sc["duration"], max_chars)
+        chunks = merge_short(split_text(sc.get("subtitle") or sc["narration"], max_chars), sc["duration"], max_chars)
         weights = [max(len(c), 1) for c in chunks]
         total_w = sum(weights)
         t = sc["start"]
@@ -179,6 +189,7 @@ def main():
     tl_path = Path(a.timeline)
     timeline = json.loads(tl_path.read_text(encoding="utf-8"))
     project = tl_path.parent
+    timeline["_project"] = str(project)  # de build_captions tim scenes.json (truong subtitle)
 
     if a.srt_only:
         write_srt(build_captions(timeline, a.max_chars or 42), Path(a.srt_only))
@@ -220,9 +231,10 @@ def main():
             f'data-duration="{sc["duration"]}" data-volume="1"></audio>')
     src = replace_block(src, "AUDIO", "\n".join(audio_tags))
 
+    wifi = '<i style="font-style:normal;white-space:nowrap">Wi-Fi</i>'
     cap_tags = [] if a.no_burn else [
         f'      <div id="cap-{i:03d}" class="cap clip" data-start="{c["start"]}" '
-        f'data-duration="{round(c["end"] - c["start"], 3)}"><span>{html.escape(c["text"])}</span></div>'
+        f'data-duration="{round(c["end"] - c["start"], 3)}"><span>{html.escape(c["text"]).replace("Wi-Fi", wifi)}</span></div>'
         for i, c in enumerate(caps, 1)]
     src = replace_block(src, "CAPTIONS", "\n".join(cap_tags))
 
