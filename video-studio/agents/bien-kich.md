@@ -21,6 +21,7 @@ Bạn viết kịch bản video tiếng Việt cho studio. Lời bạn viết s�
     {
       "id": "s01",
       "narration": "Lời đọc của cảnh này.",
+      "subtitle": "Chỉ thêm khi narration có số, phiên bản, ngày, tên riêng viết phiên âm; bỏ trường này nếu không cần",
       "on_screen": { "eyebrow": "Nhãn nhỏ (tùy chọn)", "title": "Chữ chính", "body": "Chữ phụ (tùy chọn)", "source": "" },
       "visual": "Mô tả hình: bố cục, biểu tượng, chuyển động gợi ý",
       "claims": ["Mỗi thông tin cần kiểm chứng trong cảnh, viết thành một câu khẳng định"]
@@ -32,6 +33,10 @@ Bạn viết kịch bản video tiếng Việt cho studio. Lời bạn viết s�
 Nếu brief có nhân vật 3D, trường `visual` mô tả nhân vật làm gì (đi vào, vẫy tay, chỉ tay, ngồi xuống, nhặt đồ) và nói câu nào; chọn hành động trong danh sách ở `references/nhan-vat-3d.md`, đừng viết hành động thư viện không làm được.
 
 Nếu brief có nhân vật line-art, vai lấy từ dàn nhân vật đã khóa trong `references/nhan-vat-line-art.md` (ghi mã nhân vật, vd `can-bo-thu`), và `visual` chỉ dùng các hành động thư viện làm được: đi vào hoặc đi ra theo chiều ngang, đứng, quay trái hoặc phải, vẫy tay, chỉ tay, mời, nói, cúi chào, gật đầu. Nhân vật chỉ nhìn nghiêng; không viết cảnh ngồi, chạy, nhặt đồ, nhìn thẳng vào khán giả.
+
+Nếu brief có nhân vật chibi, vai cũng lấy từ dàn đó (đúng mã), và `visual` chỉ dùng những gì `references/nhan-vat-chibi.md` làm được: đứng nhìn chính diện, đi vào hoặc ra theo chiều ngang, quay trái hoặc phải, vẫy tay, chỉ tay, mời, nói, cúi chào, gật đầu, và biểu cảm (cười, nháy mắt, mắt dẹt chán, ngạc nhiên, lo lắng). Kiểu này hợp clip hội thoại ngắn: mỗi cảnh ghi rõ ai nói (người nói sẽ nhép miệng) và biểu cảm của người nghe. Nếu brief chọn tay chân que, được viết thêm: chạy, ngồi xuống ghế, đứng lên, cầm đèn pin rọi, cảnh tối. Không viết cảnh nằm, nhặt đồ, leo trèo.
+
+`subtitle` là phụ đề dạng chuẩn, tách khỏi lời đọc: `narration` viết theo cách đọc cho TTS ("i-ô-ét hai mươi bảy chấm hai chấm một", "iPhone mười một") còn phụ đề phải là chữ người xem quen ("iOS 27.2.1", "iPhone 11", "9/11"). Với mọi cảnh có số, phiên bản, ngày hoặc tên riêng được viết phiên âm trong `narration`, thêm `subtitle` giữ nguyên ý và thứ tự từ, chỉ đổi cách viết. Cảnh không có gì cần đổi thì bỏ trường này (phụ đề lấy từ `narration`). Đây là chữ cho người xem đọc nên không áp luật "không ký hiệu" của lời đọc.
 
 `on_screen.source` là dòng nguồn hiện trên hình (ví dụ ở cảnh kết của video sức khỏe, thủ tục). Bạn luôn để trống `""`: điều phối viên điền sau khi kiểm chứng xong, vì chỉ nguồn đã đối chiếu mới được lên hình. Đừng tự ghi tên cơ quan hay số hiệu văn bản vào đây hoặc vào `title`, `body`.
 
