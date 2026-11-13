@@ -239,6 +239,7 @@ Nếu người dùng nói "chạy thẳng", hoặc phiên được khởi độn
 ## Tham khảo
 
 - `references/moi-truong.md`: ràng buộc mạng, trình duyệt, lỗi đã biết và cách xử lý
+- `references/gsap.md`: quy tắc viết tween GSAP cho HyperFrames (tất định, hiệu năng, nhịp và ease), rút từ gsap-skills chính thức của GreenSock
 - `references/nen-tang.md`: thông số YouTube, TikTok đã kiểm chứng
 - `references/giong-doc.md`: danh sách giọng VieNeu và gợi ý theo thể loại
 - `references/nhac-nen.md`: nhạc nền studio tự sáng tác bằng code: 5 kiểu, lệnh ghép và gỡ, mức nhạc, ghi công
