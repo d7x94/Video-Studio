@@ -1,0 +1,18 @@
+{
+  "_ghi_chu": "Dan dien vien 3D nguoi lon (Quaternius, CC0). Moi dien vien = model + chieu cao + mau da + mau trang phuc/toc, de video nao cung ra cung mot nguoi. skin: sang|vua|ngam|nau (S.SKIN). colors: ten vat lieu -> mau 0xRRGGBB. voice la de xuat, chua nghe thu: buoc casting chot giong. Dang cho nguoi dung duyet anh thu vai, chua khoa.",
+  "status": "de-xuat",
+  "actors": {
+    "bac-si-nu":        {"label": "Bác sĩ nữ",           "model": "Doctor_Female_Young", "height": 1.62, "skin": "sang", "colors": {"Hair": "0x17120e", "Main": "0xf7f7f2"}, "voice": "Mai Anh"},
+    "bac-si-nam":       {"label": "Bác sĩ nam",          "model": "Doctor_Male_Young",   "height": 1.74, "skin": "vua",  "colors": {"Hair": "0x17120e", "Main": "0xf7f7f2", "Black": "0x2f6f8f"}, "voice": "Minh Đức"},
+    "bac-si-lon-tuoi":  {"label": "Bác sĩ lớn tuổi",    "model": "Doctor_Male_Old",     "height": 1.68, "skin": "vua",  "colors": {"Hair": "0xd0d0d0", "Main": "0xf7f7f2"}, "voice": "Phạm Tuyên"},
+    "can-bo-nu":        {"label": "Cán bộ nữ",           "model": "Suit_Female",         "height": 1.62, "skin": "sang", "colors": {"Hair": "0x17120e", "Black": "0x22304f", "Shirt": "0xf4f4f4"}, "voice": "Thùy Dung"},
+    "can-bo-nam":       {"label": "Cán bộ nam",          "model": "Suit_Male",           "height": 1.74, "skin": "vua",  "colors": {"Hair": "0x17120e", "Black": "0x2b2b30", "Shirt": "0xe3ecf7"}, "voice": "Minh Triết"},
+    "cong-nhan-nam":    {"label": "Công nhân nam",       "model": "Worker_Male",         "height": 1.70, "skin": "ngam", "colors": {"Hat": "0xf4c20d", "Vest": "0xff7a1a", "Shirt": "0x4a5560"}, "voice": "Quốc Tuấn"},
+    "cong-nhan-nu":     {"label": "Công nhân nữ",        "model": "Worker_Female",       "height": 1.60, "skin": "vua",  "colors": {"Hair": "0x17120e", "Hat": "0xffffff", "Vest": "0xe8590c", "Shirt": "0x4a5560"}, "voice": "Đoan Trang"},
+    "nguoi-dan-nam":    {"label": "Người dân nam",       "model": "Casual_Male",         "height": 1.70, "skin": "vua",  "colors": {"Hair": "0x17120e", "Shirt": "0x2a9d8f", "Pants": "0x3a3a46"}, "voice": "Hải Đăng"},
+    "nguoi-dan-nu":     {"label": "Người dân nữ",        "model": "Casual_Female",       "height": 1.58, "skin": "sang", "colors": {"Hair": "0x17120e", "Shirt": "0xe76f51", "Pants": "0x2d3a5c"}, "voice": "Trúc Ly"},
+    "thanh-nien-nam":   {"label": "Thanh niên nam",      "model": "Casual2_Male",        "height": 1.72, "skin": "ngam", "colors": {"Hair": "0x17120e", "Shirt": "0xf4a261", "Pants": "0x264653"}, "voice": "Adam"},
+    "ong-cu":           {"label": "Ông cụ",              "model": "OldClassy_Male",      "height": 1.64, "skin": "ngam", "colors": {"Hair": "0xd9d9d9", "Shirt": "0xd9d4c5", "Pants": "0x5b4b3a"}, "hide": ["Hat"], "voice": "Quang Sơn"},
+    "ba-cu":            {"label": "Bà cụ",               "model": "OldClassy_Female",    "height": 1.52, "skin": "vua",  "colors": {"Hair": "0xe2e2e2", "Shirt": "0xb08aa8", "Pants": "0x5a4a3c"}, "hide": ["Hat"], "voice": "Ngọc Trân"}
+  }
+}
