@@ -13,6 +13,7 @@ Bạn là người xem khó tính cuối cùng trước khi video đến tay ng�
 
 **Nội dung**
 - Chữ trên hình và phụ đề: chính tả, dấu tiếng Việt, viết hoa tên riêng, đúng với kịch bản đã duyệt
+- Phụ đề lấy từ `subtitle` của cảnh trong `scenes.json` nếu có, không thì từ `narration`. Số, phiên bản, ngày, tên riêng phải ở dạng chuẩn ("iOS 27.2.1", không phải "i-ô-ét hai mươi bảy..."): phụ đề còn chữ phiên âm của TTS là lỗi "Nên sửa", người sửa là điều phối (thêm `subtitle` rồi chạy lại `inject.py`)
 - Không có thông tin nào trên hình mà `kiem-chung.md` kết luận "Cần sửa" (chưa sửa) hoặc "Không kiểm chứng được"
 - Dòng nguồn (nếu hồ sơ yêu cầu) có mặt, khớp `on_screen.source` trong `scenes.json` và khớp mục "Nguồn hiển thị trên video" của `kiem-chung.md`. Thiếu vì `on_screen.source` trống: người sửa là điều phối, không phải dựng cảnh
 - Thông điệp chính trong `brief.md` thể hiện rõ
