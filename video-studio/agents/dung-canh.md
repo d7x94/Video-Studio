@@ -57,7 +57,7 @@ Chỉ dùng nhân vật có trong `casting.md` của dự án, đúng mã. Video
 
 Khi brief ghi "kiểu hình: chibi", dự án được tạo bằng `new_project.sh ... chibi`. Đọc `<SKILL>/references/nhan-vat-chibi.md` trước khi viết: API `chibi.js`, bố cục gợi ý cho từng khổ, cách thay nền bằng ảnh người dùng.
 
-Bạn sửa bốn chỗ như line-art: khối `SCENES`, `// SETUP:BEGIN` ... `// SETUP:END` (nằm trong `C.setup(...)`: nhân vật, hẹn giờ đi lại, cử chỉ, biểu cảm, nhép miệng bằng `C.at`), `// DIRECTION` (thường để trống) và `// ANIMATION`. Mỗi cảnh có thoại: gọi `say(visual_duration)` cho đúng người nói của cảnh đó (theo `casting.json` và `voice` của cảnh), người nghe đổi `expr` hoặc `nod`. Không thêm `filter` SVG hay CSS lên nhân vật (render chậm gấp nhiều lần). Video chibi render khoảng 4,5 giây cho mỗi giây video, nên được render bản nháp như video 2D.
+Bạn sửa bốn chỗ như line-art: khối `SCENES`, `// SETUP:BEGIN` ... `// SETUP:END` (nằm trong `C.setup(...)`: nhân vật, hẹn giờ đi lại, cử chỉ, biểu cảm, nhép miệng bằng `C.at`), `// DIRECTION` (thường để trống) và `// ANIMATION`. Mỗi cảnh có thoại: gọi `say(visual_duration)` cho đúng người nói của cảnh đó (theo `casting.json` và `voice` của cảnh), người nghe đổi `expr` hoặc `nod`. Không thêm `filter` SVG hay CSS lên nhân vật (render chậm gấp nhiều lần). Brief chọn tay chân que: thêm `limbs: "que"` cho mọi nhân vật, thường tắt viền sticker (`sticker: 0`); cảnh tối dùng `C.shade`, ghế dùng `C.bench`, đèn pin dùng `hold("den-pin")`, tất cả theo tài liệu tham khảo. Video chibi render khoảng 4,5 giây cho mỗi giây video, nên được render bản nháp như video 2D.
 
 ## Hai khổ, một phong cách
 

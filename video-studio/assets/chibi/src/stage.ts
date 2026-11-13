@@ -10,7 +10,7 @@
 import type { Spec } from '../../lineart/src/cast/rig.ts';
 import { byId } from '../../lineart/src/cast/roster.ts';
 import { createChibi, type Chibi, type ChibiOptions } from './rig.ts';
-import { el } from './svg.ts';
+import { el, fill, line, f, OUT, W } from './svg.ts';
 
 export interface ChibiStage {
   svg: SVGSVGElement;
@@ -20,6 +20,10 @@ export interface ChibiStage {
   add(who: string | Spec, opt: ChibiOptions): Chibi;
   at(t: number, fn: () => void): void;
   render(t: number): void;
+  /** Lam toi canh (dem, phong toi): lop toi va vien toi phu len nen, nam sau nhan vat. */
+  shade(opacity?: number, colour?: string): void;
+  /** Ghe dai cho nhan vat ngoi. y: mat dat; seat: chieu cao mat ghe theo don vi hinh (que 60, chibi 30; tre em nhan 0,7). */
+  bench(x: number, y: number, scale: number, width?: number, seat?: number): void;
   readonly time: number;
 }
 
@@ -54,6 +58,21 @@ export function createChibiStage(svg: SVGSVGElement, opt: { width: number; heigh
       return c;
     },
     at(t, fn) { cues.push({ t, fn, done: false }); },
+    shade(opacity = 0.4, colour = '#0a0c14') {
+      const defs = el('defs', {}, back);
+      const rg = el('radialGradient', { id: 'cb-vig', cx: 0.5, cy: 0.55, r: 0.75 }, defs);
+      el('stop', { offset: 0.35, 'stop-color': '#000', 'stop-opacity': 0 }, rg);
+      el('stop', { offset: 1, 'stop-color': '#000', 'stop-opacity': Math.min(0.85, opacity * 1.9) }, rg);
+      el('rect', { width, height, fill: colour, opacity }, back);
+      el('rect', { width, height, fill: 'url(#cb-vig)' }, back);
+    },
+    bench(x, y, scale, w = 170, seat = 60) {
+      const b = el('g', { transform: `translate(${f(x)} ${f(y)}) scale(${f(scale)})` }, back);
+      const top = -seat;
+      for (const sd of [-1, 1]) line(b, `M${sd * (w / 2 - 14)} ${top} L${sd * (w / 2 - 14)} 0`, W * 1.4, OUT);
+      fill(b, `M${-w / 2} ${top - 12} L${w / 2} ${top - 12} L${w / 2} ${top + 4} L${-w / 2} ${top + 4} Z`, '#8a6a4a');
+      line(b, `M${-w / 2 + 6} ${top - 4} L${w / 2 - 6} ${top - 4}`, W * 0.4, '#5e4630');
+    },
     render(t) {
       if (!built || t < simT - 1e-6) rebuild();
       fire(simT);
