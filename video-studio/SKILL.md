@@ -104,7 +104,7 @@ Có nhân vật (line-art, chibi hoặc 3D): trong lời giao việc cho biên k
 
 Kiểu `ve-tay`: trong lời giao việc cho biên kịch, yêu cầu `visual` mỗi cảnh mô tả đúng **một** bức tranh không có chữ (bối cảnh, người, hành động, góc nhìn, màu chủ đạo), thêm trường `focus` (0 đến 1, vị trí ngang của chủ thể chính), và `on_screen.title` chỉ là nhãn ngắn. Người thật không có ảnh đương thời thì vẽ từ xa hoặc từ phía sau. Xem `references/ve-tay.md`.
 
-Kiểu `ve-net`: trong lời giao việc cho biên kịch, yêu cầu `visual` mỗi cảnh mô tả bố cục một tờ giấy bằng hình và nét đơn giản (hình nào, ở đâu, vẽ theo thứ tự nào, trùng thứ tự lời đọc), 2 đến 8 nét mỗi cảnh, và `on_screen.title` là chữ chính sẽ được viết ra bằng bút (tối đa khoảng 8 từ). Không cần `focus`. Xem `references/ve-net.md`.
+Kiểu `ve-net`: trong lời giao việc cho biên kịch, yêu cầu `visual` mỗi cảnh mô tả bố cục một tờ giấy bằng hình và nét đơn giản (hình nào, ở đâu, vẽ theo thứ tự nào, trùng thứ tự lời đọc), 2 đến 8 nét mỗi cảnh, và `on_screen.title` là chữ chính sẽ được viết ra bằng bút (tối đa khoảng 8 từ). Cảnh giải thích ý trừu tượng thì theo mục "Biến ý trừu tượng thành hình" của tài liệu đó. Không cần `focus`. Xem `references/ve-net.md`.
 
 4. Nếu hồ sơ yêu cầu dòng nguồn trên hình: chép dòng ở mục "Nguồn hiển thị trên video" của `kiem-chung.md` vào `on_screen.source` của cảnh mà hồ sơ chỉ định (thường là cảnh cuối) trong `scenes.json`, và ghi vào cột Chữ trên hình của `kich-ban.md`. Đây là đường duy nhất để dòng nguồn đến tay agent dựng cảnh; không có nguồn đã đối chiếu thì để trống.
 5. **Phụ đề tách khỏi lời đọc**: `narration` viết theo cách đọc cho TTS ("i-ô-ét hai mươi bảy chấm hai chấm một", "iPhone mười một"), nhưng phụ đề phải viết dạng chuẩn. Với mọi cảnh có số, phiên bản, ngày, tên riêng được viết phiên âm trong `narration`, thêm trường `subtitle` cùng câu viết dạng chuẩn ("iOS 27.2.1", "iPhone 11", "9/11", "9 lỗ hổng"), giữ nguyên ý và thứ tự từ. Nói rõ yêu cầu này trong lời giao việc cho biên kịch. `inject.py` tự lấy `subtitle` từ `scenes.json` của dự án cho phụ đề in trên hình và file `.srt` (không có thì dùng `narration`), nên đọc lại bằng `tts.py --only` cũng không mất.
@@ -161,7 +161,7 @@ cd ~/studio/<slug>
 python3 SKILL/scripts/tts.py scenes.json .
 ```
 
-Ra `audio/<id>.wav`, `voiceover.wav`, `timeline.json`. So tổng thời lượng với mục tiêu; lệch quá 20% thì báo người dùng ở cổng 2 kèm đề xuất (cắt bớt lời hay chỉnh `speed` 0.9 đến 1.1). Đọc lại một cảnh: `--only s03`. Mỗi lần đọc lại, thời lượng có thể đổi nhẹ; sau đó chạy lại `inject.py` cho từng khổ là đủ, vì mốc cảnh, chuyển động, tiếng và phụ đề đều lấy từ `timeline.json`.
+Ra `audio/<id>.wav`, `voiceover.wav`, `timeline.json`. So tổng thời lượng với mục tiêu; lệch quá 20% thì báo người dùng ở cổng 2 kèm đề xuất (cắt bớt lời hay chỉnh `speed` 0.9 đến 1.1). Nhịp đọc đều đều hay thiếu chỗ ngắt trước ý chính thì chỉnh `pause_before` và `speed` của từng cảnh theo `references/giong-doc.md` mục Chỉ đạo giọng theo cảnh. Đọc lại một cảnh: `--only s03`. Mỗi lần đọc lại, thời lượng có thể đổi nhẹ; sau đó chạy lại `inject.py` cho từng khổ là đủ, vì mốc cảnh, chuyển động, tiếng và phụ đề đều lấy từ `timeline.json`.
 
 ### Bước 5. Dựng hình
 

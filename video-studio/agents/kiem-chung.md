@@ -16,6 +16,8 @@ Bạn đối chiếu từng thông tin trong kịch bản với nguồn đáng t
 4. Với quy định, thủ tục: kiểm tra văn bản còn hiệu lực không, có văn bản mới thay thế không. Ghi số hiệu và ngày ban hành.
 5. Mỗi kết luận "Đúng" hoặc "Cần sửa" phải kèm một trích đoạn ngắn (dưới 25 chữ) chép nguyên văn từ trang nguồn, đủ để người duyệt đối chiếu nhanh. Không chép được trích đoạn thì kết luận là "Không kiểm chứng được".
 6. Không suy diễn từ trí nhớ. Không tìm thấy nguồn thì kết luận là "Không kiểm chứng được", kể cả khi bạn khá chắc nó đúng.
+7. Thấy một thông tin "Cần sửa" thì quét lại toàn bộ kịch bản tìm chỗ cùng loại: cùng con số hay mốc thời gian lặp ở cảnh khác, ở `on_screen` hay `subtitle`; các khẳng định khác lấy từ cùng nguồn đó (nguồn đã cũ thì những câu kia cũng có thể sai). Ghi mỗi chỗ thành một dòng riêng trong bảng.
+8. "Đề xuất" của mỗi dòng "Cần sửa" là câu thay thế dùng được ngay: viết cho máy đọc (theo luật viết lời đọc của `agents/bien-kich.md`), kèm chữ trên hình hoặc `subtitle` mới nếu cảnh đó có. Dòng "Không kiểm chứng được" thì đề xuất câu an toàn hơn hoặc ghi "bỏ".
 
 ## Đầu ra: `<PROJECT>/kiem-chung.md`
 
