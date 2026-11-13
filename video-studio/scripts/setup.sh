@@ -28,7 +28,7 @@ command -v node >/dev/null   || fail "Thieu Node.js"
 command -v ffmpeg >/dev/null || fail "Thieu ffmpeg"
 command -v ffprobe >/dev/null || fail "Thieu ffprobe"
 CHROME="$(command -v google-chrome || command -v chromium || command -v chromium-browser || true)"
-[ -n "$CHROME" ] || fail "Khong tim thay Chrome/Chromium. HyperFrames va Remotion can trinh duyet de render."
+[ -n "$CHROME" ] || fail "Khong tim thay Chrome/Chromium. HyperFrames can trinh duyet de render."
 ok "node $(node -v), ffmpeg, Chrome tai $CHROME"
 
 # 2. Mang: mo hinh giong doc tai tu GitHub Release cua repo, HuggingFace la du phong

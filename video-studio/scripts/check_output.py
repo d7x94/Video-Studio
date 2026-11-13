@@ -58,6 +58,8 @@ def main():
     else:
         w, h = v[0]["width"], v[0]["height"]
         notes.append(f"Hinh: {v[0]['codec_name']} {w}x{h}")
+        if v[0]["codec_name"] != "h264":
+            errors.append(f"Codec hinh la {v[0]['codec_name']}, can h264")
         if (w, h) not in [(1080, 1920), (1920, 1080)]:
             errors.append(f"Do phan giai la {w}x{h}, can 1080x1920 hoac 1920x1080")
     if not au:

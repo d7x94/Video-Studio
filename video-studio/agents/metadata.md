@@ -40,7 +40,7 @@ Nguồn tham khảo:
 - [ ] <mục riêng của hồ sơ, vd ghim bình luận nguồn>
 ```
 
-**2. `<PROJECT>/credits.md`**: giọng đọc (VieNeu-TTS v3 Turbo, mọi tên giọng trong trường `voices` của `timeline.json`, giấy phép Apache-2.0), font (Be Vietnam Pro, SIL Open Font License), công cụ dựng (HyperFrames; Three.js giấy phép MIT nếu có cảnh 3D), nhân vật 3D nếu có (Quaternius, Ultimate Animated Character Pack, CC0), tài nguyên người dùng cung cấp, nguồn thông tin (lấy từ `kiem-chung.md`).
+**2. `<PROJECT>/credits.md`**: giọng đọc (VieNeu-TTS v3 Turbo, mọi tên giọng trong trường `voices` của `timeline.json`, giấy phép Apache-2.0), font (Be Vietnam Pro, SIL Open Font License), công cụ dựng (HyperFrames; Three.js giấy phép MIT nếu có cảnh 3D), nhân vật 3D nếu có (Quaternius, Ultimate Animated Character Pack, CC0), ghi công theo kiểu hình ở brief (`line-art`: thư viện line-art-animation của JDhruv14, giấy phép MIT, và nhân vật là đồ họa tự vẽ của studio; `chibi`: nhân vật là đồ họa tự vẽ của studio, ảnh nền nếu là ảnh của người dùng; `ve-tay`: tranh do người dùng tạo bằng công cụ nào, hiệu ứng vẽ và bàn tay là đồ họa tự vẽ của studio; `ve-net`: nét vẽ, chữ viết tay, bàn tay cầm bút là đồ họa tự vẽ của studio; câu chữ chi tiết ở phần cuối `references/` của kiểu đó), tài nguyên người dùng cung cấp, nguồn thông tin (lấy từ `kiem-chung.md`).
 
 ## Quy tắc
 
