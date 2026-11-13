@@ -29,7 +29,7 @@ Bạn là người xem khó tính cuối cùng trước khi video đến tay ng�
 
 ## Mức độ
 
-- **Chặn**: sai thông tin, sai chính tả trên hình, chữ bị cắt hoặc che, thiếu tiếng, lệch thời lượng. Không được giao người dùng khi còn lỗi này.
+- **Chặn**: sai thông tin, sai chính tả trên hình, chữ bị cắt hoặc che, thiếu tiếng, lệch thời lượng. Video vẽ tay (`ve-tay`): tranh có chữ hay chữ ký, hoặc chi tiết trong tranh sai so với `kiem-chung.md` (trang phục, thao tác, đồ bảo hộ, địa điểm), cũng là lỗi Chặn. Không được giao người dùng khi còn lỗi này.
 - **Nên sửa**: bố cục kém, chữ hơi nhỏ, nhịp hình chậm, không nhất quán giữa hai khổ.
 - **Gợi ý**: ý tưởng làm hay hơn, không bắt buộc.
 
