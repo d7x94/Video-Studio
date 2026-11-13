@@ -1,0 +1,115 @@
+{
+  "source": "CMU Graphics Lab Motion Capture Database (mocap.cs.cmu.edu), ban BVH 2010 cua Bruce Hahne",
+  "license": "Free for use in research and commercial projects; khong ban lai du lieu, ke ca dang da chuyen doi. Xem README muc Ghi cong.",
+  "commit": "09a07f54f3bbb58797325f009282d0b2048a2871",
+  "url": "https://raw.githubusercontent.com/una-dinosauria/cmu-mocap/{commit}/data/{sub}/{file}.bvh",
+  "clips": [
+    {
+      "id": "danh-rang",
+      "file": "79_81",
+      "t0": 1.0,
+      "t1": 7.5,
+      "loop": false,
+      "desc": "đánh răng (tay trước đưa bàn chải lên miệng)",
+      "size": 705247,
+      "sha256": "c371219b2a64452251d5c930699a51232cf4854f704da8ccbb46c8795ef2b026",
+      "face": "mieng"
+    },
+    {
+      "id": "an",
+      "file": "79_15",
+      "t0": 1.0,
+      "t1": 6.6,
+      "loop": false,
+      "desc": "ăn bánh mì cầm tay",
+      "size": 657071,
+      "sha256": "70b5556be11ed352986bbcf64ff50c5d6a933ad96bc90f36e6ba2dac83045921",
+      "face": "mieng"
+    },
+    {
+      "id": "uong-nuoc",
+      "file": "79_38",
+      "t0": 0.6,
+      "t1": 4.3,
+      "loop": false,
+      "desc": "uống nước bằng cốc",
+      "size": 407636,
+      "sha256": "ba49954cb42ff35be0589f7f1d459717e6aad1cb886ed0f1ca4db30d68a47a6d",
+      "face": "mieng"
+    },
+    {
+      "id": "nghe-dien-thoai",
+      "file": "79_36",
+      "t0": 0.7,
+      "t1": 4.3,
+      "loop": false,
+      "desc": "áp điện thoại lên tai",
+      "size": 390516,
+      "sha256": "b723e28a1c622496030027a38452287b5c8f5c362ad37c9fe5d32f5b968560bf",
+      "face": "tai"
+    },
+    {
+      "id": "vui-mung",
+      "file": "79_69",
+      "t0": 0.8,
+      "t1": 6.0,
+      "loop": false,
+      "desc": "rất vui, dang tay reo",
+      "size": 617575,
+      "sha256": "35c5a46c0d1042b4eb4c0c0d5e71319abb39b50b4587b10202127ee1cb1ef579"
+    },
+    {
+      "id": "khoc",
+      "file": "79_72",
+      "t0": 0.5,
+      "t1": 7.7,
+      "loop": false,
+      "desc": "khóc, đưa tay lên mặt",
+      "size": 730001,
+      "sha256": "5ec113c61a34715ad297fb8c897ed143b99bf68bb653b4116626d3656a63fdee",
+      "face": "mieng"
+    },
+    {
+      "id": "so-hai",
+      "file": "79_73",
+      "t0": 0.5,
+      "t1": 6.2,
+      "loop": false,
+      "desc": "sợ hãi, co người",
+      "size": 672852,
+      "sha256": "78f51b188603e2eb33212929fa67c43d68b99209b4d70515aeaa7dcde56f9230",
+      "face": "mieng"
+    },
+    {
+      "id": "lanh-run",
+      "file": "79_68",
+      "t0": 1.0,
+      "t1": 9.4,
+      "loop": false,
+      "desc": "lạnh, ôm người run",
+      "size": 898209,
+      "sha256": "e0a6259d2301a7073024fb56e18ccc01dc843d61040d347ddae6f2a5c28abe25"
+    },
+    {
+      "id": "nhay",
+      "file": "13_39",
+      "t0": 0.0,
+      "t1": 2.9,
+      "loop": false,
+      "desc": "nhảy lên tại chỗ",
+      "size": 267476,
+      "sha256": "1810dec74cf72839042dde67425c53773c910803415e945f3ffd747a55a8ee78"
+    },
+    {
+      "id": "nhay-dang-tay",
+      "file": "13_29",
+      "t0": 1.0,
+      "t1": 3.6,
+      "loop": false,
+      "desc": "nhảy dang tay chân (tập thể dục)",
+      "size": 3450144,
+      "sha256": "bdfcb61b78f4cc0c03c88f275de1e109fe94581a124dae604f1113dbb66691b7"
+    }
+  ],
+  "rejected": "Da thu va bo (nhin chinh dien, khong dao cu thi khong doc ra dong tac): 79_55 quet nha, 79_89 be em be, 79_70 cuoi, 79_71 buon, 79_88 dap muoi."
+}

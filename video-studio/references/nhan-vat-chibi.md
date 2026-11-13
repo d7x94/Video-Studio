@@ -25,6 +25,7 @@ Giới hạn hiện có (đừng viết kịch bản đòi những thứ này):
 - Chỉ nhìn chính diện, hơi nghiêng về một phía; quay trái hoặc phải bằng cách lật gương nhanh (đồ cầm tay đổi bên theo).
 - Đi, chạy theo chiều ngang; ngồi trên ghế nhìn chính diện (kiểu `chibi` ngồi trông như ngồi xổm, nên dùng `que` cho cảnh ngồi). Không nằm, không cúi nhặt đồ, không leo trèo.
 - Đồ cầm thêm ngoài dàn chỉ có đèn pin (kiểu `que`). Không đổi trang phục, màu, đạo cụ trong video.
+- Động tác sinh hoạt (đánh răng, ăn, uống, nghe điện thoại, khóc, sợ, lạnh, reo mừng, nhảy) chỉ có ở kiểu `que`, qua 10 clip chuyển động thật ở mục Động tác mocap. Tay không cầm đồ vật: bàn chải, cốc, điện thoại là ngầm hiểu.
 
 ## Dàn nhân vật
 
@@ -69,11 +70,43 @@ C.at(T.s02, () => { khoa.say(2.67); khoa.expr("surprised", 1.2); thu.expr("neutr
 - `c.runTo(x)`: chạy tới `x` (nhanh khoảng 2,3 lần đi bộ, nhún và vung tay mạnh hơn).
 - `c.sit(true | false)`: ngồi xuống hoặc đứng lên trong 0,35 giây, tại chỗ. Vẽ ghế dưới người ngồi bằng `C.bench(x, y, scale, rộng, chiều cao mặt ghế)`: chiều cao mặt ghế theo đơn vị hình là 60 cho `que`, 30 cho `chibi`; trẻ em nhân 0,7. Gọi `walkTo` khi đang ngồi thì tự đứng lên rồi mới đi.
 - `c.hold("den-pin" | null)` (chỉ kiểu `que`): cầm đèn pin bằng tay trước, có luồng sáng hình nón theo hướng cẳng tay; tay nghỉ là rọi xuống đất phía trước. `c.act("sweep", giây)` rọi quét qua lại.
+- `c.play(mã, giây?)` (chỉ kiểu `que`): diễn một clip chuyển động thật, xem mục Động tác mocap.
 - `c.face(1 | -1)`: quay sang phải hoặc trái (lật gương trong 0,16 giây).
 - `C.at(t, fn)`: hẹn một việc ở giây `t` (dùng `T.<id> + ...`, không viết số giây tuyệt đối).
 - `C.shade(độ tối, màu)`: làm tối cảnh (đêm, phòng tắt đèn), mặc định 0,4: phủ lớp tối và viền tối lên nền, nằm sau nhân vật nên nhân vật vẫn rõ. Gọi ở đầu `SETUP`, trước `C.bench` nếu muốn ghế sáng như nhân vật.
 - Tắt viền sticker cho cả cảnh: `CB.createChibiStage(..., { width, height, sticker: 0 })` (sửa dòng tạo `C` trong template).
 - Vẽ thêm vào `C.back` (sau nhân vật) hoặc `C.front` (trước) bằng `CB.fill(lớp, d, màu)`, `CB.line(lớp, d, độ dày)`; viền dùng màu `CB.OUT` cho hợp nét nhân vật.
+
+## Động tác mocap (chỉ kiểu `que`)
+
+Tay chân que diễn theo chuyển động ghi từ người thật (CMU Motion Capture Database), đã chiếu sang góc nhìn chính diện và chỉnh cho đầu to của chibi: tay đưa lên miệng hay tai thì chạm đúng mặt chibi. Agent chỉ chọn mã clip và thời điểm, không chỉnh tay chân bằng số.
+
+| Mã | Động tác | Dài (giây) | Gợi ý dùng |
+|---|---|---|---|
+| `danh-rang` | đánh răng, tay trước đưa lên miệng | 6,5 | vệ sinh răng miệng |
+| `an` | ăn bằng tay, đưa lên miệng | 5,7 | ăn uống, an toàn thực phẩm |
+| `uong-nuoc` | cầm cốc uống | 3,7 | uống đủ nước, uống thuốc |
+| `nghe-dien-thoai` | áp điện thoại lên tai | 3,7 | gọi tổng đài, báo y tế |
+| `vui-mung` | dang tay reo vui | 5,3 | kết thúc có hậu, khỏi bệnh |
+| `khoc` | hai tay ôm mặt khóc | 7,3 | tình huống xấu, hối hận (thêm `expr("worried")`) |
+| `so-hai` | co người, tay đưa lên miệng | 5,7 | hoảng sợ, giật mình (thêm `expr("surprised")`) |
+| `lanh-run` | ôm người run | 8,5 | rét, sốt rét run |
+| `nhay` | nhún rồi nhảy lên tại chỗ | 2,9 | mừng rỡ, bất ngờ |
+| `nhay-dang-tay` | nhảy dang tay chân | 2,7 | tập thể dục |
+
+```js
+C.at(T.s01 + 0.1, () => minh.play("danh-rang", 3.0));   // cắt còn 3 giây cho vừa cảnh
+C.at(T.s02 + 0.1, () => thu.play("uong-nuoc", 2.0));
+C.at(T.s02 + 2.2, () => thu.play("vui-mung", 1.5));      // clip sau trộn chéo từ clip trước
+```
+
+- `play(mã, giây?)` trả về số giây sẽ diễn. Không ghi giây thì diễn hết clip; ghi ngắn hơn thì cắt, và 0,3 giây cuối trộn về tư thế nghỉ. Clip giữ khung cuối nếu `giây` dài hơn clip.
+- Tự trộn vào 0,3 giây đầu. Gọi clip mới khi clip cũ chưa xong thì trộn chéo, không giật.
+- Đang `walkTo`, `runTo` thì clip tạm dừng (như `act`); cho nhân vật đứng yên rồi mới `play`. Đang `hold("den-pin")` thì đèn đi theo bàn tay trước.
+- Kiểu `chibi` (tay ống) gọi `play` thì không có tác dụng và in cảnh báo ra console.
+- Mã không có trong bảng thì thư viện báo lỗi. Muốn thêm động tác: thêm dòng vào `tools/mocap/catalog.json` (mã file CMU, đoạn giây, kích thước, sha256) rồi chạy `python3 tools/mocap/bvh2que.py` và `bash tools/build_chibi.sh` trong repo skill. Đã thử và bỏ vì nhìn chính diện, không đạo cụ thì không ra động tác: quét nhà, bế em bé, cười, buồn, đập muỗi.
+
+Render video có clip mocap đo được khoảng 4,8 giây cho mỗi giây video (khổ dọc, 2 nhân vật có viền sticker, video 7,1 giây: 34 giây), như chibi thường.
 
 ## Nền
 
@@ -102,3 +135,5 @@ rồi trong `index.html` thay nội dung giữa `<!-- BG:BEGIN -->` và `<!-- BG
 ## Ghi công
 
 Nhân vật, rig và nền chibi do studio tự vẽ bằng code, không dùng thư viện hay hình của bên thứ ba. Ghi vào `credits.md`: "Nhân vật chibi: đồ họa tự vẽ của studio (SVG)". Nếu nền là ảnh người dùng, ghi thêm "Ảnh nền: của người dùng".
+
+Video có dùng `play` (động tác mocap) ghi thêm: "Chuyển động: dữ liệu từ CMU Graphics Lab Motion Capture Database (mocap.cs.cmu.edu), cơ sở dữ liệu được tài trợ bởi NSF EIA-0196217."

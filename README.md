@@ -28,6 +28,7 @@ video-studio/          thư mục skill (đúng như được cài vào claude.a
 tools/
   build_lineart.sh     build lại lineart.js từ nguồn
   build_chibi.sh       build lại chibi.js từ nguồn
+  mocap/               bvh2que.py và catalog.json: chuyển clip mocap CMU thành động tác cho chibi tay chân que
   package_skill.sh     đóng gói zip để tải lên claude.ai
   publish_voice_models.sh  đăng mô hình giọng đọc lên Release (Actions tự chạy)
   publish_characters.sh    đăng nhân vật 3D lên Release (Actions tự chạy)
@@ -42,6 +43,7 @@ tools/
 
 - Thư viện nét vẽ line-art: [JDhruv14/line-art-animation](https://github.com/JDhruv14/line-art-animation), MIT (`video-studio/assets/lineart/LICENSE-line-art-animation.txt`).
 - Nhân vật chibi: đồ họa tự vẽ bằng code trong repo này, không dùng thư viện hay hình của bên thứ ba.
+- Động tác mocap của chibi tay chân que (`play`): chuyển động từ [CMU Graphics Lab Motion Capture Database](http://mocap.cs.cmu.edu), bản BVH của Bruce Hahne chép tại [una-dinosauria/cmu-mocap](https://github.com/una-dinosauria/cmu-mocap) (ghim commit, kích thước và sha256 từng file trong `tools/mocap/catalog.json`). Điều khoản CMU: dùng tự do cho nghiên cứu và sản phẩm thương mại, không được bán lại dữ liệu kể cả ở dạng đã chuyển đổi. "The data used in this project was obtained from mocap.cs.cmu.edu. The database was created with funding from NSF EIA-0196217." Repo chỉ lưu clip 2D đã chuyển (`assets/chibi/src/mocap-clips.ts`), không lưu file BVH.
 - Hiệu ứng vẽ tay và bàn tay cầm bút: đồ họa tự vẽ bằng code trong repo này. Tranh của từng video do người dùng tạo, không lưu trong repo.
 - Nét vẽ, chữ viết ra và bàn tay cầm bút của kiểu `ve-net`: đồ họa tự vẽ bằng code trong repo này, không dùng thư viện hay hình của bên thứ ba.
 - Nhân vật 3D: [Quaternius Ultimate Animated Character Pack](https://quaternius.com/packs/ultimatedanimatedcharacter.html), CC0 1.0 (file giấy phép trong gói ghi CC0 1.0 Universal). Bản chép nguyên vẹn nằm ở Release `quaternius-characters-v1` (không lưu trong git), danh mục và sha256 ở `video-studio/assets/sim3d/characters.json`, cấu hình dàn diễn viên ở `video-studio/assets/sim3d/cast.json`.
