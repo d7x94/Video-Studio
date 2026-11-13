@@ -1,0 +1,32 @@
+# Moi lan day thay doi skill len main: kiem tra lineart.js khop nguon, dong goi zip,
+# dang len Release "latest" de tai ve va upload vao claude.ai.
+name: Dong goi skill
+on:
+  push:
+    branches: [main]
+    paths: ['video-studio/**', 'tools/**', '.github/workflows/package.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Kiem tra cu phap script
+        run: |
+          for f in video-studio/scripts/*.sh tools/*.sh; do bash -n "$f"; done
+          python3 -m py_compile video-studio/scripts/*.py
+      - name: Dong goi
+        run: bash tools/package_skill.sh dist/video-studio.zip
+      - name: Dang Release latest
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete latest -y --cleanup-tag || true
+          gh release create latest dist/video-studio.zip \
+            --title "video-studio (ban moi nhat)" \
+            --notes "Tu dong dong goi tu commit ${GITHUB_SHA::7}. Tai video-studio.zip, vao claude.ai > Settings > Skills de tai len thay ban cu."
