@@ -18,10 +18,14 @@ Bạn (phiên chính) giữ vai điều phối, tự làm các việc nhỏ và 
 | Vai | Model | Thẻ nhiệm vụ | Vì sao chọn model này |
 |---|---|---|---|
 | Biên kịch | sonnet | `agents/bien-kich.md` | Viết sáng tạo có cấu trúc, cần nhanh và tốt |
-| Kiểm chứng | opus | `agents/kiem-chung.md` | Phán đoán nguồn tin; sai ở đây là sai thông tin công chúng |
+| Kiểm chứng | sonnet; opus khi hồ sơ kiểm chứng mức cao | `agents/kiem-chung.md` | Thẻ nhiệm vụ đã buộc dẫn nguồn và trích đoạn, sonnet đủ cho mức vừa và thấp; với sức khỏe, thủ tục, sai là sai thông tin công chúng nên dùng opus |
 | Dựng cảnh | sonnet | `agents/dung-canh.md` | Viết HTML/GSAP khối lượng lớn |
-| QA | opus | `agents/qa.md` | Soát lỗi tinh, nhìn ảnh khung hình, quyết định chặn hay cho qua |
+| QA | sonnet | `agents/qa.md` | Soát theo danh sách, nhìn ảnh khung hình; phần kỹ thuật đã có `check_output.py` kiểm |
 | Metadata | haiku | `agents/metadata.md` | Việc theo khuôn mẫu, rẻ và nhanh |
+
+Chọn model cho kiểm chứng: dùng `opus` khi hồ sơ thể loại ghi kiểm chứng **mức cao** (hiện là `suc-khoe`, `thu-tuc`, và `ke-chuyen` khi chuyện mang khuyến cáo sức khỏe). Các trường hợp còn lại dùng `sonnet`. Không vai nào khác dùng opus.
+
+Model điều phối thường là phần tốn nhất của một job (chạy suốt từ đầu đến cuối, xem ảnh, sửa nhiều vòng). Nếu người dùng chat bằng opus, nhắc một lần ở đầu job rằng chọn sonnet cho cuộc chat sẽ tiết kiệm hơn; không lặp lại.
 
 Cách giao việc cho subagent: dùng công cụ tạo subagent (Agent hoặc Task) với tham số `model` như bảng. Subagent khởi động "trắng", không thấy cuộc trò chuyện, nên lời giao việc phải tự đủ: đường dẫn thẻ nhiệm vụ, đường dẫn hồ sơ thể loại, thư mục dự án, và brief. Mẫu:
 
@@ -94,7 +98,7 @@ Script cài HyperFrames, GSAP và font Be Vietnam Pro cục bộ, VieNeu, tải 
 ### Bước 2. Kịch bản
 
 1. Giao **biên kịch** (sonnet) viết `scenes.json` và `kich-ban.md`.
-2. Nếu hồ sơ yêu cầu kiểm chứng, giao **kiểm chứng** (opus) viết `kiem-chung.md`. Có thể chạy song song với bước dựng môi trường.
+2. Nếu hồ sơ yêu cầu kiểm chứng, giao **kiểm chứng** (opus nếu hồ sơ mức cao, không thì sonnet) viết `kiem-chung.md`. Có thể chạy song song với bước dựng môi trường.
 3. Tự áp các sửa đổi kiểm chứng đề xuất vào `scenes.json` và `kich-ban.md`. Câu nào bị đánh "không kiểm chứng được" thì bỏ hoặc viết lại cho an toàn, không giữ nguyên.
 Có nhân vật (line-art, chibi hoặc 3D): trong lời giao việc cho biên kịch, yêu cầu thêm mục "Danh sách vai" ở đầu `kich-ban.md`, mỗi vai một dòng: mã vai không dấu (vd `bac-si`, `be-gai`), tuổi, giới, nghề, tính cách, các cảnh xuất hiện, có thoại riêng hay không; và dùng đúng mã vai đó trong trường `visual` của từng cảnh. Vai chỉ đọc lời dẫn mà không xuất hiện trên hình thì ghi là "người dẫn chuyện".
 
@@ -184,7 +188,7 @@ Tự xem `qa/preview/contact_sheet.png` trước: lỗi rõ ràng (chữ tràn, 
 1. Render bản cuối mỗi khổ: `render.sh build/<khổ> final renders/final_<khổ>.mp4`. Đo trên workspace 2 nhân: khoảng 1,3 giây render cho mỗi giây video với cảnh 2D ít chuyển động, khoảng 3,5 giây với cảnh line-art 2 nhân vật, khoảng 4,5 giây với cảnh chibi 2 nhân vật, khoảng 13 đến 15 giây với cảnh có nhân vật 3D. Với 3D, mọi lần render (cả bản xem trước ở bước 6) đều chạy nền (Bash `run_in_background`) và báo người dùng thời gian dự kiến. Render tuần tự từng khổ, không chạy song song (hai lần render tranh nhau CPU).
 2. Chép `build/landscape/phu-de.srt` (hoặc portrait nếu chỉ có khổ dọc) ra `phu-de.srt` của dự án.
 3. `check_output.py` cho từng bản cuối, có `--frames qa/<khổ>` và `--srt phu-de.srt`.
-4. Giao **QA** (opus) song song với **metadata** (haiku).
+4. Giao **QA** (sonnet) song song với **metadata** (haiku).
 5. Lỗi mức "Chặn" trong `qa/qa.md`: sửa (tự sửa hoặc giao lại dựng cảnh), render lại, QA lại. Tối đa 3 vòng; quá 3 vòng thì dừng, gửi người dùng bản tốt nhất kèm danh sách lỗi còn lại, để họ quyết.
 6. Lỗi mức "Nên sửa": sửa ngay những lỗi không đổi ý đồ hình (chữ ngắt dòng sai, trạng thái giao diện mâu thuẫn, chữ quá nhỏ). Những lỗi mà sửa sẽ đổi thứ người dùng đã duyệt ở cổng 2 (biểu tượng, bố cục, màu, câu chữ) thì hỏi người dùng trước, gom vào một câu hỏi, rồi mới render lại; tránh render bản cuối hai lần.
 
