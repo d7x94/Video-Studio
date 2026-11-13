@@ -2,8 +2,11 @@
 """Tai nhan vat 3D (Quaternius, CC0) vao bo nho dem va chep vao composition.
 
 Dung:
-  python3 get_characters.py --list
-  python3 get_characters.py BUILD_DIR Doctor_Female_Young Casual_Female ...
+  python3 get_characters.py --list                          # danh muc model goc
+  python3 get_characters.py --cast                          # dan dien vien nguoi Viet da khoa (cast.json)
+  python3 get_characters.py BUILD_DIR Doctor_Female_Young Casual_Female ...   # tai model goc
+  python3 get_characters.py BUILD_DIR --cast bac-si-nu ong-cu ...             # tai model cua cac dien vien
+                                                            # va in dong S.loadChar dung cau hinh da khoa
 
 Tai tu GitHub Release cua repo truoc (ten tag trong assets/sim3d/characters.json), khong
 duoc thi tu Google Drive cong khai cua tac gia. Drive can hai ten mien drive.google.com va
@@ -67,24 +70,31 @@ def fetch(asset, file_id, dest: Path, size=None, sha=None):
              "\nKiem tra mang toi github.com; Google Drive het han muc thi thu lai sau (co khi mat 24 gio).")
 
 
-def main():
-    args = sys.argv[1:]
+def load_cast():
+    p = SKILL / "assets/sim3d/cast.json"
+    if not p.exists():
+        sys.exit("[LOI] Khong co assets/sim3d/cast.json trong skill nay")
+    return json.loads(p.read_text(encoding="utf-8"))
+
+
+def load_char_line(a):
+    """Dong S.loadChar dung cau hinh da khoa cua mot dien vien."""
+    opts = [f"height: {a['height']}", f"skin: S.SKIN.{a['skin']}"]
+    if a.get("colors"):
+        opts.append("colors: { " + ", ".join(f"{k}: {v}" for k, v in a["colors"].items()) + " }")
+    if a.get("hide"):
+        opts.append("hide: [" + ", ".join(f'"{h}"' for h in a["hide"]) + "]")
+    return f'await S.loadChar(stage, "{a["model"]}.gltf", {{ {", ".join(opts)} }});'
+
+
+def fetch_models(build: Path, models):
     chars = CATALOG["characters"]
-    if not args or args[0] == "--list":
-        for name, c in chars.items():
-            print(f"{name:22s} {c['vai']}")
-        return
-    build = Path(args[0])
-    names = args[1:]
-    unknown = [n for n in names if n not in chars]
-    if unknown:
-        sys.exit(f"[LOI] Khong co trong danh muc: {unknown}. Xem: python3 {sys.argv[0]} --list")
     CACHE.mkdir(parents=True, exist_ok=True)
     lic = CACHE / CATALOG["license_asset"]
     if valid(lic, sha=CATALOG.get("license_sha256")):
         fetch(lic.name, CATALOG["license_file_id"], lic, sha=CATALOG.get("license_sha256"))
     (build / "assets").mkdir(parents=True, exist_ok=True)
-    for n in names:
+    for n in models:
         dest = CACHE / f"{n}.gltf"
         src = "bo nho dem"
         if valid(dest, chars[n]["size"], chars[n].get("sha256")):
@@ -92,6 +102,38 @@ def main():
         shutil.copy2(dest, build / "assets" / dest.name)
         print(f"[OK] {n} ({src})")
     shutil.copy2(lic, build / "assets" / lic.name)
+
+
+def main():
+    args = sys.argv[1:]
+    chars = CATALOG["characters"]
+    if not args or args[0] == "--list":
+        for name, c in chars.items():
+            print(f"{name:22s} {c['vai']}")
+        return
+    if args[0] == "--cast":
+        cast = load_cast()
+        print(f"Dan dien vien ({cast.get('status', '?')}): ma, vai, model, giong de xuat")
+        for aid, a in cast["actors"].items():
+            print(f"{aid:18s} {a['label']:18s} {a['model']:22s} {a['voice']}")
+        return
+    build = Path(args[0])
+    if len(args) > 1 and args[1] == "--cast":
+        cast = load_cast()["actors"]
+        ids = args[2:]
+        unknown = [i for i in ids if i not in cast]
+        if not ids or unknown:
+            sys.exit(f"[LOI] Ma dien vien khong co: {unknown or '(thieu)'}. Xem: python3 {sys.argv[0]} --cast")
+        fetch_models(build, dict.fromkeys(cast[i]["model"] for i in ids))
+        print("\nDong nap nhan vat (dung nguyen cau hinh da khoa; giong lay theo buoc casting):")
+        for i in ids:
+            print(f"// {i}: {cast[i]['label']}, giong de xuat {cast[i]['voice']}\nconst {i.replace('-', '_')} = {load_char_line(cast[i])}")
+        return
+    names = args[1:]
+    unknown = [n for n in names if n not in chars]
+    if unknown:
+        sys.exit(f"[LOI] Khong co trong danh muc: {unknown}. Xem: python3 {sys.argv[0]} --list")
+    fetch_models(build, names)
 
 
 if __name__ == "__main__":

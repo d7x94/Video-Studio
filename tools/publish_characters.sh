@@ -12,6 +12,16 @@ CATALOG="$ROOT/video-studio/assets/sim3d/characters.json"
 OUT="$(realpath -m "${1:-$ROOT/dist/characters}")"
 mkdir -p "$OUT"
 
+# 0. Release da co du file thi thoat som: khong dung toi Google Drive (hay het han muc), khong ghi de gi
+TAG="$(python3 -c "import json,sys; print(json.load(open(sys.argv[1]))['release_tag'])" "$CATALOG")"
+if gh release view "$TAG" >/dev/null 2>&1; then
+  WANT="$(python3 -c "import json,sys; c=json.load(open(sys.argv[1])); print('\n'.join([n+'.gltf' for n in c['characters']]+[c['license_asset'],'SHA256SUMS']))" "$CATALOG")"
+  HAVE="$(gh release view "$TAG" --json assets --jq '.assets[].name')"
+  if [ -z "$(comm -23 <(sort <<<"$WANT") <(sort <<<"$HAVE"))" ]; then
+    echo "Release $TAG da du file: khong lam gi."; exit 0
+  fi
+fi
+
 # 1. Tai va kiem tra
 python3 - "$CATALOG" "$OUT" <<'PY'
 import hashlib, json, os, subprocess, sys
@@ -57,7 +67,6 @@ print(f"[OK] {lic.name} {got}\n----- noi dung giay phep -----\n{lic.read_text(en
 PY
 
 # 2. Dang release
-TAG="$(python3 -c "import json,sys; print(json.load(open(sys.argv[1]))['release_tag'])" "$CATALOG")"
 if ! gh release view "$TAG" >/dev/null 2>&1; then
   NOTES="Nhan vat 3D cho skill video-studio: Quaternius, Ultimate Animated Character Pack (CC0 1.0), chep nguyen ban (khong sua) tu Google Drive cua tac gia de tai nhanh va khong phu thuoc han muc Drive.
 

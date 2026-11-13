@@ -16,13 +16,37 @@ Bản nháp (`preview`) không nhanh hơn bản cuối với cảnh 3D: đo 223 
 
 Một lệnh chạy thường bị cắt ở 10 phút, nên video 3D dài hơn khoảng 40 giây phải render ở chế độ nền. Agent dựng cảnh không render 3D; chỉ chụp khung hình bằng `hyperframes snapshot` (5 khung hình mất khoảng 9 giây).
 
-Cần mạng tới `drive.google.com` và `drive.usercontent.google.com` (người dùng cho phép trong claude.ai > Settings > Capabilities). `setup.sh` báo nếu thiếu.
+Model tải từ GitHub Release `quaternius-characters-v1` của repo (cần `github.com`, cùng tên miền với mô hình giọng đọc), kiểm kích thước và sha256 theo `assets/sim3d/characters.json`. Không được thì lùi về Google Drive của tác giả (cần `drive.google.com` và `drive.usercontent.google.com`; Drive hay báo hết hạn mức tải, có khi kéo dài nhiều giờ). Cả hai nguồn đều không tới được thì `get_characters.py` báo lỗi và video 3D dừng; video 2D, line-art, chibi và vẽ tay không bị ảnh hưởng.
 
 ## Nhân vật
 
 Nguồn: Quaternius, Ultimate Animated Character Pack, giấy phép CC0 (không cần ghi công nhưng nên ghi trong `credits.md`). Danh mục trong `assets/sim3d/characters.json`; xem nhanh: `python3 SKILL/scripts/get_characters.py --list`.
 
-Nhóm hay dùng: bác sĩ (`Doctor_Female_Young`, `Doctor_Female_Old`, `Doctor_Male_Young`, `Doctor_Male_Old`), người dân (`Casual_*`, `Casual2_*`, `Casual3_*`, `Casual_Bald`), người lớn tuổi (`OldClassy_*`), nhân viên văn phòng (`Suit_*`), công nhân đội mũ bảo hộ (`Worker_*`), đầu bếp (`Chef_*`). Không có trẻ em: dùng nhân vật thường với `height` khoảng 1,1 đến 1,2.
+Nhóm hay dùng: bác sĩ (`Doctor_Female_Young`, `Doctor_Female_Old`, `Doctor_Male_Young`, `Doctor_Male_Old`), người dân (`Casual_*`, `Casual2_*`, `Casual3_*`, `Casual_Bald`), người lớn tuổi (`OldClassy_*`), nhân viên văn phòng (`Suit_*`), công nhân đội mũ bảo hộ (`Worker_*`), đầu bếp (`Chef_*`). Gói không có trẻ em: dùng người lớn thu nhỏ (`height` khoảng 1,1 đến 1,2) cho vai phụ, nhớ rằng tỉ lệ đầu và thân vẫn là người lớn.
+
+### Dàn diễn viên đã khóa
+
+12 diễn viên người lớn (người dùng duyệt ảnh thử vai ngày 2026-11-13), cấu hình trong `assets/sim3d/cast.json`: mỗi người một model, chiều cao, màu da, màu tóc và trang phục để mọi video ra cùng một người. Xem danh sách: `python3 SKILL/scripts/get_characters.py --cast`. Tải model và in sẵn dòng nạp: `python3 SKILL/scripts/get_characters.py BUILD_DIR --cast bac-si-nu ong-cu`.
+
+| Mã | Vai | Model | Giọng đề xuất |
+|---|---|---|---|
+| `bac-si-nu` | Bác sĩ nữ | Doctor_Female_Young | Mai Anh |
+| `bac-si-nam` | Bác sĩ nam | Doctor_Male_Young | Minh Đức |
+| `bac-si-lon-tuoi` | Bác sĩ lớn tuổi | Doctor_Male_Old | Phạm Tuyên |
+| `can-bo-nu` | Cán bộ nữ | Suit_Female | Thùy Dung |
+| `can-bo-nam` | Cán bộ nam | Suit_Male | Minh Triết |
+| `cong-nhan-nam` | Công nhân nam | Worker_Male | Quốc Tuấn |
+| `cong-nhan-nu` | Công nhân nữ | Worker_Female | Đoan Trang |
+| `nguoi-dan-nam` | Người dân nam | Casual_Male | Hải Đăng |
+| `nguoi-dan-nu` | Người dân nữ | Casual_Female | Trúc Ly |
+| `thanh-nien-nam` | Thanh niên nam | Casual2_Male | Adam |
+| `ong-cu` | Ông cụ | OldClassy_Male | Quang Sơn |
+| `ba-cu` | Bà cụ | OldClassy_Female | Ngọc Trân |
+
+- Dàn đã khóa: chỉ đổi khi người dùng yêu cầu rõ, và cập nhật bảng này cùng `cast.json`. Giọng là đề xuất chưa nghe thử: bước casting của từng video chốt giọng cho vai có thoại (mỗi diễn viên một giọng khác nhau trong dàn, nhưng hai video khác nhau có thể đổi).
+- Chưa có điều dưỡng và trẻ em. Cần điều dưỡng: lấy `bac-si-nu` hoặc `bac-si-nam` rồi đổi màu `Main` (áo khoác) và báo người dùng, không coi là diễn viên đã khóa.
+- `thanh-nien-nam` có kiểu tóc của model là một chỏm nhỏ trên đỉnh đầu, nhìn gần như đầu trọc; không đổi được bằng màu.
+- Ông cụ và bà cụ dùng `hide: ["Hat"]` để bỏ chiếc mũ chóp cao của model gốc. `hide` ẩn vật liệu theo tên, chiều cao chỉ tính phần còn hiện (đo lại trên ảnh: mọi diễn viên ra cùng tỉ lệ, sai khác dưới 1%).
 
 Đặc điểm cần biết:
 - Nguyên bản da và mặt màu đen, mắt trắng. `loadChar` đổi vật liệu `Skin` sang màu da (`S.SKIN.sang`, `vua`, `ngam`, `nau`) và `Face` (mắt) sang nâu đậm. Đổi màu áo bằng `colors: { TenVatLieu: 0x... }`; tên vật liệu của từng nhân vật có trong `ch.materials` (vd `Shirt`, `Pants`, `Hair`, `Main`).

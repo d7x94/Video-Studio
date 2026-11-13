@@ -1,6 +1,6 @@
 {
-  "_ghi_chu": "Dan dien vien 3D nguoi lon (Quaternius, CC0). Moi dien vien = model + chieu cao + mau da + mau trang phuc/toc, de video nao cung ra cung mot nguoi. skin: sang|vua|ngam|nau (S.SKIN). colors: ten vat lieu -> mau 0xRRGGBB. voice la de xuat, chua nghe thu: buoc casting chot giong. Dang cho nguoi dung duyet anh thu vai, chua khoa.",
-  "status": "de-xuat",
+  "_ghi_chu": "Dan dien vien 3D nguoi lon (Quaternius, CC0). Moi dien vien = model + chieu cao + mau da + mau trang phuc/toc, de video nao cung ra cung mot nguoi. skin: sang|vua|ngam|nau (S.SKIN). colors: ten vat lieu -> mau 0xRRGGBB. Dan da khoa (nguoi dung duyet anh thu vai 2026-11-13): chi doi khi nguoi dung yeu cau ro va cap nhat bang trong references/nhan-vat-3d.md. voice chi la giong de xuat (chua nghe thu): buoc casting cua tung video chot giong cho vai co thoai.",
+  "status": "da-khoa",
   "actors": {
     "bac-si-nu":        {"label": "Bác sĩ nữ",           "model": "Doctor_Female_Young", "height": 1.62, "skin": "sang", "colors": {"Hair": "0x17120e", "Main": "0xf7f7f2"}, "voice": "Mai Anh"},
     "bac-si-nam":       {"label": "Bác sĩ nam",          "model": "Doctor_Male_Young",   "height": 1.74, "skin": "vua",  "colors": {"Hair": "0x17120e", "Main": "0xf7f7f2", "Black": "0x2f6f8f"}, "voice": "Minh Đức"},

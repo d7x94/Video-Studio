@@ -3,7 +3,7 @@
 name: Dang nhan vat 3D
 on:
   push:
-    branches: [main, dan-dien-vien-3d]
+    branches: [main]
     paths: ['video-studio/assets/sim3d/characters.json', 'tools/publish_characters.sh', '.github/workflows/characters.yml']
   workflow_dispatch:
 jobs:
