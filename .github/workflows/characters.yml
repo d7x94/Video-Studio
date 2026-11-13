@@ -16,6 +16,4 @@ jobs:
       - name: Tai tu Google Drive cua tac gia, kiem tra, dang release
         env:
           GH_TOKEN: ${{ github.token }}
-          # Lan dau lap release: danh muc chua co sha256. Bo dong nay sau khi da ghi sha256.
-          BOOTSTRAP: "1"
         run: bash tools/publish_characters.sh
