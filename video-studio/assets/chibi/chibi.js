@@ -251,6 +251,93 @@ function hash(s) {
   return (h >>> 0) % 1e4 / 1e4;
 }
 
+// chibi/src/que.ts
+var RAISE = 46;
+var ARM_A = 40;
+var ARM_B = 40;
+var STICK = 7.5;
+var SLEEVE = 22;
+var RAD = Math.PI / 180;
+var dirOf = (r) => [-Math.sin(r * RAD), Math.cos(r * RAD)];
+var P = (p) => `${f(p[0])} ${f(p[1])}`;
+function drawQueArm(parent, s, side) {
+  const sleeveCol = s.topColor;
+  const stick = line(parent, "M0 0", STICK, OUT);
+  const hand = g(parent);
+  fill(hand, "M-8 0 a8 8 0 1 0 16 0 a8 8 0 1 0 -16 0", "#2a211e", W * 0.5);
+  const sleeveO = line(parent, "M0 0", SLEEVE + W * 1.6, OUT);
+  const sleeveI = line(parent, "M0 0", SLEEVE, sleeveCol);
+  return { side, sleeveO, sleeveI, stick, hand };
+}
+function poseQueArm(a, u1, u2) {
+  const S = [a.side * 40, -116];
+  const r1 = -a.side * u1, r2 = r1 - a.side * u2;
+  const v1 = dirOf(r1), v2 = dirOf(r2);
+  const E = [S[0] + ARM_A * v1[0], S[1] + ARM_A * v1[1]];
+  const H = [E[0] + ARM_B * v2[0], E[1] + ARM_B * v2[1]];
+  const C = [2 * E[0] - (S[0] + H[0]) / 2, 2 * E[1] - (S[1] + H[1]) / 2];
+  a.stick.setAttribute("d", `M${P(S)} Q${P(C)} ${P(H)}`);
+  const sl = [S[0] + 16 * v1[0], S[1] + 16 * v1[1]];
+  const d = `M${P([S[0] + 2 * v1[0], S[1] + 2 * v1[1]])} L${P(sl)}`;
+  a.sleeveO.setAttribute("d", d);
+  a.sleeveI.setAttribute("d", d);
+  a.hand.setAttribute("transform", `translate(${P(H)})`);
+  return { hand: H, angle: r2 };
+}
+function drawQueLegs(parent, s, look) {
+  const legs = [];
+  const bare = s.top === "dress" || s.bottom === "shorts";
+  const stubCol = bare ? s.bottomColor : s.bottomColor;
+  for (const side of [-1, 1]) {
+    const stick = line(parent, "M0 0", STICK, OUT);
+    const foot = g(parent);
+    fill(foot, `M${-side * 4} -1 Q${-side * 4} -11 ${side * 8} -11 Q${side * 20} -11 ${side * 20} -3 Q${side * 20} 2 ${side * 8} 2 Q${-side * 4} 2 ${-side * 4} -1 Z`, s.shoeColor ?? "#2a211e", W * 0.6);
+    const stubO = line(parent, "M0 0", 26 + W * 1.6, OUT);
+    const stubI = line(parent, "M0 0", 26, stubCol);
+    legs.push({ side, stubO, stubI, stick, foot });
+    void look;
+  }
+  return legs;
+}
+function poseQueLegs(legs, hipY, phase, walking, stubLen, sit = 0, running = false) {
+  const stride = running ? 34 : 24, liftH = running ? 24 : 14;
+  for (const L of legs) {
+    const ph = phase + (L.side > 0 ? Math.PI : 0);
+    const Hp = [L.side * 15, hipY];
+    let F = [L.side * 17, -6];
+    let bx = 3;
+    if (walking) {
+      const lift = Math.max(0, Math.cos(ph));
+      F = [L.side * 15 + stride * Math.sin(ph), -6 - lift * liftH];
+      bx = 4 + lift * 14;
+    }
+    if (sit > 0) {
+      F = [F[0] + (L.side * 26 - F[0]) * sit, F[1] + (-6 - F[1]) * sit];
+      bx = bx + (L.side * 20 - bx) * sit;
+    }
+    const M = [(Hp[0] + F[0]) / 2 + bx, (Hp[1] + F[1]) / 2];
+    L.stick.setAttribute("d", `M${P(Hp)} Q${P(M)} ${P(F)}`);
+    L.foot.setAttribute("transform", `translate(${P([F[0], F[1] + 6])})`);
+    const d = `M${P([Hp[0], Hp[1] - 4])} L${P([Hp[0], Hp[1] + stubLen])}`;
+    L.stubO.setAttribute("d", d);
+    L.stubI.setAttribute("d", d);
+  }
+}
+function drawFlashlight(parent, uid, withBeam) {
+  const root = g(parent);
+  if (withBeam) {
+    const defs = el("defs", {}, root);
+    const lg = el("linearGradient", { id: `${uid}-beam`, x1: 0, y1: 0, x2: 0, y2: 1 }, defs);
+    el("stop", { offset: 0, "stop-color": "#fff6cf", "stop-opacity": 0.55 }, lg);
+    el("stop", { offset: 0.55, "stop-color": "#ffe9a6", "stop-opacity": 0.18 }, lg);
+    el("stop", { offset: 1, "stop-color": "#ffe9a6", "stop-opacity": 0 }, lg);
+    el("path", { d: "M-9 34 L-260 900 L260 900 L9 34 Z", fill: `url(#${uid}-beam)` }, root);
+  }
+  fill(root, "M-6 -6 L6 -6 L7 22 L-7 22 Z", "#3a3f45", W * 0.6);
+  fill(root, "M-10 22 L10 22 L9 34 L-9 34 Z", shade("#3a3f45", 1.4), W * 0.6);
+  return { g: root };
+}
+
 // chibi/src/rig.ts
 var LOOKS = {
   "bac-si-minh": { skin: "#f3d3bb", hair: "#2b211e" },
@@ -414,7 +501,7 @@ function drawTorso(parent, s, look, id) {
   if ((s.prop ?? "none") === "backpack") line(t, "M-30 -124 Q-36 -96 -40 -64 M30 -124 Q36 -96 40 -64", W * 1.6, shade(s.propColor ?? "#3f6ea8", 0.8));
   return t;
 }
-function drawProp(parent, s, where) {
+function drawProp(parent, s, where, que = false) {
   const p = s.prop ?? "none";
   const col = s.propColor;
   if (where === "body" && p === "clipboard") {
@@ -435,8 +522,9 @@ function drawProp(parent, s, where) {
     const c = g(parent);
     const cc = col ?? "#2f5d6b";
     const body = "M-100 -46 Q-100 -50 -96 -50 L-46 -50 Q-42 -50 -42 -46 L-42 -10 Q-42 -6 -46 -6 L-96 -6 Q-100 -6 -100 -10 Z";
-    line(c, "M-80 -46 L-80 -58 M-62 -46 L-62 -58", W * 0.8, "#6b7178");
-    fill(c, "M-84 -62 L-58 -62 L-58 -54 L-84 -54 Z", "#3b302c", W * 0.7);
+    const gy = que ? -92 : -58;
+    line(c, `M-80 -46 L-80 ${gy} M-62 -46 L-62 ${gy}`, W * 0.8, "#6b7178");
+    fill(c, `M-86 ${gy - 4} L-58 ${gy - 4} L-58 ${gy + 4} L-86 ${gy + 4} Z`, "#3b302c", W * 0.7);
     fill(c, body, cc);
     if (!under()) el("rect", { x: -66, y: -48, width: 20, height: 40, fill: shade(cc, 0.82) }, c);
     line(c, body, W);
@@ -444,7 +532,7 @@ function drawProp(parent, s, where) {
     for (const x of [-90, -52]) fill(c, `M${x - 4} -2 a4 4 0 1 0 8 0 a4 4 0 1 0 -8 0`, "#3b302c", W * 0.5);
   }
   if (where === "ground" && p === "briefcase") {
-    const c = g(parent);
+    const c = g(parent, que ? { transform: "translate(3 -32)" } : {});
     const cc = col ?? "#6b4428";
     line(c, "M-70 -44 Q-70 -52 -62 -52 Q-54 -52 -54 -44", W * 0.9);
     fill(c, "M-88 -42 L-36 -42 Q-32 -42 -32 -38 L-32 -10 Q-32 -6 -36 -6 L-88 -6 Q-92 -6 -92 -10 L-92 -38 Q-92 -42 -88 -42 Z", cc);
@@ -452,7 +540,7 @@ function drawProp(parent, s, where) {
     fill(c, "M-66 -32 L-58 -32 L-58 -24 L-66 -24 Z", "#e2b93b", W * 0.5);
   }
   if (where === "ground" && p === "basket") {
-    const c = g(parent);
+    const c = g(parent, que ? { transform: "translate(3 -28)" } : {});
     const cc = col ?? "#c9a165";
     line(c, "M-86 -36 Q-62 -78 -38 -36", W * 1.1);
     fill(c, "M-92 -36 L-32 -36 L-38 -6 Q-62 0 -86 -6 Z", cc);
@@ -461,8 +549,9 @@ function drawProp(parent, s, where) {
   }
   if (where === "ground" && p === "cane") {
     const c = g(parent);
-    line(c, "M-54 -50 Q-54 -60 -64 -60 Q-74 -60 -74 -50 L-76 0", W * 1.7, OUT);
-    if (!under()) line(c, "M-54 -50 Q-54 -60 -64 -60 Q-74 -60 -74 -50 L-76 0", W * 0.8, "#9a6a3c");
+    const d = que ? "M-50 -80 Q-50 -94 -60 -94 Q-70 -94 -70 -82 L-74 0" : "M-54 -50 Q-54 -60 -64 -60 Q-74 -60 -74 -50 L-76 0";
+    line(c, d, W * 1.7, OUT);
+    if (!under()) line(c, d, W * 0.8, "#9a6a3c");
   }
   if (where === "back" && p === "backpack") {
     const cc = col ?? "#3f6ea8";
@@ -695,6 +784,8 @@ function gesturePose(gest, k) {
       return { u1: 52, u2: 34 + 4 * Math.sin(k * 3) };
     case "talk":
       return { u1: 18, u2: -112 + 12 * Math.sin(k * 7) };
+    case "sweep":
+      return { u1: 52 + 26 * Math.sin(k * 2.2), u2: 22 };
     default:
       return REST;
   }
@@ -708,35 +799,46 @@ function createChibi(layer, spec, opt, uid, sticker = 7) {
   const bodyK = B.body * h, headK = B.head * h;
   const stoop = (spec.stoop ?? 0) * 0.9;
   const holds = spec.prop ?? "none";
+  const que = opt.limbs === "que";
   const root = g(layer);
   const flip = g(root);
   const build = (r, id) => {
     setUnder(r);
     const body = g(flip, { transform: `scale(${f(bodyK)})` });
-    drawProp(g(body), spec, "ground");
-    const legs = drawLegs(body, spec, look);
+    drawProp(g(body), spec, "ground", que);
+    const qLegs = que ? drawQueLegs(body, spec, look) : [];
+    const legs = que ? [g(body), g(body)] : drawLegs(body, spec, look);
     const upper = g(body);
     const hairBack = g(upper);
     drawHairBack(hairBack, spec, hair);
     drawProp(upper, spec, "back");
-    const armBack = drawArm(upper, spec, look, -1);
+    const qBack = que ? drawQueArm(upper, spec, -1) : null;
+    const armBack = que ? { root: g(upper), elbow: g(upper), side: -1 } : drawArm(upper, spec, look, -1);
     drawTorso(upper, spec, look, id);
     fill(upper, "M-13 -142 L13 -142 L13 -122 L-13 -122 Z", shade(look.skin, 0.88), W * 0.8);
     const headWrap = g(upper);
     const { face: face2, tail } = drawHead(headWrap, spec, look, hair);
     drawProp(upper, spec, "body");
-    const armFront = drawArm(upper, spec, look, 1);
-    if (holds === "clipboard" || holds === "books" || holds === "ganh") upper.appendChild(armBack.root);
+    const qFront = que ? drawQueArm(upper, spec, 1) : null;
+    const armFront = que ? { root: g(upper), elbow: g(upper), side: 1 } : drawArm(upper, spec, look, 1);
+    const itemG = g(upper, { display: "none" });
+    if (que) drawFlashlight(itemG, id + "den", r === 0);
+    if (holds === "clipboard" || holds === "books" || holds === "ganh") {
+      upper.appendChild(armBack.root);
+      if (qBack) for (const n of [qBack.stick, qBack.hand, qBack.sleeveO, qBack.sleeveI]) upper.appendChild(n);
+    }
     setUnder(0);
-    return { legs, upper, hairBack, headWrap, armBack, armFront, face: face2, tail };
+    return { legs, upper, hairBack, headWrap, armBack, armFront, face: face2, tail, qLegs, qBack, qFront, itemG };
   };
   const parts = sticker > 0 ? [build(sticker / bodyK, uid + "u"), build(0, uid)] : [build(0, uid)];
   const face = parts[parts.length - 1].face;
   const blinkSeed = hash(spec.id);
   let x = opt.x, y = opt.y, scale = opt.scale ?? 1, dir = opt.dir ?? 1;
   let flipFrom = dir, flipAt = -10;
-  let target = null, walkPhase = 0, walking = false;
+  let target = null, walkPhase = 0, walking = false, running = false;
+  let sitting = false, sitAt = -10;
   let gest = null;
+  let item = null;
   let exprState = { name: "neutral", t1: Infinity };
   let speakUntil = -1, speakFrom = -1;
   let now = 0;
@@ -778,10 +880,25 @@ function createChibi(layer, spec, opt, uid, sticker = 7) {
     },
     walkTo(tx) {
       target = tx;
+      running = false;
+      if (sitting) c.sit(false);
       if (Math.abs(tx - x) > 1) c.face(tx > x ? 1 : -1);
+    },
+    runTo(tx) {
+      c.walkTo(tx);
+      running = true;
+    },
+    sit(on) {
+      if (on !== sitting) {
+        sitting = on;
+        sitAt = now;
+      }
     },
     act(name, seconds) {
       gest = { name, t0: now, t1: now + Math.max(0.6, seconds) };
+    },
+    hold(it) {
+      item = que ? it : null;
     },
     face(d) {
       if (d !== dir) {
@@ -801,32 +918,40 @@ function createChibi(layer, spec, opt, uid, sticker = 7) {
       now = t;
       walking = false;
       if (target !== null) {
-        const d = target - x, step = B.speed * scale * dt;
-        if (Math.abs(d) <= step) {
+        const sitK0 = clamp((t - sitAt) / 0.35);
+        const ready = sitting ? false : sitK0 >= 1;
+        const d = target - x, step = B.speed * scale * dt * (running ? 2.3 : 1);
+        if (!ready) {
+        } else if (Math.abs(d) <= step) {
           x = target;
           target = null;
+          running = false;
         } else {
           x += Math.sign(d) * step;
           walking = true;
-          walkPhase += dt * (spec.build === "elder" ? 6 : 9);
+          walkPhase += dt * (spec.build === "elder" ? 6 : 9) * (running ? 1.6 : 1);
         }
       }
       const fk = clamp((t - flipAt) / 0.16);
       const sx = fk >= 1 ? dir : lerp(flipFrom, dir, ease(fk));
       root.setAttribute("transform", `translate(${f(x)} ${f(y)}) scale(${f(scale)})`);
       flip.setAttribute("transform", `scale(${f(Math.abs(sx) < 0.04 ? 0.04 * Math.sign(sx || 1) : sx)} 1)`);
-      const bob = walking ? -Math.abs(Math.sin(walkPhase)) * 10 : Math.sin(t * 2.1 + blinkSeed * 6) * 1.2;
-      const l0 = `translate(0 ${f(walking ? Math.min(0, Math.sin(walkPhase) * 8) : 0)})`;
-      const l1 = `translate(0 ${f(walking ? Math.min(0, -Math.sin(walkPhase) * 8) : 0)})`;
+      const bob = walking ? -Math.abs(Math.sin(walkPhase)) * (running ? 16 : 10) : Math.sin(t * 2.1 + blinkSeed * 6) * 1.2;
+      const sk = ease(clamp((t - sitAt) / 0.35));
+      const sitK = sitting ? sk : 1 - sk;
+      const lsy = f(1 - 0.4 * sitK);
+      const l0 = `translate(0 ${f(walking ? Math.min(0, Math.sin(walkPhase) * 8) : 0)}) scale(1 ${lsy})`;
+      const l1 = `translate(0 ${f(walking ? Math.min(0, -Math.sin(walkPhase) * 8) : 0)}) scale(1 ${lsy})`;
       let w = 0, k = 0, gname = null;
       if (gest && t < gest.t1 + 0.3) {
         gname = gest.name;
         k = t - gest.t0;
         w = walking ? 0 : ease(Math.min((t - gest.t0) / 0.25, (gest.t1 + 0.3 - t) / 0.3));
       } else gest = null;
-      const sw = walking ? Math.sin(walkPhase) * 16 : 0;
+      const sw = walking ? Math.sin(walkPhase) * (running ? 30 : 16) : 0;
       const armGest = gname ? gesturePose(gname, k) : REST;
-      const fp = { u1: lerp(REST.u1, armGest.u1, w), u2: lerp(REST.u2, armGest.u2, w) };
+      const base = item ? { u1: 40, u2: 26 } : REST;
+      const fp = { u1: lerp(base.u1, armGest.u1, w), u2: lerp(base.u2, armGest.u2, w) };
       let hy = stoop, hr = 0, by = 0;
       if (gname === "nod") hy += w * Math.max(0, Math.sin(k * 7)) * 6;
       if (gname === "bow") {
@@ -837,12 +962,21 @@ function createChibi(layer, spec, opt, uid, sticker = 7) {
       hr += talking ? Math.sin(t * 4.3) * 2.2 : Math.sin(t * 0.9 + blinkSeed * 9) * 1.2;
       const ht = `translate(0 ${f(NECK_Y + hy)}) rotate(${f(hr)}) scale(${f(headScale)})`;
       const tr = `rotate(${f(walking ? Math.sin(walkPhase * 2) * 5 : Math.sin(t * 1.7) * 2)} 46 -116)`;
+      const raise = que ? lerp(-RAISE, -14, sitK) : 16 * sitK;
       for (const p of parts) {
-        p.upper.setAttribute("transform", `translate(0 ${f(bob + by)})`);
+        p.upper.setAttribute("transform", `translate(0 ${f(bob + by + raise)})`);
         p.legs[0].setAttribute("transform", l0);
         p.legs[1].setAttribute("transform", l1);
         setPose(p.armFront, fp, sw);
         setPose(p.armBack, HOLD[holds] ?? REST, HOLD[holds] ? 0 : -sw);
+        if (que) {
+          poseQueLegs(p.qLegs, -46 + bob + by + raise, walkPhase, walking, spec.top === "coat" || spec.top === "aodai" || spec.top === "dress" ? 0 : 12, sitK, running);
+          const hf = poseQueArm(p.qFront, fp.u1 + (item ? sw * 0.3 : sw), fp.u2);
+          const hb = HOLD[holds] ?? REST;
+          poseQueArm(p.qBack, hb.u1 + (HOLD[holds] ? 0 : -sw), hb.u2);
+          p.itemG.setAttribute("display", item ? "inline" : "none");
+          if (item) p.itemG.setAttribute("transform", `translate(${f(hf.hand[0])} ${f(hf.hand[1])}) rotate(${f(hf.angle)})`);
+        }
         p.headWrap.setAttribute("transform", ht);
         p.hairBack.setAttribute("transform", ht);
         p.tail?.setAttribute("transform", tr);
@@ -909,6 +1043,21 @@ function createChibiStage(svg, opt) {
     },
     at(t, fn) {
       cues.push({ t, fn, done: false });
+    },
+    shade(opacity = 0.4, colour = "#0a0c14") {
+      const defs = el("defs", {}, back);
+      const rg = el("radialGradient", { id: "cb-vig", cx: 0.5, cy: 0.55, r: 0.75 }, defs);
+      el("stop", { offset: 0.35, "stop-color": "#000", "stop-opacity": 0 }, rg);
+      el("stop", { offset: 1, "stop-color": "#000", "stop-opacity": Math.min(0.85, opacity * 1.9) }, rg);
+      el("rect", { width, height, fill: colour, opacity }, back);
+      el("rect", { width, height, fill: "url(#cb-vig)" }, back);
+    },
+    bench(x, y, scale, w = 170, seat = 60) {
+      const b = el("g", { transform: `translate(${f(x)} ${f(y)}) scale(${f(scale)})` }, back);
+      const top = -seat;
+      for (const sd of [-1, 1]) line(b, `M${sd * (w / 2 - 14)} ${top} L${sd * (w / 2 - 14)} 0`, W * 1.4, OUT);
+      fill(b, `M${-w / 2} ${top - 12} L${w / 2} ${top - 12} L${w / 2} ${top + 4} L${-w / 2} ${top + 4} Z`, "#8a6a4a");
+      line(b, `M${-w / 2 + 6} ${top - 4} L${w / 2 - 6} ${top - 4}`, W * 0.4, "#5e4630");
     },
     render(t) {
       if (!built || t < simT - 1e-6) rebuild();
