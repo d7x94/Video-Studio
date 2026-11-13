@@ -1,0 +1,21 @@
+# Dang nhan vat 3D Quaternius (CC0) len Release rieng (ten tag trong characters.json)
+# moi khi danh muc doi tren main. Khong dung Release "latest" vi workflow dong goi xoa va tao lai no.
+name: Dang nhan vat 3D
+on:
+  push:
+    branches: [main, dan-dien-vien-3d]
+    paths: ['video-studio/assets/sim3d/characters.json', 'tools/publish_characters.sh', '.github/workflows/characters.yml']
+  workflow_dispatch:
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Tai tu Google Drive cua tac gia, kiem tra, dang release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          # Lan dau lap release: danh muc chua co sha256. Bo dong nay sau khi da ghi sha256.
+          BOOTSTRAP: "1"
+        run: bash tools/publish_characters.sh

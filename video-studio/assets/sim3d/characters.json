@@ -2,6 +2,9 @@
   "source": "Quaternius - Ultimate Animated Character Pack (CC0 1.0), https://quaternius.com/packs/ultimatedanimatedcharacter.html",
   "drive_folder_gltf": "1UNNT0MeVX0O04RGgu8aLkKe3fwB9_t-A",
   "license_file_id": "1eooYt7zHAMOPEU6d3QHMzR2p0gk9ZJF8",
+  "license_asset": "LICENSE_Quaternius.txt",
+  "release_tag": "quaternius-characters-v1",
+  "release_url": "https://github.com/d7x94/video-studio/releases/download/{tag}/{asset}",
   "checked": "2026-11-12",
   "characters": {
     "Doctor_Female_Young": {"id": "1qoWTIzACscAsFirhSlTyaPM2D3A0kvwU", "size": 2189649, "vai": "Bac si nu tre, ao blouse"},
