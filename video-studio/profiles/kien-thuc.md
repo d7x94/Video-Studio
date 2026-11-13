@@ -8,6 +8,7 @@
 |---|---|
 | Thời lượng | 75 giây (dao động 45 đến 150) |
 | Giọng | Hải Đăng (nam, Bắc, tự nhiên) hoặc Trúc Ly (nữ, Bắc, tự nhiên) |
+| Nhạc nền | `vui` (chủ đề nghiêm túc: `nhe-nhang`), studio tự sáng tác bằng `nhac_nen.py`; người dùng muốn thì tắt |
 | Tốc độ | 1.0 |
 | Kiểm chứng | **Mức vừa**: số liệu, mốc lịch sử, thông số kỹ thuật, tên tính năng và vị trí menu |
 

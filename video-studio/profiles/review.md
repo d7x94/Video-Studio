@@ -8,6 +8,7 @@
 |---|---|
 | Thời lượng | 60 giây (dao động 45 đến 120) |
 | Giọng | Trúc Ly (nữ, Bắc, tự nhiên) hoặc Adam bựa (nam, Bắc, tự nhiên) cho phong cách vui |
+| Nhạc nền | `vui`, studio tự sáng tác bằng `nhac_nen.py`; người dùng muốn thì tắt |
 | Tốc độ | 1.05 |
 | Kiểm chứng | **Mức vừa**: thông số và giá phải lấy từ nguồn; nhận xét cá nhân thì không |
 
