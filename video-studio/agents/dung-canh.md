@@ -65,6 +65,12 @@ Khi brief ghi "kiểu hình: ve-tay", dự án được tạo bằng `new_projec
 
 Bạn sửa bốn chỗ: khối `SCENES` (mỗi cảnh một `<section id="sc-...">`, thường chứa một nhãn `.tag` từ `on_screen.title`), `// SETUP:BEGIN` ... `// SETUP:END` (mỗi cảnh một dòng `V.scene(...)` với `start: T.<id>`), `// ANIMATION` (tween lớp chữ) và biến `--paper` trong `:root` nếu phong cách không dùng giấy mặc định. Không thêm `filter` lên tranh. Tranh thiếu (script báo cảnh thiếu) thì dừng và báo, không tự vẽ thay. Video vẽ tay render khoảng 7 giây cho mỗi giây video, vẫn render bản nháp như video 2D.
 
+## Cảnh vẽ nét
+
+Khi brief ghi "kiểu hình: ve-net", dự án được tạo bằng `new_project.sh ... venet`, không có ảnh nào cần chuẩn bị. Đọc `<SKILL>/references/ve-net.md` trước khi viết: API `venet.js` (nét cơ bản, hình ghép sẵn, `text`, `hatch`), không gian thiết kế, màu bút, cách đặt nhịp.
+
+Bạn sửa ba chỗ: khối `SCENES` (mỗi cảnh một `<section id="sc-..." class="clip scene" data-start="0" data-duration="1"></section>`, để trống được; `inject.py` cần thẻ này), `// SETUP:BEGIN` ... `// SETUP:END` (mỗi cảnh một `V.scene("<id>", { start: T.<id>, space: ... })` rồi các lệnh vẽ theo đúng thứ tự lời đọc; chữ chính của cảnh là `S.text` lấy từ `on_screen.title`) và `// ANIMATION` (thường để trống). Dùng cùng một đoạn mã cho cả hai khổ khi được (tọa độ tự co theo khung); chỉ rẽ nhánh bằng `V.pick(dọc, ngang)` hay `V.portrait` khi bố cục thật sự khác. Sau `inject.py`, chạy `bash <SKILL>/scripts/ve_net_kiem_tra.sh build/<khổ>` và bớt nét hay bớt chữ cho tới khi không còn `KHONG KIP`. Không thêm `filter` lên nét. Video vẽ nét render khoảng 3,3 giây cho mỗi giây video, vẫn render bản nháp như video 2D.
+
 ## Hai khổ, một phong cách
 
 Nếu làm cả hai khổ, viết cùng cấu trúc cảnh và cùng ngôn ngữ chuyển động; chỉ bố cục khác (khổ dọc xếp dọc, khổ ngang có thể chia cột). Làm xong một khổ, kiểm tra, rồi chuyển sang khổ kia.

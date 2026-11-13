@@ -1,17 +1,18 @@
 #!/usr/bin/env bash
 # Tao mot composition HyperFrames tu template cua skill.
-# Dung:  bash new_project.sh PROJECT_DIR portrait|landscape [3d|lineart|chibi|vetay]
+# Dung:  bash new_project.sh PROJECT_DIR portrait|landscape [3d|lineart|chibi|vetay|venet]
 #   them "3d" de dung canh co nhan vat 3D (Three.js + thu vien sim3d.js)
 #   them "lineart" de dung canh co nhan vat net muc (SVG + thu vien lineart.js, dan nhan vat da khoa)
 #   them "chibi" de dung canh co nhan vat chibi nhin chinh dien (SVG + thu vien chibi.js, cung dan nhan vat)
 #   them "vetay" de dung canh ve tay: tranh hien dan theo vet co, co ban tay cam but (thu vien vetay.js)
+#   them "venet" de dung canh ve net: but ve tung net that (vong tron, tia sang, gach cheo, chu viet ra), khong can anh (thu vien venet.js)
 # Ket qua: PROJECT_DIR/build/<format>/ voi index.html, gsap.min.js, fonts/ san sang.
 set -euo pipefail
 source "${STUDIO_HOME:-$HOME/studio}/studio.env"
 
 PROJECT="$1"; FORMAT="$2"; MODE="${3:-2d}"
 case "$FORMAT" in portrait|landscape) ;; *) echo "FORMAT phai la portrait hoac landscape"; exit 1;; esac
-case "$MODE" in 2d|3d|lineart|chibi|vetay) ;; *) echo "Tham so thu ba chi nhan 3d, lineart, chibi hoac vetay"; exit 1;; esac
+case "$MODE" in 2d|3d|lineart|chibi|vetay|venet) ;; *) echo "Tham so thu ba chi nhan 3d, lineart, chibi, vetay hoac venet"; exit 1;; esac
 
 OUT="$PROJECT/build/$FORMAT"
 # Khong ghi de composition da dung: chay lai lenh nay se xoa het canh agent da viet.
@@ -43,6 +44,9 @@ elif [ "$MODE" = vetay ]; then
   cp "$STUDIO_SKILL/templates/$FORMAT-vetay.html" "$OUT/index.html"
   cp "$STUDIO_SKILL/assets/vetay/vetay.js" "$OUT/"
   mkdir -p "$OUT/img"
+elif [ "$MODE" = venet ]; then
+  cp "$STUDIO_SKILL/templates/$FORMAT-venet.html" "$OUT/index.html"
+  cp "$STUDIO_SKILL/assets/venet/venet.js" "$OUT/"
 else
   cp "$STUDIO_SKILL/templates/$FORMAT.html" "$OUT/index.html"
 fi
