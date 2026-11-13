@@ -26,20 +26,37 @@ export function drawQueArm(parent: Element, s: Spec, side: 1 | -1): QueArm {
   return { side, sleeveO, sleeveI, stick, hand };
 }
 
-/** Dat tu the tay que. u1: mo vai ra ngoai (do), u2: gap khuyu (do). Tra ve vi tri ban tay va huong cang tay. */
-export function poseQueArm(a: QueArm, u1: number, u2: number): { hand: Vec; angle: number } {
-  const S: Vec = [a.side * 40, -116];
-  const r1 = -a.side * u1, r2 = r1 - a.side * u2;
+/** Diem vai, khuyu, ban tay cua tay que theo goc. u1: mo vai ra ngoai (do), u2: gap khuyu (do). */
+export function queArmPoints(side: 1 | -1, u1: number, u2: number): { S: Vec; E: Vec; H: Vec; r2: number } {
+  const S: Vec = [side * 40, -116];
+  const r1 = -side * u1, r2 = r1 - side * u2;
   const v1 = dirOf(r1), v2 = dirOf(r2);
   const E: Vec = [S[0] + ARM_A * v1[0], S[1] + ARM_A * v1[1]];
   const H: Vec = [E[0] + ARM_B * v2[0], E[1] + ARM_B * v2[1]];
+  return { S, E, H, r2 };
+}
+
+/** Ve tay que qua diem khuyu E toi ban tay H (tinh tu goc toa do than). Tra ve vi tri ban tay va huong cang tay. */
+export function drawQueArmAt(a: QueArm, E: Vec, H: Vec): { hand: Vec; angle: number } {
+  const S: Vec = [a.side * 40, -116];
   const C: Vec = [2 * E[0] - (S[0] + H[0]) / 2, 2 * E[1] - (S[1] + H[1]) / 2];
   a.stick.setAttribute('d', `M${P(S)} Q${P(C)} ${P(H)}`);
+  const l1 = Math.hypot(E[0] - S[0], E[1] - S[1]) || 1;
+  const v1: Vec = [(E[0] - S[0]) / l1, (E[1] - S[1]) / l1];
   const sl: Vec = [S[0] + 16 * v1[0], S[1] + 16 * v1[1]];
   const d = `M${P([S[0] + 2 * v1[0], S[1] + 2 * v1[1]])} L${P(sl)}`;
   a.sleeveO.setAttribute('d', d); a.sleeveI.setAttribute('d', d);
   a.hand.setAttribute('transform', `translate(${P(H)})`);
-  return { hand: H, angle: r2 };
+  // huong cang tay (do, 0 = huong xuong, quay theo chieu kim dong ho nhu dirOf)
+  const angle = Math.atan2(-(H[0] - E[0]), H[1] - E[1]) / RAD;
+  return { hand: H, angle };
+}
+
+/** Dat tu the tay que. u1: mo vai ra ngoai (do), u2: gap khuyu (do). Tra ve vi tri ban tay va huong cang tay. */
+export function poseQueArm(a: QueArm, u1: number, u2: number): { hand: Vec; angle: number } {
+  const p = queArmPoints(a.side, u1, u2);
+  drawQueArmAt(a, p.E, p.H);
+  return { hand: p.H, angle: p.r2 };
 }
 
 export interface QueLeg { side: 1 | -1; stubO: SVGPathElement; stubI: SVGPathElement; stick: SVGPathElement; foot: SVGGElement }
@@ -59,29 +76,40 @@ export function drawQueLegs(parent: Element, s: Spec, look: { skin: string }): Q
   return legs;
 }
 
+/** Diem hong, giua (diem dieu khien) va ban chan cua chan que theo nhip buoc. */
+export function queLegPoints(side: 1 | -1, hipY: number, phase: number, walking: boolean, sit = 0, running = false): { Hp: Vec; M: Vec; F: Vec } {
+  const stride = running ? 34 : 24, liftH = running ? 24 : 14;
+  const ph = phase + (side > 0 ? Math.PI : 0);
+  const Hp: Vec = [side * 15, hipY];
+  let F: Vec = [side * 17, -6];
+  let bx = 3;
+  if (walking) {
+    const lift = Math.max(0, Math.cos(ph));
+    F = [side * 15 + stride * Math.sin(ph), -6 - lift * liftH];
+    bx = 4 + lift * 14;
+  }
+  if (sit > 0) {
+    F = [F[0] + (side * 26 - F[0]) * sit, F[1] + (-6 - F[1]) * sit];
+    bx = bx + (side * 20 - bx) * sit;
+  }
+  const M: Vec = [(Hp[0] + F[0]) / 2 + bx, (Hp[1] + F[1]) / 2];
+  return { Hp, M, F };
+}
+
+/** Ve chan que: duong cong tu hong Hp qua diem dieu khien M toi ban chan F. */
+export function drawQueLegAt(L: QueLeg, Hp: Vec, M: Vec, F: Vec, stubLen: number) {
+  L.stick.setAttribute('d', `M${P(Hp)} Q${P(M)} ${P(F)}`);
+  L.foot.setAttribute('transform', `translate(${P([F[0], F[1] + 6])})`);
+  const d = `M${P([Hp[0], Hp[1] - 4])} L${P([Hp[0], Hp[1] + stubLen])}`;
+  L.stubO.setAttribute('d', d); L.stubI.setAttribute('d', d);
+}
+
 /** Dat chan que. hipY: do cao hong (khong gian than), phase: pha buoc (rad), walking: dang di,
  *  sit: 0..1 muc ngoi (dau goi mo ra hai ben), running: buoc dai va nhac chan cao hon. */
 export function poseQueLegs(legs: QueLeg[], hipY: number, phase: number, walking: boolean, stubLen: number, sit = 0, running = false) {
-  const stride = running ? 34 : 24, liftH = running ? 24 : 14;
   for (const L of legs) {
-    const ph = phase + (L.side > 0 ? Math.PI : 0);
-    const Hp: Vec = [L.side * 15, hipY];
-    let F: Vec = [L.side * 17, -6];
-    let bx = 3;
-    if (walking) {
-      const lift = Math.max(0, Math.cos(ph));
-      F = [L.side * 15 + stride * Math.sin(ph), -6 - lift * liftH];
-      bx = 4 + lift * 14;
-    }
-    if (sit > 0) {
-      F = [F[0] + (L.side * 26 - F[0]) * sit, F[1] + (-6 - F[1]) * sit];
-      bx = bx + (L.side * 20 - bx) * sit;
-    }
-    const M: Vec = [(Hp[0] + F[0]) / 2 + bx, (Hp[1] + F[1]) / 2];
-    L.stick.setAttribute('d', `M${P(Hp)} Q${P(M)} ${P(F)}`);
-    L.foot.setAttribute('transform', `translate(${P([F[0], F[1] + 6])})`);
-    const d = `M${P([Hp[0], Hp[1] - 4])} L${P([Hp[0], Hp[1] + stubLen])}`;
-    L.stubO.setAttribute('d', d); L.stubI.setAttribute('d', d);
+    const p = queLegPoints(L.side, hipY, phase, walking, sit, running);
+    drawQueLegAt(L, p.Hp, p.M, p.F, stubLen);
   }
 }
 

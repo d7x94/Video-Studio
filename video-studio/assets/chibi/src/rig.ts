@@ -8,7 +8,8 @@
 // dir = -1 thi lat guong ca nhan vat (do cam tay chuyen sang ben kia).
 import type { Spec, Gesture } from '../../lineart/src/cast/rig.ts';
 import { el, g, fill, line, flat, f, shade, clamp, lerp, ease, hash, setUnder, under, OUT, W } from './svg.ts';
-import { RAISE, drawQueArm, poseQueArm, drawQueLegs, poseQueLegs, drawFlashlight, type QueArm, type QueLeg } from './que.ts';
+import { RAISE, drawQueArm, drawQueLegs, drawFlashlight, queArmPoints, drawQueArmAt, queLegPoints, drawQueLegAt, type QueArm, type QueLeg, type Vec } from './que.ts';
+import { hasClip, clipLength, sampleClip } from './mocap.ts';
 
 export type Expr = 'neutral' | 'happy' | 'wink' | 'deadpan' | 'surprised' | 'worried';
 export type { Gesture };
@@ -50,6 +51,9 @@ export interface Chibi {
   act(gesture: Move, seconds: number): void;
   /** Cam them do vat bang tay truoc (chi kieu que): 'den-pin' co luong sang; null de bo xuong. */
   hold(item: Item | null): void;
+  /** Dien mot clip chuyen dong that (chi kieu que; ma clip xem references/nhan-vat-chibi.md muc Dong tac mocap).
+   *  seconds: thoi gian dien (mac dinh: het clip; clip lap thi bat buoc). Tra ve so giay se dien. Dang di thi tam dung. */
+  play(clip: string, seconds?: number): number;
   /** Quay ve phai (1) hoac trai (-1): lat guong nhanh. */
   face(dir: 1 | -1): void;
   /** Net mat; khong ghi giay thi giu den khi doi. */
@@ -463,6 +467,7 @@ function drawFace(face: SVGGElement, s: Spec, look: Look): Face {
 }
 
 // ---------------- tu the ----------------
+const mix = (a: Vec, b: Vec, k: number): Vec => [a[0] + (b[0] - a[0]) * k, a[1] + (b[1] - a[1]) * k];
 interface Pose { u1: number; u2: number }
 const REST: Pose = { u1: 10, u2: 6 };
 // tay sau khi cam do (u1: mo vai ra ngoai, u2: gap khuyu; do)
@@ -534,6 +539,9 @@ export function createChibi(layer: Element, spec: Spec, opt: ChibiOptions, uid: 
   let sitting = false, sitAt = -10;
   let gest: { name: Move; t0: number; t1: number } | null = null;
   let item: Item | null = null;
+  let mo: { id: string; t0: number; t1: number } | null = null;
+  let moPrev: { id: string; t0: number; t1: number } | null = null;   // clip dang tron ra khi clip moi bat dau
+  const mv: number[] = new Array(20).fill(0), mvPrev: number[] = new Array(20).fill(0);
   let exprState: { name: Expr; t1: number } = { name: 'neutral', t1: Infinity };
   let speakUntil = -1, speakFrom = -1;
   let now = 0;
@@ -559,6 +567,14 @@ export function createChibi(layer: Element, spec: Spec, opt: ChibiOptions, uid: 
     sit(on) { if (on !== sitting) { sitting = on; sitAt = now; } },
     act(name, seconds) { gest = { name, t0: now, t1: now + Math.max(0.6, seconds) }; },
     hold(it) { item = que ? it : null; },
+    play(id, seconds) {
+      if (!que) { console.warn(`[chibi] play('${id}') chi dung voi limbs: 'que'`); return 0; }
+      if (!hasClip(id)) throw new Error(`[chibi] khong co clip mocap '${id}'`);
+      const len = seconds ?? clipLength(id);
+      moPrev = mo && now < mo.t1 + 0.3 ? { ...mo, t1: Math.min(mo.t1, now) } : null;
+      mo = { id, t0: now, t1: now + Math.max(0.6, len) };
+      return len;
+    },
     face(d) { if (d !== dir) { flipFrom = dir; dir = d; flipAt = now; } },
     expr(name, seconds) { exprState = { name, t1: seconds ? now + seconds : Infinity }; },
     say(seconds) { speakFrom = now; speakUntil = now + seconds; },
@@ -602,20 +618,57 @@ export function createChibi(layer: Element, spec: Spec, opt: ChibiOptions, uid: 
       if (gname === 'bow') { hy += w * 12; by = w * 6; }
       const talking = t >= speakFrom && t < speakUntil;
       hr += talking ? Math.sin(t * 4.3) * 2.2 : Math.sin(t * 0.9 + blinkSeed * 9) * 1.2;
-      const ht = `translate(0 ${f(NECK_Y + hy)}) rotate(${f(hr)}) scale(${f(headScale)})`;
       const tr = `rotate(${f(walking ? Math.sin(walkPhase * 2) * 5 : Math.sin(t * 1.7) * 2)} 46 -116)`;
       // ngoi: que ha hong tu -92 xuong -60; chibi ha than 16 va ep chan
       const raise = que ? lerp(-RAISE, -14, sitK) : 16 * sitK;
+      // clip mocap: tron vao 0,3 giay dau, tron ra 0,3 giay cuoi; dang di thi tat
+      const weightOf = (m: { t0: number; t1: number }) => ease(clamp(Math.min((t - m.t0) / 0.3, (m.t1 + 0.3 - t) / 0.3)));
+      let wm = 0;
+      if (mo && t < mo.t1 + 0.3) {
+        wm = walking ? 0 : weightOf(mo);
+        sampleClip(mo.id, Math.min(t, mo.t1) - mo.t0, mv);
+      } else mo = null;
+      // clip truoc chua tron ra het: tron cheo sang clip moi thay vi giat ve tu the nghi
+      if (moPrev && t < moPrev.t1 + 0.3 && !walking) {
+        const wp = weightOf(moPrev);
+        sampleClip(moPrev.id, Math.min(t, moPrev.t1) - moPrev.t0, mvPrev);
+        const a = wp * (1 - wm), W = a + wm;
+        if (W > 0) for (let q = 0; q < 20; q++) mv[q] = (mvPrev[q] * a + (mo ? mv[q] * wm : 0)) / W;
+        wm = W;
+      } else moPrev = null;
+      const mdx = mv[16] * wm, mdy = mv[17] * wm, mtilt = mv[18] / 10 * wm;
+      if (wm > 0) hy += clamp(mv[19] / 60) * 14 * wm;
+      const ht = `translate(0 ${f(NECK_Y + hy)}) rotate(${f(hr)}) scale(${f(headScale)})`;
+      const ut = `translate(${f(mdx)} ${f(bob + by + raise + mdy)})` + (wm > 0 ? ` rotate(${f(mtilt)} 0 -46)` : '');
       for (const p of parts) {
-        p.upper.setAttribute('transform', `translate(0 ${f(bob + by + raise)})`);
+        p.upper.setAttribute('transform', wm > 0 || que ? ut : `translate(0 ${f(bob + by + raise)})`);
         p.legs[0].setAttribute('transform', l0); p.legs[1].setAttribute('transform', l1);
         setPose(p.armFront, fp, sw);
         setPose(p.armBack, HOLD[holds] ?? REST, HOLD[holds] ? 0 : -sw);
         if (que) {
-          poseQueLegs(p.qLegs, -46 + bob + by + raise, walkPhase, walking, spec.top === 'coat' || spec.top === 'aodai' || spec.top === 'dress' ? 0 : 12, sitK, running);
-          const hf = poseQueArm(p.qFront!, fp.u1 + (item ? sw * 0.3 : sw), fp.u2);
+          const stub = spec.top === 'coat' || spec.top === 'aodai' || spec.top === 'dress' ? 0 : 12;
+          for (const L of p.qLegs) {
+            const q = queLegPoints(L.side, -46 + bob + by + raise, walkPhase, walking, sitK, running);
+            q.Hp[0] += mdx; q.Hp[1] += mdy; q.M[0] += mdx; q.F[0] += mdx;
+            if (wm > 0) {
+              const o = L.side > 0 ? 12 : 8;
+              const K: Vec = [q.Hp[0] + mv[o], q.Hp[1] + mv[o + 1]], F: Vec = [q.Hp[0] + mv[o + 2], q.Hp[1] + mv[o + 3]];
+              const M: Vec = [2 * K[0] - (q.Hp[0] + F[0]) / 2, 2 * K[1] - (q.Hp[1] + F[1]) / 2];
+              q.M = mix(q.M, M, wm); q.F = mix(q.F, F, wm);
+            }
+            drawQueLegAt(L, q.Hp, q.M, q.F, stub);
+          }
           const hb = HOLD[holds] ?? REST;
-          poseQueArm(p.qBack!, hb.u1 + (HOLD[holds] ? 0 : -sw), hb.u2);
+          const armAt = (a: QueArm, u1: number, u2: number, o: number) => {
+            const q = queArmPoints(a.side, u1, u2);
+            if (wm > 0) {
+              q.E = mix(q.E, [q.S[0] + mv[o], q.S[1] + mv[o + 1]], wm);
+              q.H = mix(q.H, [q.S[0] + mv[o + 2], q.S[1] + mv[o + 3]], wm);
+            }
+            return drawQueArmAt(a, q.E, q.H);
+          };
+          const hf = armAt(p.qFront!, fp.u1 + (item ? sw * 0.3 : sw), fp.u2, 4);
+          armAt(p.qBack!, hb.u1 + (HOLD[holds] ? 0 : -sw), hb.u2, 0);
           p.itemG.setAttribute('display', item ? 'inline' : 'none');
           if (item) p.itemG.setAttribute('transform', `translate(${f(hf.hand[0])} ${f(hf.hand[1])}) rotate(${f(hf.angle)})`);
         }
