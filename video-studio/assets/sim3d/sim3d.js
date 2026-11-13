@@ -125,11 +125,34 @@ export function buildRoom(stage, name) {
 export const SKIN = { sang: 0xf1c27d, vua: 0xe0ac69, ngam: 0xc68642, nau: 0x8d5524 };
 const loader = new GLTFLoader();
 
+/** Hop bao cua cac dinh KHONG thuoc vat lieu bi an (dung tu the nghi, chua gan xuong). */
+export function visibleBox(root, hide) {
+  root.updateMatrixWorld(true);
+  const box = new THREE.Box3(), v = new THREE.Vector3();
+  root.traverse(o => {
+    if (!o.isMesh) return;
+    const pos = o.geometry.attributes.position, idx = o.geometry.index;
+    const mats = Array.isArray(o.material) ? o.material : [o.material];
+    const groups = o.geometry.groups.length ? o.geometry.groups
+      : [{ start: 0, count: idx ? idx.count : pos.count, materialIndex: 0 }];
+    for (const gr of groups) {
+      if (hide.includes(mats[gr.materialIndex].name)) continue;
+      for (let i = gr.start; i < gr.start + gr.count; i++) {
+        v.fromBufferAttribute(pos, idx ? idx.getX(i) : i).applyMatrix4(o.matrixWorld);
+        box.expandByPoint(v);
+      }
+    }
+  });
+  return box;
+}
+
 /**
  * Nap nhan vat, doi mau theo ten vat lieu, chuan hoa chieu cao.
  * colors: { TenVatLieu: 0xRRGGBB } (vd { Shirt: 0x2a9d8f }); "Skin" va "Face" (mat) co tham so rieng.
+ * hide: ["Hat"] an cac vat lieu theo ten (vd bo mu chop cao cua OldClassy_*); chieu cao chuan hoa
+ * chi tinh phan con hien, nen `height` la chieu cao thuc cua nguoi sau khi an.
  */
-export async function loadChar(stage, file, { height = 1.65, skin = SKIN.sang, eyes = 0x2b1d14, colors = {} } = {}) {
+export async function loadChar(stage, file, { height = 1.65, skin = SKIN.sang, eyes = 0x2b1d14, colors = {}, hide = [] } = {}) {
   const g = await loader.loadAsync("assets/" + file);
   const root = g.scene;
   const materials = new Set();
@@ -142,10 +165,14 @@ export async function loadChar(stage, file, { height = 1.65, skin = SKIN.sang, e
       if (m.name === "Skin") m.color.setHex(skin);
       if (m.name === "Face") m.color.setHex(eyes);
       if (colors[m.name] !== undefined) m.color.setHex(colors[m.name]);
+      if (hide.includes(m.name)) m.visible = false;
     });
   });
   const bb = new THREE.Box3().setFromObject(root);
-  root.scale.setScalar(height / (bb.max.y - bb.min.y));
+  let h = bb.max.y - bb.min.y;
+  // Phan bi an: do tren dinh tho roi quy ve cung thuoc do voi setFromObject (hai phep do lech nhau vai %)
+  if (hide.length) { const hv = b => b.max.y - b.min.y; h *= hv(visibleBox(root, hide)) / hv(visibleBox(root, [])); }
+  root.scale.setScalar(height / h);
   const mixer = new THREE.AnimationMixer(root);
   const act = {};
   for (const c of g.animations) { const a = mixer.clipAction(c); a.play(); a.setEffectiveWeight(0); act[c.name] = a; }

@@ -41,11 +41,11 @@ elif curl -s -o /dev/null -m 15 -w "%{http_code}" https://huggingface.co | grep 
 else
   warn "Khong tai duoc mo hinh giong doc (GitHub Release va huggingface.co deu khong duoc)"
 fi
-# Nhan vat 3D (tuy chon) tai tu Google Drive cua tac gia
+# Nhan vat 3D (tuy chon): tai tu GitHub Release (cung ten mien github.com voi mo hinh giong); Drive cua tac gia chi du phong
 if curl -s -o /dev/null -m 15 -w "%{http_code}" https://drive.usercontent.google.com | grep -q "^[2345]"; then
-  ok "Truy cap duoc Google Drive (tai nhan vat 3D)"
+  ok "Truy cap duoc Google Drive (du phong tai nhan vat 3D)"
 else
-  warn "Khong truy cap duoc drive.usercontent.google.com: chua tai duoc nhan vat 3D (video 2D van lam binh thuong)"
+  warn "Khong truy cap duoc drive.usercontent.google.com: khong co nguon du phong cho nhan vat 3D (nguon chinh la github.com; video 2D van lam binh thuong)"
 fi
 
 if [ "${1:-}" = "--check" ]; then

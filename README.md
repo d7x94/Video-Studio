@@ -43,5 +43,5 @@ tools/
 - Nhân vật chibi: đồ họa tự vẽ bằng code trong repo này, không dùng thư viện hay hình của bên thứ ba.
 - Hiệu ứng vẽ tay và bàn tay cầm bút: đồ họa tự vẽ bằng code trong repo này. Tranh của từng video do người dùng tạo, không lưu trong repo.
 - Nét vẽ, chữ viết ra và bàn tay cầm bút của kiểu `ve-net`: đồ họa tự vẽ bằng code trong repo này, không dùng thư viện hay hình của bên thứ ba.
-- Nhân vật 3D: Quaternius Ultimate Animated Character Pack, CC0 (tải khi dựng môi trường, không lưu trong repo).
+- Nhân vật 3D: [Quaternius Ultimate Animated Character Pack](https://quaternius.com/packs/ultimatedanimatedcharacter.html), CC0 1.0 (file giấy phép trong gói ghi CC0 1.0 Universal). Bản chép nguyên vẹn nằm ở Release `quaternius-characters-v1` (không lưu trong git), danh mục và sha256 ở `video-studio/assets/sim3d/characters.json`, cấu hình dàn diễn viên ở `video-studio/assets/sim3d/cast.json`.
 - Giọng đọc: [pnnbao-ump/VieNeu-TTS-v3-Turbo](https://huggingface.co/pnnbao-ump/VieNeu-TTS-v3-Turbo) (dự án gốc [pnnbao97/VieNeu-TTS](https://github.com/pnnbao97/VieNeu-TTS)) và [OpenMOSS-Team/MOSS-Audio-Tokenizer-Nano-ONNX](https://huggingface.co/OpenMOSS-Team/MOSS-Audio-Tokenizer-Nano-ONNX), Apache-2.0. Bản chép nguyên vẹn nằm ở Release `vieneu-v3-turbo-61b85e3` (không lưu trong git), danh mục và sha256 ở `video-studio/assets/voice-models.json`.
