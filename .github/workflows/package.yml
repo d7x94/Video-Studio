@@ -1,15 +1,21 @@
-# Moi lan day thay doi skill len main: kiem tra lineart.js va chibi.js khop nguon, dong goi zip,
-# dang len Release "latest" de tai ve va upload vao claude.ai.
+# Pull request: kiem tra script, lineart.js/chibi.js khop nguon, thu dong goi (khong dang gi).
+# Push len main: kiem tra nhu tren, roi dong goi zip va dang len Release "latest"
+# de tai ve va upload vao claude.ai.
 name: Dong goi skill
 on:
+  pull_request:
+    paths: ['video-studio/**', 'tools/**', '.github/workflows/package.yml']
   push:
     branches: [main]
     paths: ['video-studio/**', 'tools/**', '.github/workflows/package.yml']
   workflow_dispatch:
+concurrency:
+  group: package-skill-${{ github.ref }}
+  cancel-in-progress: false
 permissions:
-  contents: write
+  contents: read
 jobs:
-  package:
+  check:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -20,13 +26,33 @@ jobs:
         run: |
           for f in video-studio/scripts/*.sh tools/*.sh; do bash -n "$f"; done
           python3 -m py_compile video-studio/scripts/*.py
-      - name: Dong goi
-        run: bash tools/package_skill.sh dist/video-studio.zip
+      - name: Thu dong goi va kiem noi dung zip
+        run: |
+          bash tools/package_skill.sh dist/video-studio.zip
+          unzip -Z1 dist/video-studio.zip | grep -v '^video-studio/' && { echo "Zip co file ngoai thu muc skill"; exit 1; } || true
+      - uses: actions/upload-artifact@v4
+        with:
+          name: video-studio-zip
+          path: dist/video-studio.zip
+          retention-days: 7
+  release:
+    needs: check
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: video-studio-zip
+          path: dist
       - name: Dang Release latest
         env:
           GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
         run: |
           gh release delete latest -y --cleanup-tag || true
           gh release create latest dist/video-studio.zip \
+            --target "$GITHUB_SHA" \
             --title "video-studio (ban moi nhat)" \
             --notes "Tu dong dong goi tu commit ${GITHUB_SHA::7}. Tai video-studio.zip, vao claude.ai > Settings > Skills de tai len thay ban cu."

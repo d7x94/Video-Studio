@@ -30,6 +30,7 @@ tools/
   build_chibi.sh       build lại chibi.js từ nguồn
   package_skill.sh     đóng gói zip để tải lên claude.ai
   publish_voice_models.sh  đăng mô hình giọng đọc lên Release (Actions tự chạy)
+  publish_characters.sh    đăng nhân vật 3D lên Release (Actions tự chạy)
 ```
 
 ## Cài và cập nhật skill
