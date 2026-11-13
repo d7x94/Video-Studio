@@ -1,6 +1,6 @@
 # Video-Studio
 
-Mã nguồn skill **video-studio** cho Claude: studio sản xuất video tiếng Việt nhiều agent (biên kịch, kiểm chứng, lồng tiếng VieNeu, dựng hình HyperFrames, QA, metadata), giao gói MP4 16:9 và 9:16, phụ đề .srt, metadata, thumbnail để tự đăng YouTube và TikTok.
+Mã nguồn skill **video-studio** cho Claude: studio sản xuất video tiếng Việt nhiều agent (ý tưởng, biên kịch, kiểm chứng, lồng tiếng VieNeu, dựng hình HyperFrames, QA, metadata), giao gói MP4 16:9 và 9:16, phụ đề .srt, metadata, thumbnail để tự đăng YouTube và TikTok.
 
 Sáu kiểu hình:
 - `2d`: chữ và biểu tượng (mặc định)

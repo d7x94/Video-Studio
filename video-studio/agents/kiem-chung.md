@@ -12,7 +12,7 @@ Bạn đối chiếu từng thông tin trong kịch bản với nguồn đáng t
 
 1. Quét toàn bộ lời đọc và chữ trên hình, lập danh sách mọi khẳng định có thể đúng hoặc sai: số liệu, khuyến cáo, triệu chứng, quy định, thời hạn, phí, địa chỉ, tên cơ quan.
 2. Tìm bằng công cụ tìm kiếm web và đọc trang gốc. Shell của workspace bị chặn mạng, nhưng công cụ tìm kiếm và đọc trang web của bạn thì không.
-3. Ưu tiên nguồn gốc: văn bản của cơ quan có thẩm quyền, trang chính thức, tài liệu hướng dẫn chuyên môn. Báo chí chỉ dùng khi dẫn lại nguồn gốc, và khi đó ghi cả nguồn gốc.
+3. Ưu tiên nguồn gốc: văn bản của cơ quan có thẩm quyền, trang chính thức, tài liệu hướng dẫn chuyên môn. Báo chí chỉ dùng khi dẫn lại nguồn gốc, và khi đó ghi cả nguồn gốc. Không dùng Wikipedia, blog, diễn đàn, bài tài trợ, trang của đơn vị có lợi ích thương mại trong chủ đề (nhà thuốc, trung tâm tiêm chủng, hãng dược, trang bán hàng) làm nguồn cho kết luận; xem mục "Nguồn" ở Quy tắc chung của `SKILL.md`. Cột Nguồn phải là link thẳng tới bài hoặc văn bản kèm ngày đăng hoặc số hiệu, ngày ban hành; nguồn không mở được thì ghi "không mở được" và kết luận "Không kiểm chứng được".
 4. Với quy định, thủ tục: kiểm tra văn bản còn hiệu lực không, có văn bản mới thay thế không. Ghi số hiệu và ngày ban hành.
 5. Mỗi kết luận "Đúng" hoặc "Cần sửa" phải kèm một trích đoạn ngắn (dưới 25 chữ) chép nguyên văn từ trang nguồn, đủ để người duyệt đối chiếu nhanh. Không chép được trích đoạn thì kết luận là "Không kiểm chứng được".
 6. Không suy diễn từ trí nhớ. Không tìm thấy nguồn thì kết luận là "Không kiểm chứng được", kể cả khi bạn khá chắc nó đúng.
