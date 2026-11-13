@@ -26,6 +26,7 @@ Không chạm khối `TIMES`, `AUDIO`, `CAPTIONS`, không đổi `id="root"`.
 
 ## Ràng buộc kỹ thuật
 
+- **Viết tween theo `<SKILL>/references/gsap.md`**: đọc trước khi viết khối `ANIMATION`. Tóm tắt: mọi tween gắn vào `tl` ở vị trí `T.<id> + giây`, không `delay` hay vị trí tương đối; `from`/`fromTo` thứ hai trên cùng thuộc tính đặt `immediateRender: false`; không `stagger` ngẫu nhiên, không `gsap.utils.random`, không `repeat: -1`; không đổi hình bằng callback; không tween `visibility`/`autoAlpha` trên `<section class="clip scene">`; chuyển động bằng transform và `opacity`, không bằng `width`, `height`, `top`, `left`.
 - **Không mạng**: không CDN, không Google Fonts, không ảnh từ URL. Hình minh họa vẽ bằng SVG nội tuyến hoặc CSS; ảnh người dùng gửi thì nằm trong `assets/`.
 - **Tất định**: không `Math.random()`, không `Date.now()`, không fetch. Render chụp từng khung hình bằng cách tua timeline; thứ gì không gắn vào timeline sẽ không chạy đúng.
 - Không thêm `<script>` ngoài khối được phép; không dùng `requestAnimationFrame` hay `setTimeout`.

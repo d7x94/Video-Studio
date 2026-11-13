@@ -42,6 +42,7 @@ tools/
 ## Ghi công
 
 - Thư viện nét vẽ line-art: [JDhruv14/line-art-animation](https://github.com/JDhruv14/line-art-animation), MIT (`video-studio/assets/lineart/LICENSE-line-art-animation.txt`).
+- Quy tắc viết tween GSAP (`video-studio/references/gsap.md`): rút và chuyển thể từ [greensock/gsap-skills](https://github.com/greensock/gsap-skills) (commit `aed9cfd`), MIT, Copyright (c) 2026 GreenSock (`video-studio/references/LICENSE-gsap-skills.txt`). Chỉ là tài liệu hướng dẫn, không chép mã vào skill.
 - Nhân vật chibi: đồ họa tự vẽ bằng code trong repo này, không dùng thư viện hay hình của bên thứ ba.
 - Nhạc nền (`scripts/nhac_nen.py`): studio tự sáng tác bằng code (tổng hợp âm thanh bằng numpy), không dùng nhạc, mẫu âm thanh hay thư viện nhạc bên ngoài.
 - Động tác mocap của chibi tay chân que (`play`): chuyển động từ [CMU Graphics Lab Motion Capture Database](http://mocap.cs.cmu.edu), bản BVH của Bruce Hahne chép tại [una-dinosauria/cmu-mocap](https://github.com/una-dinosauria/cmu-mocap) (ghim commit, kích thước và sha256 từng file trong `tools/mocap/catalog.json`). Điều khoản CMU: dùng tự do cho nghiên cứu và sản phẩm thương mại, không được bán lại dữ liệu kể cả ở dạng đã chuyển đổi. "The data used in this project was obtained from mocap.cs.cmu.edu. The database was created with funding from NSF EIA-0196217." Repo chỉ lưu clip 2D đã chuyển (`assets/chibi/src/mocap-clips.ts`), không lưu file BVH.
