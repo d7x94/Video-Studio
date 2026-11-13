@@ -59,6 +59,12 @@ Khi brief ghi "kiểu hình: chibi", dự án được tạo bằng `new_project
 
 Bạn sửa bốn chỗ như line-art: khối `SCENES`, `// SETUP:BEGIN` ... `// SETUP:END` (nằm trong `C.setup(...)`: nhân vật, hẹn giờ đi lại, cử chỉ, biểu cảm, nhép miệng bằng `C.at`), `// DIRECTION` (thường để trống) và `// ANIMATION`. Mỗi cảnh có thoại: gọi `say(visual_duration)` cho đúng người nói của cảnh đó (theo `casting.json` và `voice` của cảnh), người nghe đổi `expr` hoặc `nod`. Không thêm `filter` SVG hay CSS lên nhân vật (render chậm gấp nhiều lần). Brief chọn tay chân que: thêm `limbs: "que"` cho mọi nhân vật, thường tắt viền sticker (`sticker: 0`); cảnh tối dùng `C.shade`, ghế dùng `C.bench`, đèn pin dùng `hold("den-pin")`, tất cả theo tài liệu tham khảo. Video chibi render khoảng 4,5 giây cho mỗi giây video, nên được render bản nháp như video 2D.
 
+## Cảnh vẽ tay
+
+Khi brief ghi "kiểu hình: ve-tay", dự án được tạo bằng `new_project.sh ... vetay` và tranh đã nằm trong `build/<khổ>/img/` (`<id>.jpg`, `<id>-sketch.jpg`, do `ve_tay_anh.py` làm). Đọc `<SKILL>/references/ve-tay.md` trước khi viết: API `vetay.js`, lớp chữ `.tag`, `.big`, `.source`, màu giấy theo phong cách.
+
+Bạn sửa bốn chỗ: khối `SCENES` (mỗi cảnh một `<section id="sc-...">`, thường chứa một nhãn `.tag` từ `on_screen.title`), `// SETUP:BEGIN` ... `// SETUP:END` (mỗi cảnh một dòng `V.scene(...)` với `start: T.<id>`), `// ANIMATION` (tween lớp chữ) và biến `--paper` trong `:root` nếu phong cách không dùng giấy mặc định. Không thêm `filter` lên tranh. Tranh thiếu (script báo cảnh thiếu) thì dừng và báo, không tự vẽ thay. Video vẽ tay render khoảng 7 giây cho mỗi giây video, vẫn render bản nháp như video 2D.
+
 ## Hai khổ, một phong cách
 
 Nếu làm cả hai khổ, viết cùng cấu trúc cảnh và cùng ngôn ngữ chuyển động; chỉ bố cục khác (khổ dọc xếp dọc, khổ ngang có thể chia cột). Làm xong một khổ, kiểm tra, rồi chuyển sang khổ kia.

@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="vi" data-resolution="landscape">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <!-- Tat ca tai nguyen phai nam cuc bo: CDN va Google Fonts bi chan trong workspace -->
+    <link rel="stylesheet" href="fonts/400.css" />
+    <link rel="stylesheet" href="fonts/600.css" />
+    <link rel="stylesheet" href="fonts/800.css" />
+    <script src="gsap.min.js"></script>
+    <style>
+      /* Mau giay va muc: agent dung canh doi theo phong cach tranh (xem references/ve-tay.md) */
+      :root { --paper: #efe5d2; --paper-edge: #d9c9ab; --ink: #3b2620; --accent: #9c3b25; --font: "Be Vietnam Pro", sans-serif; }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1920px; height: 1080px; overflow: hidden; background: var(--paper); }
+      #root { position: relative; width: 100%; height: 100%; font-family: var(--font); color: var(--ink); }
+      .clip { position: absolute; inset: 0; }
+      /* Giay: mau phang va bong toi nhe o mep (gradient CSS, khong dung filter de render nhanh) */
+      #paper { background: radial-gradient(ellipse at 50% 45%, var(--paper) 55%, var(--paper-edge) 130%); }
+      #stage svg { width: 1920px; height: 1080px; display: block; }
+
+      .scene { pointer-events: none; z-index: 10; }
+      /* Nhan moc thoi gian, dia danh: manh giay dan goc tren trai */
+      .tag { position: absolute; left: 70px; top: 60px; background: var(--paper); color: var(--ink);
+             font-weight: 800; font-size: 46px; line-height: 1.15; padding: 14px 28px 16px 28px; border: 4px solid var(--ink);
+             border-radius: 6px; box-shadow: 8px 8px 0 rgba(59, 38, 32, 0.25); max-width: 900px; }
+      .tag small { display: block; font-weight: 600; font-size: 0.62em; color: var(--accent); letter-spacing: 0.04em; text-transform: uppercase; margin-bottom: 4px; }
+      /* Tieu de lon (canh mo dau, ket): chu muc dam tren giay */
+      .big { position: absolute; left: 0; right: 0; top: 380px; text-align: center; font-weight: 800; font-size: 96px; line-height: 1.1;
+             color: #fff; -webkit-text-stroke: 14px var(--ink); paint-order: stroke fill; padding: 0 80px; text-wrap: balance; }
+      .source { position: absolute; right: 40px; bottom: 20px; font-size: 24px; color: var(--ink); opacity: 0.85;
+                background: rgba(239, 229, 210, 0.85); padding: 4px 12px; border-radius: 6px; }
+
+      /* Phu de: chu trang vien muc, de len tranh */
+      .cap { display: flex; align-items: flex-end; justify-content: center; padding: 0 200px 60px 200px; z-index: 50; pointer-events: none; }
+      .cap span { font-weight: 800; font-size: 50px; line-height: 1.22; max-width: 1500px; text-align: center; text-wrap: balance; color: #fff;
+                  -webkit-text-stroke: 10px var(--ink); paint-order: stroke fill; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="10" data-width="1920" data-height="1080">
+      <div id="paper" class="clip"></div>
+      <!-- data-span="full": inject.py dat thoi luong bang ca video -->
+      <div id="stage" class="clip" data-start="0" data-duration="10" data-span="full"><svg id="v" xmlns="http://www.w3.org/2000/svg" width="1920" height="1080"></svg></div>
+
+      <!-- SCENES:BEGIN -->
+      <!-- Moi canh mot lop chu (co the de trong, nhung phai co the section):
+           <section id="sc-s01" class="clip scene" data-start="0" data-duration="1"><div class="tag"><small>1789</small>Ngoc Hoi</div></section> -->
+      <!-- SCENES:END -->
+
+      <!-- AUDIO:BEGIN -->
+      <!-- AUDIO:END -->
+
+      <!-- CAPTIONS:BEGIN -->
+      <!-- CAPTIONS:END -->
+    </div>
+    <script type="module">
+      import * as VT from "./vetay.js";
+      const DUR = Number(document.getElementById("root").dataset.duration);
+      // TIMES:BEGIN
+      const T = {};
+      // TIMES:END
+      const V = VT.createStage(document.getElementById("v"), { width: 1920, height: 1080, duration: DUR });
+
+      // SETUP:BEGIN
+      // Agent dung canh: moi canh mot buc tranh (anh da chuan bi bang scripts/ve_tay_anh.py vao img/). Vd:
+      // V.scene("s01", { start: T.s01, color: "img/s01.jpg", sketch: "img/s01-sketch.jpg" });
+      // SETUP:END
+
+      const tl = gsap.timeline({ paused: true });
+      // ANIMATION:BEGIN
+      // Tween cho lop chu, moc theo T.<id>, vd:
+      // tl.from("#sc-s01 .tag", { y: -40, opacity: 0, duration: 0.5, ease: "back.out(2)" }, T.s01 + 0.6);
+      // ANIMATION:END
+      const state = { t: 0 };
+      tl.to(state, { t: DUR, duration: DUR, ease: "none", onUpdate: () => V.render(state.t) }, 0);
+      V.render(0);
+      window.__timelines = window.__timelines || {};
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>
