@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="vi" data-resolution="portrait">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <!-- Tat ca tai nguyen phai nam cuc bo: CDN va Google Fonts bi chan trong workspace -->
+    <link rel="stylesheet" href="fonts/400.css" />
+    <link rel="stylesheet" href="fonts/600.css" />
+    <link rel="stylesheet" href="fonts/800.css" />
+    <script src="gsap.min.js"></script>
+    <style>
+      :root { --ink: #3b2620; --font: "Be Vietnam Pro", sans-serif; }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1080px; height: 1920px; overflow: hidden; background: #d9e6ee; }
+      #root { position: relative; width: 100%; height: 100%; font-family: var(--font); color: var(--ink); }
+      .clip { position: absolute; inset: 0; }
+      /* Nen: anh nguoi dung tu chup da lam mo san (bg.jpg, xem references/nhan-vat-chibi.md), khong co thi dung nen ve */
+      #bg img { width: 100%; height: 100%; object-fit: cover; display: block; }
+      #bg svg { width: 100%; height: 100%; display: block; }
+      #stage svg { width: 1080px; height: 1920px; display: block; }
+
+      .scene { display: flex; flex-direction: column; align-items: center; padding: 200px 70px 0 70px; z-index: 10; pointer-events: none; }
+      .scene .title { font-weight: 800; font-size: 74px; line-height: 1.15; text-align: center; color: #fff; max-width: 940px; text-wrap: balance;
+                      -webkit-text-stroke: 14px #1b1b1b; paint-order: stroke fill; }
+      /* Phu de kieu sticker: chu trang dam, vien den day, de len than nhan vat; chua 380 px duoi cho giao dien TikTok */
+      .cap { display: flex; align-items: flex-end; justify-content: center; padding: 0 60px 380px 60px; z-index: 50; pointer-events: none; }
+      .cap span { font-weight: 800; font-size: 66px; line-height: 1.2; max-width: 960px; text-align: center; text-wrap: balance; color: #fff;
+                  -webkit-text-stroke: 12px #111; paint-order: stroke fill; letter-spacing: -0.5px; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="10" data-width="1080" data-height="1920">
+      <div id="bg" class="clip">
+          <!-- BG:BEGIN -->
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 1260" preserveAspectRatio="xMidYMid slice">
+            <defs><filter id="bgblur" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation="22" /></filter>
+              <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d9e6ee" /><stop offset="1" stop-color="#eef1e6" /></linearGradient></defs>
+            <rect width="1080" height="1260" fill="url(#sky)" />
+            <g filter="url(#bgblur)">
+              <rect x="-40" y="380" width="1160" height="360" fill="#e9d9c4" />
+              <rect x="80" y="430" width="200" height="140" fill="#c9b49a" /><rect x="420" y="430" width="200" height="140" fill="#c9b49a" /><rect x="760" y="430" width="200" height="140" fill="#c9b49a" />
+              <rect x="-40" y="320" width="1160" height="70" fill="#d07f5a" />
+              <ellipse cx="160" cy="250" rx="300" ry="230" fill="#8fae6a" /><ellipse cx="760" cy="200" rx="380" ry="240" fill="#a3bb78" />
+              <ellipse cx="1040" cy="420" rx="200" ry="190" fill="#7d9c5c" /><rect x="600" y="300" width="26" height="520" fill="#5d4a3a" />
+              <rect x="-40" y="760" width="1160" height="520" fill="#a8b98a" /><path d="M300 1260 Q520 900 760 760 L860 760 Q700 1000 760 1260 Z" fill="#d8ccb4" />
+              <rect x="380" y="640" width="320" height="150" fill="#5f8fb0" opacity="0.7" />
+            </g>
+          </svg>
+          <!-- BG:END -->
+      </div>
+      <!-- data-span="full": inject.py dat thoi luong bang ca video -->
+      <div id="stage" class="clip" data-start="0" data-duration="10" data-span="full"><svg id="c" xmlns="http://www.w3.org/2000/svg" width="1080" height="1920"></svg></div>
+
+      <!-- SCENES:BEGIN -->
+      <!-- Moi canh mot lop chu (co the de trong):
+           <section id="sc-s01" class="clip scene" data-start="0" data-duration="1"><div class="title">...</div></section> -->
+      <!-- SCENES:END -->
+
+      <!-- AUDIO:BEGIN -->
+      <!-- AUDIO:END -->
+
+      <!-- CAPTIONS:BEGIN -->
+      <!-- CAPTIONS:END -->
+    </div>
+    <script src="speech.js"></script>
+    <script type="module">
+      import * as CB from "./chibi.js";
+      const DUR = Number(document.getElementById("root").dataset.duration);
+      // TIMES:BEGIN
+      const T = {};
+      // TIMES:END
+      const C = CB.createChibiStage(document.getElementById("c"), { width: 1080, height: 1920 });
+
+      C.setup((C) => {
+        // SETUP:BEGIN
+        // Agent dung canh: dat nhan vat tu dan da khoa, hen gio net mat, loi noi, cu chi. Vd:
+        // const thu = C.add("can-bo-thu", { x: 300, y: 1980, scale: 3, dir: 1 });
+        // C.at(T.s01, () => { thu.say(2.4); thu.act("present", 2.4); });
+        // SETUP:END
+      });
+
+      function render(t) {
+        // DIRECTION:BEGIN
+        // DIRECTION:END
+        C.render(t);
+      }
+
+      const tl = gsap.timeline({ paused: true });
+      // ANIMATION:BEGIN
+      // ANIMATION:END
+      const state = { t: 0 };
+      tl.to(state, { t: DUR, duration: DUR, ease: "none", onUpdate: () => render(state.t) }, 0);
+      render(0);
+      window.__timelines = window.__timelines || {};
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>
