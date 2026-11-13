@@ -202,9 +202,13 @@ def main():
     portrait = 'data-resolution="portrait"' in src
 
     # Dong bo khung thoi gian cua cac canh
+    # Bo qua the nam trong chu thich HTML: template co dong vi du `<section id="sc-s01" ...>`
+    # trong chu thich, khong duoc bat nham va khong duoc ghi de len do.
     for sc in timeline["scenes"]:
         pat = re.compile(rf'<section\b[^>]*\bid="sc-{re.escape(sc["id"])}"[^>]*>')
-        m = pat.search(src)
+        comments = [mm.span() for mm in re.finditer(r"<!--.*?-->", src, re.S)]
+        m = next((mm for mm in pat.finditer(src)
+                  if not any(a <= mm.start() < b for a, b in comments)), None)
         if not m:
             raise SystemExit(f'Thieu <section id="sc-{sc["id"]}"> trong {index}')
         tag = m.group(0)
@@ -212,7 +216,7 @@ def main():
             raise SystemExit(f'<section id="sc-{sc["id"]}"> thieu data-start hoac data-duration trong {index}')
         new = re.sub(r'data-start="[^"]*"', f'data-start="{sc["visual_start"]}"', tag)
         new = re.sub(r'data-duration="[^"]*"', f'data-duration="{sc["visual_duration"]}"', new)
-        src = src.replace(tag, new, 1)
+        src = src[:m.start()] + new + src[m.end():]
 
     times = json.dumps({sc["id"]: sc["visual_start"] for sc in timeline["scenes"]})
     pat = re.compile(r"(// TIMES:BEGIN).*?(// TIMES:END)", re.S)
