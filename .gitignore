@@ -3,3 +3,21 @@ node_modules/
 __pycache__/
 *.pyc
 .DS_Store
+
+# Khong dua vao git (xem CLAUDE.md): bi mat, mo hinh, san pham tung video
+.env
+*.env
+studio/
+models/
+*.onnx
+*.data
+*.npz
+*.gltf
+*.glb
+*.wav
+*.mp3
+*.m4a
+*.mp4
+*.mov
+*.webm
+*.srt

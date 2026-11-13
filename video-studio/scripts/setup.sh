@@ -31,10 +31,16 @@ CHROME="$(command -v google-chrome || command -v chromium || command -v chromium
 [ -n "$CHROME" ] || fail "Khong tim thay Chrome/Chromium. HyperFrames va Remotion can trinh duyet de render."
 ok "node $(node -v), ffmpeg, Chrome tai $CHROME"
 
-# 2. Mang: HuggingFace can cho lan tai mo hinh giong doc dau tien
-HF_OK=1
-curl -s -o /dev/null -m 15 -w "%{http_code}" https://huggingface.co | grep -q "^[23]" || HF_OK=0
-if [ "$HF_OK" = 1 ]; then ok "Truy cap duoc huggingface.co"; else warn "Khong truy cap duoc huggingface.co: chua tai duoc giong doc VieNeu"; fi
+# 2. Mang: mo hinh giong doc tai tu GitHub Release cua repo, HuggingFace la du phong
+VOICE_NET=0
+MODELS_TAG="$(python3 -c "import json,sys; print(json.load(open(sys.argv[1]))['release_tag'])" "$SKILL_DIR/assets/voice-models.json")"
+if curl -s -o /dev/null -m 15 -L -w "%{http_code}" "https://github.com/d7x94/video-studio/releases/download/$MODELS_TAG/SHA256SUMS" | grep -q "^2"; then
+  VOICE_NET=1; ok "Tai duoc mo hinh giong doc tu GitHub Release ($MODELS_TAG)"
+elif curl -s -o /dev/null -m 15 -w "%{http_code}" https://huggingface.co | grep -q "^[23]"; then
+  VOICE_NET=1; warn "Khong tai duoc tu GitHub Release $MODELS_TAG; dung du phong huggingface.co"
+else
+  warn "Khong tai duoc mo hinh giong doc (GitHub Release va huggingface.co deu khong duoc)"
+fi
 # Nhan vat 3D (tuy chon) tai tu Google Drive cua tac gia
 if curl -s -o /dev/null -m 15 -w "%{http_code}" https://drive.usercontent.google.com | grep -q "^[2345]"; then
   ok "Truy cap duoc Google Drive (tai nhan vat 3D)"
@@ -77,7 +83,7 @@ EOF
 ok "Ghi $ENV_FILE"
 
 # 6. Tai san mo hinh giong doc va thu mot cau
-if [ "$HF_OK" = 1 ]; then
+if [ "$VOICE_NET" = 1 ]; then
   python3 "$SKILL_DIR/scripts/tts.py" --warmup || fail "Khoi dong VieNeu that bai"
   touch "$TOOLS/.voice_done"
   ok "Giong doc VieNeu san sang"
@@ -87,6 +93,6 @@ touch "$TOOLS/.ready"
 if [ -f "$TOOLS/.voice_done" ]; then
   echo "XONG. Cac script khac tu doc $ENV_FILE"
 else
-  warn "Chua tai duoc giong doc (khong truy cap duoc huggingface.co). Dung hinh van lam duoc; long tieng thi chua."
-  echo "XONG MOT PHAN. Mo ten mien huggingface.co roi chay lai: bash $0"
+  warn "Chua tai duoc giong doc (khong toi duoc GitHub Release lan huggingface.co). Dung hinh van lam duoc; long tieng thi chua."
+  echo "XONG MOT PHAN. Kiem tra mang toi github.com roi chay lai: bash $0"
 fi

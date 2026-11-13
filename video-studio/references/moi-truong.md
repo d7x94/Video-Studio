@@ -9,7 +9,8 @@ Shell của workspace ra ngoài qua proxy có danh sách cho phép. Tại thời
 | Đích | Trạng thái | Hệ quả |
 |---|---|---|
 | registry.npmjs.org, pypi.org | Được | Cài HyperFrames, GSAP, font, VieNeu |
-| huggingface.co | Được | Tải mô hình giọng VieNeu |
+| github.com (Release của repo) | Được | Tải mô hình giọng VieNeu (Release `vieneu-v3-turbo-61b85e3`, danh mục `assets/voice-models.json`) |
+| huggingface.co | Được | Dự phòng khi không tải được từ Release; không bắt buộc |
 | cdn.jsdelivr.net, unpkg, Google Fonts | Bị chặn | Template mặc định của HyperFrames lấy GSAP từ CDN: animation **âm thầm không chạy**. Skill cài GSAP và font cục bộ |
 | Kho ảnh, nhạc (Pixabay...) | Bị chặn | Hình vẽ bằng code, hoặc người dùng gửi kèm |
 | Dịch vụ giọng đọc đám mây | Bị chặn | Dùng VieNeu chạy cục bộ |
@@ -23,7 +24,7 @@ HyperFrames cố tải chrome-headless-shell riêng và thất bại vì mạng.
 
 ## Lỗi đã biết
 
-**onnxruntime 1.29 từ chối nạp VieNeu từ bộ nhớ đệm HuggingFace.** Lỗi "External data path escapes model directory": file `.onnx` và `.data` nằm ở hai thư mục blobs khác nhau qua symlink. `tts.py` đã vá bằng cách tải mô hình vào thư mục thường `~/studio/.tools/models/`. Nếu bản vieneu mới đổi cấu trúc nội bộ (`_v3_turbo_engine.onnx_runtime_lite.OnnxV3LiteEngine._fetch`) thì vá này cần cập nhật.
+**onnxruntime 1.29 từ chối nạp VieNeu từ bộ nhớ đệm HuggingFace.** Lỗi "External data path escapes model directory": file `.onnx` và `.data` nằm ở hai thư mục blobs khác nhau qua symlink. `tts.py` đã vá bằng cách đặt mô hình vào thư mục thường `~/studio/.tools/models/` (tự tải theo `assets/voice-models.json`, kiểm sha256, rồi chạy offline với `HF_HUB_OFFLINE=1`). Nếu vieneu đổi danh sách file cần nạp, `tts.py` báo lỗi "vieneu doi hoi file chua co trong assets/voice-models.json": cập nhật danh mục và Release. Nếu bản vieneu mới đổi cấu trúc nội bộ (`_v3_turbo_engine.onnx_runtime_lite.OnnxV3LiteEngine._fetch`) thì vá này cần cập nhật.
 
 **Render báo `[non-blocking] Failed to load resource: 404`.** Trình duyệt hỏi favicon. `hyperframes check` không báo lỗi console nào; bỏ qua.
 

@@ -22,6 +22,7 @@ video-studio/          thư mục skill (đúng như được cài vào claude.a
 tools/
   build_lineart.sh     build lại lineart.js từ nguồn
   package_skill.sh     đóng gói zip để tải lên claude.ai
+  publish_voice_models.sh  đăng mô hình giọng đọc lên Release (Actions tự chạy)
 ```
 
 ## Cài và cập nhật skill
@@ -33,3 +34,4 @@ tools/
 
 - Thư viện nét vẽ line-art: [JDhruv14/line-art-animation](https://github.com/JDhruv14/line-art-animation), MIT (`video-studio/assets/lineart/LICENSE-line-art-animation.txt`).
 - Nhân vật 3D: Quaternius Ultimate Animated Character Pack, CC0 (tải khi dựng môi trường, không lưu trong repo).
+- Giọng đọc: [pnnbao-ump/VieNeu-TTS-v3-Turbo](https://huggingface.co/pnnbao-ump/VieNeu-TTS-v3-Turbo) (dự án gốc [pnnbao97/VieNeu-TTS](https://github.com/pnnbao97/VieNeu-TTS)) và [OpenMOSS-Team/MOSS-Audio-Tokenizer-Nano-ONNX](https://huggingface.co/OpenMOSS-Team/MOSS-Audio-Tokenizer-Nano-ONNX), Apache-2.0. Bản chép nguyên vẹn nằm ở Release `vieneu-v3-turbo-61b85e3` (không lưu trong git), danh mục và sha256 ở `video-studio/assets/voice-models.json`.
