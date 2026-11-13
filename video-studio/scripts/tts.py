@@ -11,20 +11,29 @@ Dau ra trong PROJECT:
   voiceover.wav          ghep ca bai (de nghe duyet)
   timeline.json          moc thoi gian tung canh, dung cho dung hinh va phu de
 
+Mo hinh: danh muc assets/voice-models.json (ten file, kich thuoc, sha256).
+Tai tu GitHub Release cua repo truoc, khong duoc thi tu HuggingFace dung revision
+da ghim; file nao cung phai khop sha256 moi dung. Tai xong thi chay offline
+(HF_HUB_OFFLINE=1), vieneu khong goi HuggingFace nua.
+
 Vi sao co doan "va" ben duoi: onnxruntime >= 1.29 tu choi nap file .data ngoai
 khi chung nam o thu muc blobs khac nhau trong bo nho dem HuggingFace (symlink).
-Ta tai mo hinh vao thu muc thuong (local_dir) de tranh loi do.
+Ta dat mo hinh vao thu muc thuong (~/studio/.tools/models) de tranh loi do.
 """
 import argparse
+import hashlib
 import json
 import os
 import subprocess
 import sys
 from pathlib import Path
 
+os.environ.setdefault("HF_HUB_OFFLINE", "1")
+
 STUDIO_HOME = Path(os.environ.get("STUDIO_HOME", Path.home() / "studio"))
 MODEL_ROOT = STUDIO_HOME / ".tools" / "models"
-REPO = "pnnbao-ump/VieNeu-TTS-v3-Turbo"
+MANIFEST = json.loads((Path(__file__).resolve().parent.parent / "assets/voice-models.json")
+                      .read_text(encoding="utf-8"))
 DEFAULT_VOICE = "Mai Anh"
 
 LEAD_IN = 0.4      # giay im lang dau video
@@ -40,32 +49,64 @@ def cpu_has_vnni() -> bool:
     return "avx512_vnni" in flags or "avx_vnni" in flags
 
 
+def sha256(path: Path) -> str:
+    h = hashlib.sha256()
+    with open(path, "rb") as f:
+        for block in iter(lambda: f.read(1 << 20), b""):
+            h.update(block)
+    return h.hexdigest()
+
+
+def curl(url: str, out: Path) -> bool:
+    r = subprocess.run(["curl", "-fsSL", "--retry", "2", "-m", "900", "-o", str(out), url],
+                       capture_output=True, text=True)
+    return r.returncode == 0 and out.exists()
+
+
+def ensure_models(sub: str):
+    """Tai cac file can cho ban `sub` (onnx_int8 hoac onnx_update) va bo giai ma."""
+    vieneu_dir = MANIFEST["sources"]["pnnbao-ump/VieNeu-TTS-v3-Turbo"]["dir"]
+    need = [f for f in MANIFEST["files"]
+            if not f["path"].startswith(vieneu_dir + "/") or f["path"].startswith(f"{vieneu_dir}/{sub}/")]
+    for f in need:
+        dest = MODEL_ROOT / f["path"]
+        if dest.exists() and dest.stat().st_size == f["size"]:
+            continue
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        tmp = dest.with_name(dest.name + ".part")
+        rev = MANIFEST["sources"][f["repo"]]["revision"]
+        urls = [("GitHub Release", MANIFEST["release_url"].format(tag=MANIFEST["release_tag"], asset=f["asset"])),
+                ("HuggingFace", f"https://huggingface.co/{f['repo']}/resolve/{rev}/{f['hf_path']}")]
+        for name, url in urls:
+            if curl(url, tmp) and tmp.stat().st_size == f["size"] and sha256(tmp) == f["sha256"]:
+                tmp.rename(dest)
+                print(f"[OK] {f['path']} ({name})", file=sys.stderr)
+                break
+            tmp.unlink(missing_ok=True)
+        else:
+            sys.exit(f"[LOI] Khong tai duoc {f['path']} tu GitHub Release lan HuggingFace (hoac sai sha256).\n"
+                     "Kiem tra mang toi github.com, hoac gui kem file thu am loi doc.")
+
+
 def load_tts():
-    from huggingface_hub import hf_hub_download, snapshot_download
     from vieneu._v3_turbo_engine import onnx_runtime_lite as lite
 
     def _fetch(repo, files, subfolder):
-        dest = MODEL_ROOT / repo.replace("/", "__")
-        last = None
-        for fn in files:
-            try:
-                last = hf_hub_download(repo, fn, subfolder=subfolder or None, local_dir=dest)
-            except Exception:
-                if fn.endswith(".json"):
-                    continue
-                raise
-        return Path(last).parent
+        # Khong tai: moi file da co san nho ensure_models. Thieu nghia la vieneu doi danh sach file.
+        d = MODEL_ROOT / repo.replace("/", "__") / (subfolder or "")
+        missing = [fn for fn in files if not (d / fn).exists() and not fn.endswith(".json")]
+        if missing:
+            sys.exit(f"[LOI] vieneu doi hoi file chua co trong assets/voice-models.json: {repo} {missing}")
+        return d
 
     lite.OnnxV3LiteEngine._fetch = staticmethod(_fetch)
 
     precision = "int8" if cpu_has_vnni() else "fp32"
     sub = "onnx_int8" if precision == "int8" else "onnx_update"
-    local = MODEL_ROOT / "vieneu"
-    if not (local / sub / "config.json").exists():
-        snapshot_download(REPO, allow_patterns=[f"{sub}/*"], local_dir=local)
+    ensure_models(sub)
 
     from vieneu import Vieneu
-    return Vieneu(precision=precision, onnx_dir=str(local / sub))
+    return Vieneu(precision=precision, onnx_dir=str(MODEL_ROOT / "vieneu" / sub))
 
 
 def wav_duration(path: Path) -> float:

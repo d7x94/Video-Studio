@@ -1,0 +1,19 @@
+# Dang mo hinh giong doc VieNeu len Release rieng (ten tag trong voice-models.json)
+# moi khi danh muc doi tren main. Khong dung Release "latest" vi workflow kia xoa va tao lai no.
+name: Dang mo hinh giong doc
+on:
+  push:
+    branches: [main]
+    paths: ['video-studio/assets/voice-models.json', 'tools/publish_voice_models.sh', '.github/workflows/voice-models.yml']
+  workflow_dispatch:
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Tai tu HuggingFace, kiem sha256, dang release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: bash tools/publish_voice_models.sh

@@ -89,7 +89,7 @@ Chạy nền ngay sau bước 0 để không phải chờ:
 bash SKILL/scripts/setup.sh     # lần đầu vài phút; chạy lại thì bỏ qua phần đã xong
 ```
 
-Script cài HyperFrames, GSAP và font Be Vietnam Pro cục bộ, VieNeu, tải giọng đọc, ghi `~/studio/studio.env`. Mỗi lệnh Bash là một shell mới: trước khi gọi `hyperframes` trực tiếp, chạy `source ~/studio/studio.env` trong cùng lệnh (các script trong `SKILL/scripts` tự đọc file này). Nếu báo không truy cập được huggingface.co thì chưa lồng tiếng được: nói với người dùng rằng họ có thể mở tên miền này trong claude.ai (Settings > Capabilities trên trình duyệt), hoặc gửi kèm file thu âm lời đọc. Các ràng buộc môi trường khác ở `references/moi-truong.md`.
+Script cài HyperFrames, GSAP và font Be Vietnam Pro cục bộ, VieNeu, tải giọng đọc, ghi `~/studio/studio.env`. Mỗi lệnh Bash là một shell mới: trước khi gọi `hyperframes` trực tiếp, chạy `source ~/studio/studio.env` trong cùng lệnh (các script trong `SKILL/scripts` tự đọc file này). Mô hình giọng đọc tải từ GitHub Release của repo skill, huggingface.co chỉ là dự phòng. Nếu báo không tải được từ cả hai thì chưa lồng tiếng được: nói với người dùng kiểm tra quyền truy cập github.com trong claude.ai (Settings > Capabilities trên trình duyệt), hoặc gửi kèm file thu âm lời đọc. Các ràng buộc môi trường khác ở `references/moi-truong.md`.
 
 ### Bước 2. Kịch bản
 
