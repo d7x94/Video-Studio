@@ -154,7 +154,7 @@ def write_srt(caps, path: Path):
 
 def write_speech_env(voiceover: Path, out: Path, fps=30):
     """Am luong loi doc (0..1) moi khung hinh. voiceover.wav da canh theo moc timeline
-    (tts.py ghep cung LEAD_IN va SCENE_GAP), nen chi so khung = giay * fps."""
+    (tts.py ghep dung khoang nghi pause_before cua tung canh), nen chi so khung = giay * fps."""
     import numpy as np
     import soundfile as sf
     a, sr = sf.read(str(voiceover))

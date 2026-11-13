@@ -5,6 +5,7 @@ Dung:
   python3 tts.py --warmup                         # tai mo hinh, doc thu mot cau
   python3 tts.py --list-voices                    # liet ke giong co san
   python3 tts.py PROJECT/scenes.json PROJECT      # long tieng tung canh
+  python3 tts.py PROJECT/scenes.json PROJECT --retime   # chi tinh lai moc (doi pause_before)
 
 Dau ra trong PROJECT:
   audio/<scene_id>.wav   tieng doc tung canh (48 kHz)
@@ -39,6 +40,8 @@ DEFAULT_VOICE = "Mai Anh"
 LEAD_IN = 0.4      # giay im lang dau video
 SCENE_GAP = 0.35   # giay nghi giua hai canh
 TAIL = 1.0         # giay giu hinh cuoi
+PAUSE_MAX = 1.5    # tran cho "pause_before" cua mot canh
+SPEED_MIN, SPEED_MAX = 0.85, 1.15   # ngoai khoang nay giong bi meo
 
 
 def cpu_has_vnni() -> bool:
@@ -137,6 +140,8 @@ def main():
     ap.add_argument("--voice", help="Ghi de giong trong scenes.json")
     ap.add_argument("--speed", type=float, help="0.85 den 1.15; ghi de scenes.json")
     ap.add_argument("--only", help="Chi long tieng lai cac canh nay, vd: s02,s05")
+    ap.add_argument("--retime", action="store_true",
+                    help="Khong doc lai canh da co file; chi tinh lai timeline va ban ghep (sau khi doi pause_before)")
     ap.add_argument("--warmup", action="store_true")
     ap.add_argument("--list-voices", action="store_true")
     a = ap.parse_args()
@@ -158,27 +163,38 @@ def main():
     data = json.loads(Path(a.scenes).read_text(encoding="utf-8"))
     voice = a.voice or data.get("voice") or DEFAULT_VOICE
     speed = a.speed or float(data.get("speed", 1.0))
-    if not 0.85 <= speed <= 1.15:
+    if not SPEED_MIN <= speed <= SPEED_MAX:
         sys.exit("speed phai trong khoang 0.85 den 1.15 de giong khong bi meo")
-    only = set(a.only.split(",")) if a.only else None
+    only = set(a.only.split(",")) if a.only else (set() if a.retime else None)
 
     audio_dir = project / "audio"
     audio_dir.mkdir(parents=True, exist_ok=True)
 
-    t = LEAD_IN
+    # Chi dao giong theo canh: "pause_before" (giay nghi truoc canh, thay khoang nghi mac dinh;
+    # dung truoc cau dao y hay ket luan) va "speed" rieng cua canh (--speed ghi de tat ca).
+    # Doi pause_before khong can doc lai; doi speed cua canh thi phai --only canh do.
+    t = 0.0
     scenes_out = []
-    for sc in data["scenes"]:
+    for i, sc in enumerate(data["scenes"]):
         sid, text = sc["id"], sc["narration"].strip()
+        gap = float(sc.get("pause_before", LEAD_IN if i == 0 else SCENE_GAP))
+        if not 0 <= gap <= PAUSE_MAX:
+            sys.exit(f"{sid}: pause_before phai trong khoang 0 den {PAUSE_MAX} giay")
+        sc_speed = a.speed or float(sc.get("speed", speed))
+        if not SPEED_MIN <= sc_speed <= SPEED_MAX:
+            sys.exit(f"{sid}: speed phai trong khoang 0.85 den 1.15 de giong khong bi meo")
+        t += gap
         wav = audio_dir / f"{sid}.wav"
         sc_voice = a.voice or sc.get("voice") or voice   # canh co the co giong rieng (ke chuyen)
         if only is None or sid in only or not wav.exists():
-            synth(tts, text, sc_voice, wav, speed)
+            synth(tts, text, sc_voice, wav, sc_speed)
             print(f"{sid}: {wav_duration(wav):.2f}s", flush=True)
         dur = wav_duration(wav)
         scenes_out.append({"id": sid, "start": round(t, 3), "duration": round(dur, 3),
-                           "audio": f"audio/{sid}.wav", "narration": text, "voice": sc_voice})
-        t += dur + SCENE_GAP
-    total = round(t - SCENE_GAP + TAIL, 3)
+                           "audio": f"audio/{sid}.wav", "narration": text, "voice": sc_voice,
+                           "speed": sc_speed, "pause_before": gap})
+        t += dur
+    total = round(t + TAIL, 3)
 
     # Hinh: canh dau hien tu giay 0 (phu ca khoang LEAD_IN), moi canh keo den luc canh sau
     # bat dau, canh cuoi giu them TAIL. Tieng: "start"/"duration". Hinh: "visual_*".
@@ -189,21 +205,21 @@ def main():
 
     # "voices": moi giong da dung (canh co the co giong rieng), de ghi credits.md cho du
     voices = list(dict.fromkeys(sc["voice"] for sc in scenes_out))
-    timeline = {"voice": voice, "voices": voices, "speed": speed, "lead_in": LEAD_IN, "total": total,
+    timeline = {"voice": voice, "voices": voices, "speed": speed, "lead_in": scenes_out[0]["pause_before"], "total": total,
                 "scenes": scenes_out}
     (project / "timeline.json").write_text(json.dumps(timeline, ensure_ascii=False, indent=2),
                                           encoding="utf-8")
 
-    # Ban ghep de nghe duyet
-    parts = []
-    for i, sc in enumerate(scenes_out):
-        gap = LEAD_IN if i == 0 else SCENE_GAP
-        parts.append(f"aevalsrc=0:d={gap}:s=48000[g{i}]")
-    inputs, chain = [], []
+    # Ban ghep de nghe duyet (khoang lang dung bang pause_before de khop moc timeline)
+    # Canh co pause_before = 0 thi bo doan lang (aevalsrc d=0 cho luong rong).
+    parts, inputs, chain = [], [], []
     for i, sc in enumerate(scenes_out):
         inputs += ["-i", str(project / sc["audio"])]
-        chain.append(f"[g{i}][{i}:a]")
-    fc = ";".join(parts) + ";" + "".join(chain) + f"concat=n={2 * len(scenes_out)}:v=0:a=1[out]"
+        if sc["pause_before"] > 0:
+            parts.append(f"aevalsrc=0:d={sc['pause_before']}:s=48000[g{i}]")
+            chain.append(f"[g{i}]")
+        chain.append(f"[{i}:a]")
+    fc = "".join(p + ";" for p in parts) + "".join(chain) + f"concat=n={len(chain)}:v=0:a=1[out]"
     subprocess.run(["ffmpeg", "-v", "error", "-y", *inputs, "-filter_complex", fc, "-map", "[out]",
                     str(project / "voiceover.wav")], check=True)
     print(f"Tong thoi luong: {total:.1f}s, giong: {', '.join(voices)}")

@@ -65,6 +65,29 @@ S.text("ngày", 250, 640, { size: 72, anchor: "middle", mark: true });  // chữ
 
 **Thứ tự và nhịp.** Các nét vẽ lần lượt đúng thứ tự gọi hàm; bàn tay vào từ góc dưới phải, nhấc bút đi từ nét này sang nét khác, rồi rời khung sau nét cuối. Muốn một nét bắt đầu đúng lúc lời đọc nhắc tới thì đặt `at` (tính từ đầu cảnh, lấy từ độ dài đoạn lời trong `timeline.json`); khi đã dùng `at`, thư viện không tự co giãn tốc độ bút nữa.
 
+## Biến ý trừu tượng thành hình
+
+Cảnh giải thích dễ thành "chữ và biểu tượng xếp cạnh nhau". Muốn người xem hiểu bằng mắt, biên kịch dựng `visual` theo ba bước:
+
+1. **Ý trừu tượng thành một hành động vật lý**: tắc, rò rỉ, dồn lại, lọc, đẩy, chìm, lan ra, chặn lại.
+2. **Hệ thống thành một đồ vật đơn giản**: phễu, cái cân, bình, giếng, băng chuyền, cái thang, cây cầu, cánh cổng, tảng đá.
+3. **Người que (`person`) làm hành động đó với đồ vật**. Bỏ người que đi mà hình vẫn đủ nghĩa thì người que chỉ để trang trí: nghĩ lại.
+
+Sáu khuôn cảnh hay dùng (chọn một, nội dung cụ thể thì tự nghĩ):
+
+| Khuôn | Hình | Thứ tự bút vẽ |
+|---|---|---|
+| Cỗ máy | người que vận hành một hộp có phễu và cửa ra | hộp, phễu, đầu vào rơi vào, mũi tên, kết quả ở cửa ra |
+| Trước và sau | trái rối (nét chồng chéo, màu đỏ), phải gọn (khối xếp hàng, màu xanh) | vạch giữa, bên rối, mũi tên cam, bên gọn |
+| Hành trình gặp hố | một con đường có hố hay mốc dọc đường | đường, người que, từng hố hay mốc theo thứ tự lời đọc, đích |
+| Một thành nhiều | một nguồn tách ra nhiều nhánh | nguồn, các mũi tên tỏa ra, kết quả từng nhánh |
+| Đẩy đá lên dốc | người que đẩy tảng đá, qua đỉnh thì đá lăn | dốc, tảng đá, người que, mũi tên đi lên, mũi tên lăn xuống |
+| Múc từ giếng | trong đống rối chỉ lấy ra một thứ có giá trị | giếng, đống nét rối, gầu, mũi tên kéo lên, vật lấy được |
+
+Quy ước màu, giữ suốt video: `ink` là cấu trúc và người que; `orange` chỉ dành cho dòng chảy và mũi tên; `red` là vấn đề hay cảnh báo; `blue` hoặc `green` là kết quả tốt. Giữ nhiều giấy trống, chủ thể chiếm khoảng một nửa tờ.
+
+Tất cả khuôn trên dựng được bằng các hàm có sẵn (`person`, `rect`, `circle`, `arrow`, `path`, `hatch`); không cần thư viện mới. Phương pháp này tham khảo ý tưởng từ skill Ink Theater của OpenMontage; không dùng mã hay hình của dự án đó.
+
 ## Bố cục gợi ý
 
 - **Tiêu đề trước, hình sau**: nét đầu tiên là `text` (tiêu đề cảnh), kèm `under`, rồi mới vẽ hình minh họa. Người xem tắt tiếng vẫn đọc được ý.

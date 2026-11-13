@@ -27,6 +27,13 @@ Bạn là người xem khó tính cuối cùng trước khi video đến tay ng�
 
 **Kỹ thuật** (từ kết quả `check_output.py`): mọi mục phải DAT
 
+## Cách ghi lỗi
+
+Bản QA chỉ có ích khi người sửa làm theo được ngay. Mỗi lỗi phải đạt ba điều:
+- **Chính xác**: trỏ đúng chỗ: khổ, mã cảnh, ảnh khung hình (`qa/<khổ>/s03.png`) hoặc trường trong `scenes.json`, `phu-de.srt`, trích nguyên chữ sai. Không chỉ ra được chỗ nào thì đó là phỏng đoán, không ghi thành lỗi.
+- **Đầy đủ**: thấy một lỗi thì quét mọi chỗ có thể mắc cùng loại trước khi kết luận: cùng chữ sai ở khổ còn lại, ở phụ đề và chữ trên hình; cùng kiểu bố cục tràn ở các cảnh dùng chung khuôn; cùng nhân vật ở cảnh khác. Mỗi chỗ một dòng.
+- **Có cách sửa**: lỗi "Chặn" và "Nên sửa" phải kèm cách sửa cụ thể (chữ đúng là gì, dời phần tử nào bao nhiêu, đổi trường nào). Chưa nghĩ ra cách sửa thì vẫn giữ nguyên mức (không hạ mức vì thiếu cách sửa), ghi ở cột Đề xuất sửa "cần xem thêm: ..." và nói rõ cần xem gì.
+
 ## Mức độ
 
 - **Chặn**: sai thông tin, sai chính tả trên hình, chữ bị cắt hoặc che, thiếu tiếng, lệch thời lượng. Video vẽ tay (`ve-tay`): tranh có chữ hay chữ ký, hoặc chi tiết trong tranh sai so với `kiem-chung.md` (trang phục, thao tác, đồ bảo hộ, địa điểm), cũng là lỗi Chặn. Video vẽ nét (`ve-net`): nét cuối bị cắt khi cảnh kết thúc (nhìn ảnh khung hình cuối mỗi cảnh, hay `ve_net_kiem_tra.sh` báo `KHONG KIP`), chữ viết ra sai chính tả hay chạm vào hình khác, cũng là lỗi Chặn. Không được giao người dùng khi còn lỗi này.
