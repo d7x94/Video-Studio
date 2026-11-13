@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="vi" data-resolution="landscape">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <!-- Tat ca tai nguyen phai nam cuc bo: CDN va Google Fonts bi chan trong workspace -->
+    <link rel="stylesheet" href="fonts/400.css" />
+    <link rel="stylesheet" href="fonts/600.css" />
+    <link rel="stylesheet" href="fonts/800.css" />
+    <script src="gsap.min.js"></script>
+    <script type="importmap">{ "imports": { "three": "./three.module.min.js" } }</script>
+    <style>
+      :root {
+        --ink: #1d3557;
+        --card: #fffaf0;
+        --accent: #e76f51;
+        --font: "Be Vietnam Pro", sans-serif;
+      }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1920px; height: 1080px; overflow: hidden; background: #f3e6d3; }
+      #root { position: relative; width: 100%; height: 100%; font-family: var(--font); color: var(--ink); }
+      .clip { position: absolute; inset: 0; }
+      #stage canvas { width: 1920px; height: 1080px; display: block; }
+
+      /* Lop chu tren canh 3D: the o phan tren, chua khoang giua cho nhan vat */
+      .scene { display: flex; flex-direction: column; align-items: flex-start; padding: 90px 120px 0 120px; gap: 18px; z-index: 10; pointer-events: none; }
+      .scene .title { font-weight: 800; font-size: 64px; line-height: 1.15; text-align: left; background: var(--card);
+                      padding: 16px 34px; border-radius: 24px; box-shadow: 0 8px 0 var(--ink); max-width: 900px; text-wrap: balance; }
+      .scene .body { font-weight: 600; font-size: 38px; line-height: 1.3; text-align: left; background: rgba(255, 250, 240, 0.92);
+                     padding: 12px 28px; border-radius: 18px; max-width: 760px; text-wrap: balance; }
+      .source { position: absolute; right: 60px; bottom: 40px; font-size: 24px; color: var(--ink); opacity: 0.8; }
+
+      .cap { display: flex; align-items: flex-end; justify-content: center; padding: 0 200px 70px 200px; z-index: 50; pointer-events: none; }
+      .cap span { font-weight: 600; font-size: 40px; line-height: 1.3; text-align: center; max-width: 1400px; text-wrap: balance;
+                  color: #fff; background: rgba(0, 0, 0, 0.62); padding: 10px 26px; border-radius: 14px; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="10" data-width="1920" data-height="1080">
+      <!-- data-span="full": inject.py dat thoi luong bang ca video -->
+      <div id="stage" class="clip" data-start="0" data-duration="10" data-span="full"><canvas id="c" width="1920" height="1080"></canvas></div>
+
+      <!-- SCENES:BEGIN -->
+      <!-- Moi canh mot lop chu (co the de trong):
+           <section id="sc-s01" class="clip scene" data-start="0" data-duration="1"><div class="title">...</div></section> -->
+      <!-- SCENES:END -->
+
+      <!-- AUDIO:BEGIN -->
+      <!-- AUDIO:END -->
+
+      <!-- CAPTIONS:BEGIN -->
+      <!-- CAPTIONS:END -->
+    </div>
+    <script src="speech.js"></script>
+    <script type="module">
+      import * as S from "./sim3d.js";
+      const { THREE } = S;
+      const DUR = Number(document.getElementById("root").dataset.duration);
+      // TIMES:BEGIN
+      const T = {};
+      // TIMES:END
+      const stage = S.createStage(document.getElementById("c"), { width: 1920, height: 1080 });
+
+      // SETUP:BEGIN
+      // Agent dung canh: dung phong, nap nhan vat, dat vi tri. Vd:
+      // const room = S.buildRoom(stage, "phong-kham");
+      // const doc = await S.loadChar(stage, "Doctor_Female_Young.gltf", { height: 1.7, skin: S.SKIN.sang });
+      // SETUP:END
+
+      function render(t) {
+        // DIRECTION:BEGIN
+        // Agent dung canh: dao dien theo t (giay), dung T.<id> cho moc canh. Vd:
+        // S.cameraPath(stage.camera, [{ t: 0, pos: [3.4, 4.6, 7.6], look: [0, 1, 0] }], t);
+        // const walking = S.walk(doc, { from: [3, 0.9], to: [0.4, 0.9], t0: 0, t1: 2.8, endAngle: 0.45 }, t);
+        // (moi nhan vat chi goi S.walk mot lan; di nhieu chang thi truyen mang cac chang)
+        // S.animate(doc, [["Walk", 0, 2.8], ["Idle", 2.8, DUR]], t);
+        // S.wave(doc, t, T.s01 + 3.4, T.s01 + 4.8);
+        // S.talk(doc, t, T.s02, T.s02 + 5);
+        // DIRECTION:END
+        stage.render();
+      }
+
+      const tl = gsap.timeline({ paused: true });
+      // ANIMATION:BEGIN
+      // Tween cho lop chu, vd: tl.from("#sc-s01 .title", { y: -60, opacity: 0, duration: 0.5 }, T.s01 + 0.3);
+      // ANIMATION:END
+      const state = { t: 0 };
+      tl.to(state, { t: DUR, duration: DUR, ease: "none", onUpdate: () => render(state.t) }, 0);
+      render(0);
+      // Chi dang ky timeline sau khi nhan vat da nap xong: runtime cho dang ky moi bat dau chup
+      window.__timelines = window.__timelines || {};
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

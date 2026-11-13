@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="vi" data-resolution="landscape">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <!-- Tat ca tai nguyen phai nam cuc bo: CDN va Google Fonts bi chan trong workspace -->
+    <link rel="stylesheet" href="fonts/400.css" />
+    <link rel="stylesheet" href="fonts/600.css" />
+    <link rel="stylesheet" href="fonts/800.css" />
+    <script src="gsap.min.js"></script>
+    <style>
+      :root {
+        --ink: #1d3557;
+        --card: #fffaf0;
+        --accent: #e76f51;
+        --font: "Be Vietnam Pro", sans-serif;
+      }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1920px; height: 1080px; overflow: hidden; background: #fdfcf8; }
+      #root { position: relative; width: 100%; height: 100%; font-family: var(--font); color: var(--ink); }
+      .clip { position: absolute; inset: 0; }
+      #stage svg { width: 1920px; height: 1080px; display: block; }
+      #stage svg .pp { fill: var(--paper, #fdfcf8); }
+
+      /* Lop chu tren canh line-art: the o phan tren, chua khoang giua cho nhan vat */
+      .scene { display: flex; flex-direction: column; align-items: flex-start; padding: 90px 120px 0 120px; gap: 18px; z-index: 10; pointer-events: none; }
+      .scene .title { font-weight: 800; font-size: 64px; line-height: 1.15; text-align: left; background: var(--card);
+                      padding: 16px 34px; border-radius: 24px; box-shadow: 0 8px 0 var(--ink); max-width: 900px; text-wrap: balance; }
+      .scene .body { font-weight: 600; font-size: 38px; line-height: 1.3; text-align: left; background: rgba(255, 250, 240, 0.92);
+                     padding: 12px 28px; border-radius: 18px; max-width: 760px; text-wrap: balance; }
+      .source { position: absolute; right: 60px; bottom: 40px; font-size: 24px; color: var(--ink); opacity: 0.8; }
+
+      .cap { display: flex; align-items: flex-end; justify-content: center; padding: 0 200px 70px 200px; z-index: 50; pointer-events: none; }
+      .cap span { font-weight: 600; font-size: 40px; line-height: 1.3; text-align: center; max-width: 1400px; text-wrap: balance;
+                  color: #fff; background: rgba(0, 0, 0, 0.62); padding: 10px 26px; border-radius: 14px; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="10" data-width="1920" data-height="1080">
+      <!-- data-span="full": inject.py dat thoi luong bang ca video -->
+      <div id="stage" class="clip" data-start="0" data-duration="10" data-span="full"><svg id="c" xmlns="http://www.w3.org/2000/svg" width="1920" height="1080"></svg></div>
+
+      <!-- SCENES:BEGIN -->
+      <!-- Moi canh mot lop chu (co the de trong):
+           <section id="sc-s01" class="clip scene" data-start="0" data-duration="1"><div class="title">...</div></section> -->
+      <!-- SCENES:END -->
+
+      <!-- AUDIO:BEGIN -->
+      <!-- AUDIO:END -->
+
+      <!-- CAPTIONS:BEGIN -->
+      <!-- CAPTIONS:END -->
+    </div>
+    <script src="speech.js"></script>
+    <script type="module">
+      import * as LA from "./lineart.js";
+      const DUR = Number(document.getElementById("root").dataset.duration);
+      // TIMES:BEGIN
+      const T = {};
+      // TIMES:END
+      const L = LA.createLineStage(document.getElementById("c"), { width: 1920, height: 1080 });
+
+      L.setup((L) => {
+        // SETUP:BEGIN
+        // Agent dung canh: ve nen (L.back), dat nhan vat tu dan da khoa, hen gio dong tac. Vd:
+        // L.ground(780);
+        // const lan = L.add("dieu-duong-lan", { x: 300, y: 780, scale: 3.2 });
+        // L.at(0, () => lan.walkTo(960));
+        // L.at(T.s02 + 0.4, () => lan.act("talk", 4));
+        // SETUP:END
+      });
+
+      function render(t) {
+        // DIRECTION:BEGIN
+        // Thuong de trong: moi dong tac hen bang L.at trong SETUP. Chi them o day thu
+        // phu thuoc truc tiep t (vd dich chuyen mot do vat trong L.back).
+        // DIRECTION:END
+        L.render(t);
+      }
+
+      const tl = gsap.timeline({ paused: true });
+      // ANIMATION:BEGIN
+      // Tween cho lop chu, vd: tl.from("#sc-s01 .title", { y: -60, opacity: 0, duration: 0.5 }, T.s01 + 0.3);
+      // ANIMATION:END
+      const state = { t: 0 };
+      tl.to(state, { t: DUR, duration: DUR, ease: "none", onUpdate: () => render(state.t) }, 0);
+      render(0);
+      window.__timelines = window.__timelines || {};
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>
