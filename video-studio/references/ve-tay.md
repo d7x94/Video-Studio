@@ -39,7 +39,7 @@ Mẫu gửi người dùng, mỗi cảnh một khối:
 <câu lệnh tiếng Anh>
 ```
 
-Ảnh gửi qua ứng dụng chat thường bị nén nhỏ (đã gặp 1168x784 với tranh tạo bằng Grok): nhắc người dùng gửi dạng tệp nếu muốn nét hơn; `ve_tay_anh.py` vẫn phóng được, tranh màu nước chịu mờ nhẹ tốt.
+Tranh có thể nhỏ hơn khung video (đã gặp 1168x784 với tranh Grok gửi qua chat, chưa rõ do công cụ hay do nén khi gửi): nhắc người dùng chọn độ phân giải cao nhất và thử gửi dạng tệp; `ve_tay_anh.py` vẫn phóng được, tranh màu nước chịu mờ nhẹ tốt.
 
 Kèm hướng dẫn: dán từng câu lệnh vào công cụ tạo ảnh, chọn khổ ngang 16:9 nếu công cụ có tùy chọn, tải ảnh về đúng tên file, gửi lại cả bộ. Muốn khổ dọc đẹp hơn thì tạo thêm bản dọc (thay câu cuối bằng `Tall 9:16 portrait image.`) và lưu `<id>-doc.jpg`.
 
