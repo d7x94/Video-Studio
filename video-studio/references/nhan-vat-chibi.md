@@ -24,7 +24,7 @@ Có hai kiểu tay chân, chọn khi `C.add`:
 Giới hạn hiện có (đừng viết kịch bản đòi những thứ này):
 - Chỉ nhìn chính diện, hơi nghiêng về một phía; quay trái hoặc phải bằng cách lật gương nhanh (đồ cầm tay đổi bên theo).
 - Đi, chạy theo chiều ngang; ngồi trên ghế nhìn chính diện (kiểu `chibi` ngồi trông như ngồi xổm, nên dùng `que` cho cảnh ngồi). Không nằm, không cúi nhặt đồ, không leo trèo.
-- Đồ cầm thêm ngoài dàn chỉ có đèn pin (kiểu `que`). Không đổi trang phục, màu, đạo cụ trong video.
+- Đồ cầm thêm ngoài dàn chỉ có đèn pin (kiểu `que`). Không đổi trang phục, màu, đạo cụ giữa video (muốn nhân vật mặc đồ theo vai thì chọn skin ở casting, xem mục Skin theo vai cuối tài liệu).
 - Động tác sinh hoạt (đánh răng, ăn, uống, nghe điện thoại, khóc, sợ, lạnh, reo mừng, nhảy) chỉ có ở kiểu `que`, qua 10 clip chuyển động thật ở mục Động tác mocap. Tay không cầm đồ vật: bàn chải, cốc, điện thoại là ngầm hiểu.
 
 ## Dàn nhân vật
@@ -137,3 +137,30 @@ rồi trong `index.html` thay nội dung giữa `<!-- BG:BEGIN -->` và `<!-- BG
 Nhân vật, rig và nền chibi do studio tự vẽ bằng code, không dùng thư viện hay hình của bên thứ ba. Ghi vào `credits.md`: "Nhân vật chibi: đồ họa tự vẽ của studio (SVG)". Nếu nền là ảnh người dùng, ghi thêm "Ảnh nền: của người dùng".
 
 Video có dùng `play` (động tác mocap) ghi thêm: "Chuyển động: dữ liệu từ CMU Graphics Lab Motion Capture Database (mocap.cs.cmu.edu), cơ sở dữ liệu được tài trợ bởi NSF EIA-0196217."
+
+## Skin theo vai
+
+Nhân vật cố định (khuôn mặt, dáng, màu da, tóc, kính, giọng). Mỗi vai mặc một **skin**: trang phục, màu, mũ, đồ đeo, đạo cụ, kèm tên cử chỉ riêng của vai. Không ghi `skin` thì nhân vật mặc bộ đồ khóa trong roster như trước. Nguồn: `assets/lineart/src/cast/skins.ts` (dùng chung line-art và chibi).
+
+```js
+const sep = C.add("bac-si-minh", { x: 405, y: 1100, scale: 1, skin: "sep" });   // L.add cho line-art, cùng tùy chọn
+C.at(T.s04, () => { sep.say(3.4); sep.act("ra-lenh", 3.4); });                 // "ra-lenh" -> point
+```
+
+| Skin | Đồ | Cử chỉ theo vai (-> cử chỉ có sẵn) |
+|---|---|---|
+| `sep` | áo vest tối, cà vạt, quần tối | `ra-lenh` -> point, `thuyet-phuc` -> present, `tra-loi` -> talk |
+| `luat-su` | áo vest xám, quần tối, cầm hồ sơ (đạo cụ `books`) | `trinh-ho-so` -> present, `phan-tich` -> talk, `chi-dieu-khoan` -> point |
+| `nhan-vien-van-phong` | sơ mi, cà vạt, cặp da | (dùng cử chỉ chung) |
+| `bac-si` | áo blouse, ống nghe | `kham` -> point, `giai-thich` -> present |
+| `dieu-duong` | đồng phục xanh ngọc, mũ, khẩu trang | `huong-dan` -> present |
+| `can-bo-kiem-dich` | áo xanh nhạt, mũ kê-pi, thẻ đeo, bìa hồ sơ | `kiem-tra` -> point, `huong-dan` -> present |
+| `cong-nhan` | mũ bảo hộ, áo phản quang | (chung) |
+| `hanh-khach` | áo khoác, mũ lưỡi trai, khẩu trang, vali | (chung) |
+
+Quy tắc:
+- Kính thuộc về nhân vật, không thuộc skin: ai đeo kính vẫn đeo kính khi đổi skin, ai không đeo thì không có.
+- Skin chốt ở cổng casting (`casting.json` mỗi vai ghi `character` và `skin`) rồi khóa như nhân vật; không đổi skin giữa video.
+- Skin chỉ dùng được mẫu đồ đã có trong rig (xem `SUPPORTED` trong `assets/chibi/src/rig.ts`). Muốn đồ mới (vest dài, đồng phục cảnh sát...) phải vẽ vào cả hai rig rồi mới thêm skin; thư viện báo lỗi "chua ve ban chibi" nếu thiếu.
+- Tên cử chỉ riêng chỉ là biệt danh; không thêm động tác mới. Thêm skin: viết vào `LIST` trong `skins.ts`, build lại (xem `assets/lineart/src/BUILD.md`).
+- Cặp nhân vật và skin không bị giới hạn theo giới, nhưng đồ mặc kiểu `aodai`, `baba`, `dress` chưa có skin nên chỉ có trong bộ đồ khóa của nhân vật.

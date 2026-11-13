@@ -141,7 +141,7 @@ Vì sao dừng ở đây: sửa kịch bản thì rẻ, sửa sau khi đã lồn
 Như casting diễn viên trước khi quay: chốt ai đóng vai nào, trông thế nào, giọng gì, rồi mới lồng tiếng và dựng hình. Đổi nhân vật sau bước này nghĩa là lồng tiếng và dựng lại, nên dừng ở đây. Video kiểu `2d` thì bỏ qua bước này.
 
 **Line-art** (dàn nhân vật đã khóa trong `references/nhan-vat-line-art.md`, không tải gì):
-1. Mỗi vai trong "Danh sách vai" chọn 1 đến 2 nhân vật trong dàn hợp tuổi, giới, nghề; vai có thoại chọn giọng VieNeu như mục 2 bên dưới. Không có nhân vật hợp vai thì dùng người gần nhất và báo người dùng.
+1. Mỗi vai trong "Danh sách vai" chọn 1 đến 2 nhân vật trong dàn hợp tuổi, giới, nghề, và một skin hợp vai (sếp, luật sư, bác sĩ...; xem mục "Skin theo vai" cuối `references/nhan-vat-line-art.md`; ghi `skin` trong `casting.json`); vai có thoại chọn giọng VieNeu như mục 2 bên dưới. Không có nhân vật hợp vai thì dùng người gần nhất và báo người dùng.
 2. Thử vai bằng ảnh: `bash SKILL/scripts/new_project.sh ~/studio/<slug>/casting portrait lineart`, viết khối `SETUP` đặt các ứng viên đứng thành hàng (cách nhau khoảng 260 px ở `scale` 3,5, cùng quay phải), lớp chữ ghi mã vai dưới chân từng người, rồi `hyperframes snapshot --at 1 --no-end -o snaps`. Nghe thử giọng như mục 4 bên dưới.
 3. Gửi bảng casting (vai, nhân vật, giọng), ảnh và giọng thử. Dừng lại chờ. Chốt: `casting.json` mỗi vai ghi `role`, `character` (mã trong dàn), `voice`, `scenes`; và `casting.md`. Từ đây không đổi nhân vật hay giọng.
 

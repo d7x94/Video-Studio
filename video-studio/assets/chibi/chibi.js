@@ -210,6 +210,76 @@ var byId = (id) => {
   return s;
 };
 
+// lineart/src/cast/skins.ts
+var fromRoster = (id, label, gestures) => {
+  const s = byId(id);
+  return {
+    id: label,
+    label: s.role,
+    outfit: {
+      top: s.top,
+      topColor: s.topColor,
+      sleeve: s.sleeve,
+      bottom: s.bottom,
+      bottomColor: s.bottomColor,
+      hat: s.hat,
+      hatColor: s.hatColor,
+      extras: (s.extras ?? []).filter((e) => e !== "glasses"),
+      prop: s.prop,
+      propColor: s.propColor,
+      shoeColor: s.shoeColor
+    },
+    gestures
+  };
+};
+var LIST = [
+  // Bo do rieng cho cac vai ngoai dan
+  {
+    id: "sep",
+    label: "Sep / giam doc",
+    outfit: { top: "jacket", topColor: "#2f3441", sleeve: "long", bottom: "trousers", bottomColor: "#1f232b", extras: ["tie"], prop: "none", shoeColor: "#1b1b1b" },
+    gestures: { "ra-lenh": "point", "thuyet-phuc": "present", "tra-loi": "talk" }
+  },
+  {
+    id: "luat-su",
+    label: "Luat su",
+    outfit: { top: "jacket", topColor: "#3b3f4a", sleeve: "long", bottom: "trousers", bottomColor: "#2b2d34", extras: [], prop: "books", propColor: "#6b4f3a", shoeColor: "#1b1b1b" },
+    gestures: { "trinh-ho-so": "present", "phan-tich": "talk", "chi-dieu-khoan": "point" }
+  },
+  {
+    id: "nhan-vien-van-phong",
+    label: "Nhan vien van phong",
+    outfit: { top: "shirt", topColor: "#ece6d6", sleeve: "long", bottom: "trousers", bottomColor: "#2f3540", extras: ["tie"], prop: "briefcase" }
+  },
+  // Bo do theo nghe da co trong dan: ai cung mac duoc
+  fromRoster("bac-si-minh", "bac-si", { "kham": "point", "giai-thich": "present" }),
+  fromRoster("dieu-duong-lan", "dieu-duong", { "huong-dan": "present" }),
+  fromRoster("can-bo-thu", "can-bo-kiem-dich", { "kiem-tra": "point", "huong-dan": "present" }),
+  fromRoster("anh-tuan", "cong-nhan"),
+  fromRoster("anh-khoa", "hanh-khach")
+];
+var SKINS = Object.fromEntries(LIST.map((s) => [s.id, s]));
+var skinById = (id) => {
+  const s = SKINS[id];
+  if (!s) throw new Error(`unknown skin ${id} (co: ${Object.keys(SKINS).join(", ")})`);
+  return s;
+};
+function withSkin(spec, skinId) {
+  if (!skinId) return spec;
+  const sk = skinById(skinId);
+  const glasses = (spec.extras ?? []).includes("glasses");
+  const extras = [...sk.outfit.extras ?? []];
+  if (glasses && !extras.includes("glasses")) extras.push("glasses");
+  return { ...spec, ...sk.outfit, extras };
+}
+function applyGestureAliases(c, skinId) {
+  const map = skinId ? skinById(skinId).gestures : void 0;
+  if (!map) return c;
+  const base = c.act.bind(c);
+  c.act = (name, seconds) => base(map[name] ?? name, seconds);
+  return c;
+}
+
 // chibi/src/svg.ts
 var NS = "http://www.w3.org/2000/svg";
 var OUT = "#4a2c25";
@@ -1135,8 +1205,8 @@ function createChibiStage(svg, opt) {
       built = false;
     },
     add(who, o) {
-      const spec = typeof who === "string" ? byId(who) : who;
-      const c = createChibi(people, spec, o, `ch${n++}`, sticker);
+      const spec = withSkin(typeof who === "string" ? byId(who) : who, o.skin);
+      const c = applyGestureAliases(createChibi(people, spec, o, `ch${n++}`, sticker), o.skin);
       cast.push(c);
       return c;
     },
@@ -1191,6 +1261,7 @@ export {
   LOOKS,
   OUT,
   ROSTER,
+  SKINS,
   W,
   byId,
   createChibi,
@@ -1201,5 +1272,7 @@ export {
   g,
   line,
   shade,
-  speechAt
+  skinById,
+  speechAt,
+  withSkin
 };

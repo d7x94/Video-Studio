@@ -10,4 +10,5 @@ bash tools/build_lineart.sh          # ghi đè assets/lineart/lineart.js (esbui
 bash tools/build_lineart.sh --check  # chỉ kiểm tra lineart.js khớp nguồn
 ```
 
+Skin theo vai (trang phục, đạo cụ, cử chỉ riêng): sửa `cast/skins.ts`, dùng chung cho line-art và chibi, build cả hai.
 Sửa nhân vật: sửa `cast/roster.ts` (đã khóa, chỉ sửa khi người dùng yêu cầu), build lại, chụp thử.

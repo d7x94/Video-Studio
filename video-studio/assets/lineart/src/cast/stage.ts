@@ -15,9 +15,12 @@
 import { el, pen, inkDefs, f } from '../lib/ink.ts';
 import { createCharacter, type Character, type Spec } from './rig.ts';
 import { byId } from './roster.ts';
+import { withSkin, applyGestureAliases } from './skins.ts';
 
 export interface StageOptions { width: number; height: number; paper?: string; ink?: string }
-export interface AddOptions { x: number; y: number; scale?: number; dir?: 1 | -1; phase?: number }
+export interface AddOptions { x: number; y: number; scale?: number; dir?: 1 | -1; phase?: number;
+  /** Skin theo vai (xem cast/skins.ts), vd 'sep', 'luat-su'. Khong ghi thi mac bo do khoa trong roster. */
+  skin?: string }
 export interface LineStage {
   svg: SVGSVGElement;
   /** Layers inside the ink filter, back to front: back (props, set), people, front. */
@@ -57,9 +60,9 @@ export function createLineStage(svg: SVGSVGElement, opt: StageOptions): LineStag
     get time() { return simT; },
     setup(fn) { setupFn = fn; built = false; },
     add(who, o) {
-      const spec = typeof who === 'string' ? byId(who) : who;
+      const spec = withSkin(typeof who === 'string' ? byId(who) : who, o.skin);
       const sh = el('ellipse', { rx: 9 * (o.scale ?? 1), ry: 1.4 * (o.scale ?? 1), fill: '#1c1c1c', opacity: 0.07, cy: o.y + 1 }, people);
-      const c = createCharacter(people, spec, o);
+      const c = applyGestureAliases(createCharacter(people, spec, o), o.skin);
       cast.push(c); shadows.push([c, sh]);
       return c;
     },

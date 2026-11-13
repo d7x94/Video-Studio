@@ -18,7 +18,7 @@ Giới hạn hiện có (đừng viết kịch bản đòi những thứ này):
 - Chỉ nhìn nghiêng (quay trái hoặc phải), không quay mặt ra khán giả.
 - Không có miệng: nói bằng cử chỉ `talk` (tay mời, đầu gật theo nhịp).
 - Chưa có tư thế ngồi, nằm, cúi nhặt đồ, chạy.
-- Không đổi trang phục, màu, đạo cụ trong video.
+- Không đổi trang phục, màu, đạo cụ giữa video (muốn mặc đồ theo vai thì chọn skin ở casting, xem mục Skin theo vai cuối tài liệu).
 
 ## Dàn nhân vật (đã khóa)
 
@@ -77,3 +77,30 @@ L.at(T.s03, () => thu.face(1));                           // quay sang phải (k
 ## Ghi công
 
 Thư viện nét vẽ gốc: github.com/JDhruv14/line-art-animation (giấy phép MIT, `assets/lineart/LICENSE-line-art-animation.txt`). Ghi vào `credits.md` của mọi video line-art: "Nhân vật nét mực dựng trên thư viện line-art-animation của JDhruv14 (MIT)".
+
+## Skin theo vai
+
+Nhân vật cố định (khuôn mặt, dáng, màu da, tóc, kính, giọng). Mỗi vai mặc một **skin**: trang phục, màu, mũ, đồ đeo, đạo cụ, kèm tên cử chỉ riêng của vai. Không ghi `skin` thì nhân vật mặc bộ đồ khóa trong roster như trước. Nguồn: `assets/lineart/src/cast/skins.ts` (dùng chung line-art và chibi).
+
+```js
+const sep = C.add("bac-si-minh", { x: 405, y: 1100, scale: 1, skin: "sep" });   // L.add cho line-art, cùng tùy chọn
+C.at(T.s04, () => { sep.say(3.4); sep.act("ra-lenh", 3.4); });                 // "ra-lenh" -> point
+```
+
+| Skin | Đồ | Cử chỉ theo vai (-> cử chỉ có sẵn) |
+|---|---|---|
+| `sep` | áo vest tối, cà vạt, quần tối | `ra-lenh` -> point, `thuyet-phuc` -> present, `tra-loi` -> talk |
+| `luat-su` | áo vest xám, quần tối, cầm hồ sơ (đạo cụ `books`) | `trinh-ho-so` -> present, `phan-tich` -> talk, `chi-dieu-khoan` -> point |
+| `nhan-vien-van-phong` | sơ mi, cà vạt, cặp da | (dùng cử chỉ chung) |
+| `bac-si` | áo blouse, ống nghe | `kham` -> point, `giai-thich` -> present |
+| `dieu-duong` | đồng phục xanh ngọc, mũ, khẩu trang | `huong-dan` -> present |
+| `can-bo-kiem-dich` | áo xanh nhạt, mũ kê-pi, thẻ đeo, bìa hồ sơ | `kiem-tra` -> point, `huong-dan` -> present |
+| `cong-nhan` | mũ bảo hộ, áo phản quang | (chung) |
+| `hanh-khach` | áo khoác, mũ lưỡi trai, khẩu trang, vali | (chung) |
+
+Quy tắc:
+- Kính thuộc về nhân vật, không thuộc skin: ai đeo kính vẫn đeo kính khi đổi skin, ai không đeo thì không có.
+- Skin chốt ở cổng casting (`casting.json` mỗi vai ghi `character` và `skin`) rồi khóa như nhân vật; không đổi skin giữa video.
+- Skin chỉ dùng được mẫu đồ đã có trong rig (xem `SUPPORTED` trong `assets/chibi/src/rig.ts`). Muốn đồ mới (vest dài, đồng phục cảnh sát...) phải vẽ vào cả hai rig rồi mới thêm skin; thư viện báo lỗi "chua ve ban chibi" nếu thiếu.
+- Tên cử chỉ riêng chỉ là biệt danh; không thêm động tác mới. Thêm skin: viết vào `LIST` trong `skins.ts`, build lại (xem `assets/lineart/src/BUILD.md`).
+- Cặp nhân vật và skin không bị giới hạn theo giới, nhưng đồ mặc kiểu `aodai`, `baba`, `dress` chưa có skin nên chỉ có trong bộ đồ khóa của nhân vật.

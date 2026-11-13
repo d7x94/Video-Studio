@@ -9,6 +9,7 @@
 //   function render(t) { C.render(t); }
 import type { Spec } from '../../lineart/src/cast/rig.ts';
 import { byId } from '../../lineart/src/cast/roster.ts';
+import { withSkin, applyGestureAliases } from '../../lineart/src/cast/skins.ts';
 import { createChibi, type Chibi, type ChibiOptions } from './rig.ts';
 import { el, fill, line, f, OUT, W } from './svg.ts';
 
@@ -52,8 +53,8 @@ export function createChibiStage(svg: SVGSVGElement, opt: { width: number; heigh
     get time() { return simT; },
     setup(fn) { setupFn = fn; built = false; },
     add(who, o) {
-      const spec = typeof who === 'string' ? byId(who) : who;
-      const c = createChibi(people, spec, o, `ch${n++}`, sticker);
+      const spec = withSkin(typeof who === 'string' ? byId(who) : who, o.skin);
+      const c = applyGestureAliases(createChibi(people, spec, o, `ch${n++}`, sticker), o.skin);
       cast.push(c);
       return c;
     },
