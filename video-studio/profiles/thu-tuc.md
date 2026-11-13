@@ -8,6 +8,7 @@
 |---|---|
 | Thời lượng | 75 giây (dao động 60 đến 120) |
 | Giọng | Minh Đức (nam, Bắc, tin tức). Khán giả phía Nam: Minh Triết |
+| Nhạc nền | `nghiem-tuc`, studio tự sáng tác bằng `nhac_nen.py`; người dùng muốn thì tắt |
 | Tốc độ | 0.95 (chậm hơn chút để người xem kịp ghi nhớ) |
 | Kiểm chứng | **Bắt buộc, mức cao, phải dẫn văn bản** |
 

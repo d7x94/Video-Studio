@@ -8,6 +8,7 @@
 |---|---|
 | Thời lượng | 90 giây (dao động 60 đến 180) |
 | Giọng | Thiện Minh (nam, Bắc, kể chuyện) hoặc Ngọc Linh (nữ, Bắc, kể chuyện). Phía Nam: Thái Sơn, Thục Đoan |
+| Nhạc nền | `ke-chuyen` (chuyện hồi hộp, cảnh báo: `hoi-hop`), studio tự sáng tác bằng `nhac_nen.py`; người dùng muốn thì tắt |
 | Tốc độ | 0.95 |
 | Kiểm chứng | **Mức thấp** với chuyện hư cấu; **mức vừa** với chuyện có thật hay sự kiện lịch sử |
 

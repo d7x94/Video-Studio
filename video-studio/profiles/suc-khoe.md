@@ -8,6 +8,7 @@
 |---|---|
 | Thời lượng | 60 giây (dao động 45 đến 90) |
 | Giọng | Mai Anh (nữ, Bắc, tin tức). Khán giả phía Nam: Thùy Dung |
+| Nhạc nền | `nhe-nhang`, studio tự sáng tác bằng `nhac_nen.py`; người dùng muốn thì tắt |
 | Tốc độ | 1.0 |
 | Kiểm chứng | **Bắt buộc, mức cao** |
 

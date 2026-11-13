@@ -25,7 +25,7 @@ def main():
     a = ap.parse_args()
 
     p = Path(a.project)
-    slug = p.name
+    slug = p.resolve().name   # goi voi "." thi p.name rong
     out = p / "output"
     out.mkdir(exist_ok=True)
     made = []
