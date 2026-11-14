@@ -224,6 +224,7 @@ Tự xem `qa/preview/contact_sheet.png` trước: lỗi rõ ràng (chữ tràn, 
 ### Bước 7. Hoàn thiện
 
 1. Render bản cuối mỗi khổ: `render.sh build/<khổ> final renders/final_<khổ>.mp4`. Đo trên workspace 2 nhân: khoảng 1,3 giây render cho mỗi giây video với cảnh 2D ít chuyển động, khoảng 3,5 giây với cảnh line-art 2 nhân vật, khoảng 4,5 giây với cảnh chibi 2 nhân vật, khoảng 7 giây với cảnh vẽ tay, khoảng 3,3 giây với cảnh vẽ nét, khoảng 13 đến 15 giây với cảnh có nhân vật 3D. Với 3D, mọi lần render (cả bản xem trước ở bước 6) đều chạy nền (Bash `run_in_background`) và báo người dùng thời gian dự kiến. Render tuần tự từng khổ, không chạy song song (hai lần render tranh nhau CPU).
+1a. Kiểu `ve-net`, tùy chọn: tiếng bút theo từng nét (`tieng_but.py`, xem mục "Tiếng bút" của `references/ve-net.md`); tạo trước khi ghép nhạc, `nhac_nen.py` tự trộn `audio/hieu-ung.wav`.
 1b. Có nhạc nền: `python3 SKILL/scripts/nhac_nen.py . --kieu <kiểu>` (ghép vào mọi `renders/final_*.mp4`, giữ bản không nhạc riêng). Render lại khổ nào thì chạy lại lệnh này.
 1c. Chuẩn hóa âm lượng mỗi bản cuối (sau nhạc nền): `bash SKILL/scripts/chuan_am.sh renders/final_<khổ>.mp4` (về -14 LUFS, đỉnh không quá -1 dBTP, hình giữ nguyên, ghi đè tại chỗ). Thoát mã 1 và cảnh báo khi không đạt, thường do nhạc nền quá to: giảm bằng `nhac_nen.py --muc` rồi chạy lại.
 2. Chép `build/landscape/phu-de.srt` (hoặc portrait nếu chỉ có khổ dọc) ra `phu-de.srt` của dự án.

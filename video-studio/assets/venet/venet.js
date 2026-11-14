@@ -662,7 +662,11 @@ export function createStage(svg, opts = {}) {
   // Bao cao thoi gian tung canh: de agent kiem tra ve co kip khong
   function report() {
     if (!finalized) finalize();
-    return scenes.map((s) => ({ id: s.id, start: s.start, end: s.end, drawEnd: +(s.start + s.drawEnd).toFixed(2), items: s.items.length }));
+    // ev: thoi diem (giay, tinh tu dau video) va do dai tung net, de scripts/tieng_but.py dung tieng but
+    return scenes.map((s) => ({
+      id: s.id, start: s.start, end: s.end, drawEnd: +(s.start + s.drawEnd).toFixed(2), items: s.items.length,
+      ev: s.items.filter((it) => it.kind !== "wait").map((it) => ({ t: +(s.start + it.start).toFixed(3), d: +it.dur.toFixed(3), k: it.kind })),
+    }));
   }
 
   // Font tai xong thi do lai chu va ve lai khung hien tai

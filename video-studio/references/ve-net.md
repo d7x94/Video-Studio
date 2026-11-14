@@ -107,6 +107,22 @@ bash SKILL/scripts/ve_net_kiem_tra.sh build/<khổ>
 
 In mỗi cảnh một dòng: số nét, thời điểm vẽ xong và thời điểm cảnh kết thúc. Dòng có `KHONG KIP` hay mục `[CANH BAO]` nghĩa là nét cuối bị cắt khi cảnh kết thúc: bớt nét, bớt chữ, hoặc nhờ biên kịch kéo dài lời đọc. Script thoát mã 1 khi có cảnh báo.
 
+## Tiếng bút (tùy chọn)
+
+Mỗi nét có tiếng bút ma sát trên giấy, chữ viết thành từng đợt ngắn, vệt dạ quang êm và trầm hơn, mỗi cảnh mới có tiếng lật giấy nhẹ. Mọi tiếng tổng hợp bằng numpy (nhiễu trắng lọc dải), không dùng mẫu âm thanh bên ngoài. Mốc thời gian lấy đúng từ composition, nên tiếng khớp nét vẽ.
+
+```bash
+bash SKILL/scripts/ve_net_kiem_tra.sh build/<khổ> --json <PROJECT>/venet-report.json   # thêm --json để lưu thời điểm từng nét
+python3 SKILL/scripts/tieng_but.py <PROJECT>                                          # ghi audio/hieu-ung.wav
+python3 SKILL/scripts/nhac_nen.py <PROJECT> --kieu <kiểu>                              # có hieu-ung.wav thì tự trộn cùng nhạc
+python3 SKILL/scripts/nhac_nen.py <PROJECT> --chi-hieu-ung                             # brief ghi không nhạc: chỉ ghép tiếng bút
+```
+
+- Tiếng bút không bị bộ nén theo lời đọc như nhạc nền; giữ nhỏ bằng `--muc` của `tieng_but.py` (đỉnh mặc định -18 dBFS). `--khong-hieu-ung` ở `nhac_nen.py` bỏ qua file này; `--bo` gỡ cả nhạc lẫn tiếng bút.
+- Hai khổ có thể lệch nhịp vẽ (khác tốc độ co giãn): lấy báo cáo từ khổ nào thì tiếng khớp khổ đó; dùng cho cả hai khổ thì nên lấy báo cáo ở khổ đang giao trước, hoặc chạy riêng từng khổ vào `--bao-cao` khác.
+- Đã kiểm chứng: lấy báo cáo thật từ Chrome, tạo file tiếng tất định (chạy lại cho cùng một file), năng lượng chỉ rơi vào các khoảng có nét, ghép vào video mẫu không chồng tiếng khi chạy lại, `--bo` trả đúng bản gốc, nhạc nền một mình cho ra âm thanh giống hệt bản cũ. **Chưa nghe thử bằng tai người** và chưa chạy trên video HyperFrames thật: nghe lại và chỉnh `--muc` trước khi giao.
+- `credits.md`: "Tiếng bút: do studio tự tổng hợp bằng code, không dùng mẫu âm thanh bên ngoài".
+
 ## Quy tắc đã rút ra khi thử
 
 - **Tất định**: độ lệch tay vẽ sinh từ hạt giống cố định (`seed`); không dùng `Math.random`, `Date.now`.
