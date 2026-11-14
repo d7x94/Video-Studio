@@ -128,7 +128,7 @@ Kiểu `ve-net`: trong lời giao việc cho biên kịch, yêu cầu `visual` m
 
 ### Bước 3. Cổng duyệt 1: kịch bản
 
-Gửi người dùng: bảng cảnh (lời đọc, chữ trên hình, ý tưởng hình), thời lượng ước tính, tóm tắt kiểm chứng (bao nhiêu ý đã đối chiếu, nguồn chính, chỗ đã sửa). Dừng lại chờ.
+Gửi người dùng: bảng cảnh (lời đọc, chữ trên hình, ý tưởng hình), thời lượng ước tính, ba phương án cấu trúc kèm phương án biên kịch đã chọn (mục "Phương án cấu trúc" đầu `kich-ban.md`; người dùng muốn phương án khác thì giao biên kịch viết lại theo phương án đó và chạy lại kiểm chứng cho câu bị đổi), tóm tắt kiểm chứng (bao nhiêu ý đã đối chiếu, nguồn chính, chỗ đã sửa). Dừng lại chờ.
 
 Cùng lúc ở cổng này:
 - **Nghe thử giọng**: đọc một câu thật của kịch bản bằng giọng mặc định và 4 đến 6 giọng khác hợp thể loại (theo `references/giong-doc.md`), mỗi giọng một file mp3 tên ghi giọng, giới, miền; gửi kèm để người dùng chọn trước khi lồng tiếng cả video (đổi giọng sau khi đã dựng hình thì phải lồng tiếng và render lại). Cách làm: viết `thu-giong/scenes.json`, mỗi cảnh cùng một câu, trường `voice` khác nhau, rồi `python3 SKILL/scripts/tts.py thu-giong/scenes.json thu-giong` và đổi wav sang mp3 bằng ffmpeg.
