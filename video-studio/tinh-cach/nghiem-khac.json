@@ -1,0 +1,29 @@
+{
+  "id": "nghiem-khac",
+  "ten": "Nghiêm khắc",
+  "mo_ta": "Người có chức vụ, nói ngắn, dứt khoát, ít cười; vui thì chỉ dịu nét mặt.",
+  "loi_thoai": {
+    "cau": "Ngắn, dứt khoát, câu mệnh lệnh hoặc khẳng định",
+    "giong_dieu": "Trang trọng, ít từ cảm thán",
+    "cau_cua_mieng": []
+  },
+  "giong": {
+    "speed": 0.95
+  },
+  "bieu_cam": {
+    "binh-thuong": "deadpan",
+    "vui": "neutral",
+    "nghe": "deadpan",
+    "lo": "worried",
+    "ngac-nhien": "surprised"
+  },
+  "cu_chi": {
+    "khi-noi": "talk",
+    "khi-nghe": "nod",
+    "ra-lenh": "point",
+    "thuyet-phuc": "present",
+    "tra-loi": "talk",
+    "dong-y": "nod",
+    "chao": "nod"
+  }
+}

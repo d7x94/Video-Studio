@@ -11,7 +11,8 @@ import { el, g, fill, line, flat, f, shade, clamp, lerp, ease, hash, setUnder, u
 import { RAISE, drawQueArm, drawQueLegs, drawFlashlight, queArmPoints, drawQueArmAt, queLegPoints, drawQueLegAt, type QueArm, type QueLeg, type Vec } from './que.ts';
 import { hasClip, clipLength, sampleClip } from './mocap.ts';
 
-export type Expr = 'neutral' | 'happy' | 'wink' | 'deadpan' | 'surprised' | 'worried';
+import { EXPRS, type Expr } from '../../lineart/src/cast/tinh-cach.ts';
+export { EXPRS, type Expr };
 export type { Gesture };
 
 export interface Look { skin: string; hair: string; blush?: number }
@@ -39,6 +40,8 @@ export type Item = 'den-pin';
 export interface ChibiOptions { x: number; y: number; scale?: number; dir?: 1 | -1; limbs?: 'chibi' | 'que';
   /** Skin theo vai (xem lineart/src/cast/skins.ts), vd 'sep', 'luat-su'. Khong ghi thi mac bo do khoa trong roster. */
   skin?: string;
+  /** Tinh cach (cach dien) cua vai, ma trong tinh-cach.js: doi ten cu chi, ten bieu cam, them noi()/nghe(). */
+  tinhCach?: string;
   /** Khung hien (giay): chi hien khi from <= t < until; dung de doi skin theo canh (xem san khau). */
   from?: number; until?: number }
 export interface Chibi {
@@ -62,6 +65,8 @@ export interface Chibi {
   face(dir: 1 | -1): void;
   /** Net mat; khong ghi giay thi giu den khi doi. */
   expr(name: Expr, seconds?: number): void;
+  /** Net mat mac dinh (khi khong co bieu cam nao dang chay); tinh cach dat qua 'binh-thuong'. */
+  exprBase(name: Expr): void;
   /** Nhep mieng theo loi doc trong `seconds` giay ke tu bay gio. */
   say(seconds: number): void;
   update(t: number, dt: number, speech: (t: number) => number | null): void;
@@ -546,6 +551,7 @@ export function createChibi(layer: Element, spec: Spec, opt: ChibiOptions, uid: 
   let mo: { id: string; t0: number; t1: number } | null = null;
   let moPrev: { id: string; t0: number; t1: number } | null = null;   // clip dang tron ra khi clip moi bat dau
   const mv: number[] = new Array(20).fill(0), mvPrev: number[] = new Array(20).fill(0);
+  let baseExpr: Expr = 'neutral';
   let exprState: { name: Expr; t1: number } = { name: 'neutral', t1: Infinity };
   let speakUntil = -1, speakFrom = -1;
   let now = 0;
@@ -581,6 +587,7 @@ export function createChibi(layer: Element, spec: Spec, opt: ChibiOptions, uid: 
     },
     face(d) { if (d !== dir) { flipFrom = dir; dir = d; flipAt = now; } },
     expr(name, seconds) { exprState = { name, t1: seconds ? now + seconds : Infinity }; },
+    exprBase(name) { if (exprState.name === baseExpr && exprState.t1 === Infinity) exprState = { name, t1: Infinity }; baseExpr = name; },
     say(seconds) { speakFrom = now; speakUntil = now + seconds; },
     update(t, dt, speech) {
       now = t;
@@ -682,7 +689,7 @@ export function createChibi(layer: Element, spec: Spec, opt: ChibiOptions, uid: 
       }
       face.root.setAttribute('transform', 'translate(6 0)');
       // net mat
-      if (exprState.t1 <= t) exprState = { name: 'neutral', t1: Infinity };
+      if (exprState.t1 <= t) exprState = { name: baseExpr, t1: Infinity };
       const ex = exprState.name;
       const period = 3.1 + blinkSeed * 1.6;
       const ph = (t + blinkSeed * period) % period;

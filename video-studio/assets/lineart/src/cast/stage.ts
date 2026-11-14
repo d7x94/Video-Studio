@@ -15,12 +15,15 @@
 import { el, pen, inkDefs, f } from '../lib/ink.ts';
 import { createCharacter, type Character, type Spec } from './rig.ts';
 import { byId } from './roster.ts';
-import { withSkin, applyGestureAliases } from './skins.ts';
+import { withSkin } from './skins.ts';
+import { applyTinhCach, type Dien } from './tinh-cach.ts';
 
 export interface StageOptions { width: number; height: number; paper?: string; ink?: string }
 export interface AddOptions { x: number; y: number; scale?: number; dir?: 1 | -1; phase?: number;
   /** Skin theo vai (xem cast/skins.ts), vd 'sep', 'luat-su'. Khong ghi thi mac bo do khoa trong roster. */
   skin?: string;
+  /** Tinh cach (cach dien) cua vai, ma trong tinh-cach.js (vd 'nghiem-khac'): doi ten cu chi, them noi()/nghe(). */
+  tinhCach?: string;
   /** Khung hien (giay): nhan vat chi hien khi from <= t < until. Dung de doi skin theo canh:
    *  them cung nhan vat nhieu lan, moi ban mot skin, khung hien noi tiep nhau o ranh gioi canh.
    *  Hai ban cua cung mot nhan vat khong duoc trung khung hien. */
@@ -31,7 +34,7 @@ export interface LineStage {
   back: SVGGElement; people: SVGGElement; front: SVGGElement;
   width: number; height: number;
   setup(fn: (L: LineStage) => void): void;
-  add(who: string | Spec, opt: AddOptions): Character;
+  add(who: string | Spec, opt: AddOptions): Character & Dien;
   at(t: number, fn: () => void): void;
   ground(y: number, x0?: number, x1?: number, weight?: number): SVGPathElement;
   render(t: number): void;
@@ -69,7 +72,7 @@ export function createLineStage(svg: SVGSVGElement, opt: StageOptions): LineStag
       const w0 = o.from ?? -Infinity, w1 = o.until ?? Infinity;
       checkWindow(spec.id, w0, w1, o.from !== undefined || o.until !== undefined);
       const sh = el('ellipse', { rx: 9 * (o.scale ?? 1), ry: 1.4 * (o.scale ?? 1), fill: '#1c1c1c', opacity: 0.07, cy: o.y + 1 }, people);
-      const c = applyGestureAliases(createCharacter(people, spec, o), o.skin);
+      const c = applyTinhCach(createCharacter(people, spec, o), o.tinhCach);
       cast.push(c); shadows.push([c, sh]);
       if (o.from !== undefined || o.until !== undefined) windows.push([c, sh, w0, w1]);
       return c;

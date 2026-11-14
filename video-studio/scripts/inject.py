@@ -29,6 +29,7 @@ import html
 import json
 import re
 import shutil
+import sys
 from pathlib import Path
 
 
@@ -256,6 +257,16 @@ def main():
     # Canh 3D: am luong loi doc theo tung khung hinh, dung cho gat dau va cu chi khi noi
     if 'src="speech.js"' in src:
         write_speech_env(project / "voiceover.wav", index.parent / "speech.js")
+    if 'src="tinh-cach.js"' in src:
+        # tinh cach (cach dien) cua vai: thu vien SKILL/tinh-cach/ + PROJECT/tinh-cach/
+        sys.path.insert(0, str(Path(__file__).resolve().parent))
+        import vai
+        tcs, err = vai.read_tc(project)
+        if err:
+            sys.exit("Loi tinh cach: " + "; ".join(err))
+        (index.parent / "tinh-cach.js").write_text(
+            "window.TINH_CACH = " + json.dumps({k: t for k, (_, t) in tcs.items()}, ensure_ascii=False) + ";\n",
+            encoding="utf-8")
 
     index.write_text(src, encoding="utf-8")
     write_srt(caps, index.parent / "phu-de.srt")

@@ -1,0 +1,29 @@
+{
+  "id": "chuyen-nghiep",
+  "ten": "Chuyên nghiệp (luật sư, văn phòng)",
+  "mo_ta": "Chỉn chu, lập luận theo ý, trình hồ sơ, chỉ vào điều khoản.",
+  "loi_thoai": {
+    "cau": "Có cấu trúc: thứ nhất, thứ hai; dùng từ chuyên môn vừa phải",
+    "giong_dieu": "Trang trọng, rành mạch",
+    "cau_cua_mieng": []
+  },
+  "giong": {
+    "speed": 1.0
+  },
+  "bieu_cam": {
+    "binh-thuong": "neutral",
+    "vui": "happy",
+    "nghe": "neutral",
+    "lo": "worried",
+    "ngac-nhien": "surprised"
+  },
+  "cu_chi": {
+    "khi-noi": "talk",
+    "khi-nghe": "nod",
+    "trinh-ho-so": "present",
+    "phan-tich": "talk",
+    "chi-dieu-khoan": "point",
+    "chao": "bow",
+    "dong-y": "nod"
+  }
+}

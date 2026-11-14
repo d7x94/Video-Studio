@@ -1,16 +1,22 @@
 #!/usr/bin/env python3
-"""Thu vien ho so vai: vai da casting o video truoc, luu de video sau dung lai.
+"""Thu vien ho so vai va tinh cach: vai, tinh cach da dung o video truoc, luu de video sau dung lai.
 
-Ho so vai nam o SKILL/vai/<ma-vai>.json (xem SKILL/vai/README.md). Nhan vat (mat, dang, giong)
-la dien vien co dinh trong dan; ho so vai ghi ai dong, ten goi, chuc vu, tuoi, cac bo do (skin)
-vai duoc mac va cac cu chi hay dung.
+Ba lop: nhan vat (dien vien co dinh trong dan: mat, dang, giong), skin (trang phuc), tinh cach
+(cach dien: loi thoai, nhip doc, bieu cam, cu chi). Ho so vai (SKILL/vai/<ma-vai>.json, xem
+SKILL/vai/README.md) ghep danh tinh (ho ten, chuc vu, tuoi) voi nhan vat, cac bo do va mot tinh cach.
+Tinh cach o SKILL/tinh-cach/<ma>.json (xem SKILL/tinh-cach/README.md); tinh cach moi cua mot video
+de o PROJECT/tinh-cach/.
 
 Dung:
   python3 vai.py danh-sach [--kieu line-art|chibi|3d]   # in bang ho so vai
-  python3 vai.py kiem [FILE ...]                          # kiem ho so vai (mac dinh: ca thu vien)
+  python3 vai.py tinh-cach [PROJECT]                      # in bang tinh cach (thu vien + cua du an)
+  python3 vai.py kiem [FILE ...]                          # kiem ho so vai va tinh cach (mac dinh: ca thu vien)
   python3 vai.py kiem-casting PROJECT/casting.json        # kiem casting.json, in khung hien khi doi skin theo canh
+  python3 vai.py ap-giong PROJECT/casting.json PROJECT/scenes.json
+                                                          # dat speed theo tinh cach cho canh cua tung vai (canh chua co speed)
+  python3 vai.py tinh-cach-js PROJECT OUT.js              # gom tinh cach thanh tinh-cach.js (inject.py goi)
   python3 vai.py xuat PROJECT/casting.json THU_MUC --video SLUG [--ngay YYYY-MM-DD]
-                                                          # ghi ho so vai (moi hoac cap nhat) tu casting da chot
+                                                          # ghi ho so vai va tinh cach moi tu casting da chot
 
 Dan nhan vat, skin, cu chi doc tu assets/lineart/lineart.js va assets/chibi/chibi.js bang node,
 nen luon khop ban build. Thoat ma 1 neu co loi.
@@ -25,6 +31,8 @@ from pathlib import Path
 
 SKILL = Path(__file__).resolve().parent.parent
 LIB = SKILL / "vai"
+TC_LIB = SKILL / "tinh-cach"
+TC_DAC_BIET = {"cu_chi": ("khi-noi", "khi-nghe"), "bieu_cam": ("binh-thuong", "nghe")}
 KIEU = ("line-art", "chibi", "3d")
 GOC = "goc"  # skin dac biet: bo do khoa trong roster cua nhan vat
 TUOI = {"child": (3, 15), "adult": (18, 59), "elder": (60, 100)}
@@ -38,8 +46,8 @@ def load_cast():
         "const L = await import(process.argv[1]); const C = await import(process.argv[2]);"
         "console.log(JSON.stringify({"
         "roster: L.ROSTER.map(r => ({id: r.id, name: r.name, role: r.role, build: r.build, sex: r.sex})),"
-        "skins: Object.values(L.SKINS).map(s => ({id: s.id, label: s.label, gestures: s.gestures || {}})),"
-        "gestures: [...L.GESTURES], clips: Object.keys(C.MOCAP)}))"
+        "skins: Object.values(L.SKINS).map(s => ({id: s.id, label: s.label})),"
+        "gestures: [...L.GESTURES], exprs: [...C.EXPRS], clips: Object.keys(C.MOCAP)}))"
     )
     out = subprocess.run(
         ["node", "--input-type=module", "-e", js,
@@ -75,7 +83,57 @@ def read_cards(paths=None):
     return cards
 
 
-def check_card(c, cast, name="?"):
+def read_tc(project=None):
+    """Tinh cach: thu vien + PROJECT/tinh-cach/. Tra ve {id: (duong dan, du lieu)}; trung id thi bao loi."""
+    out, err = {}, []
+    dirs = [TC_LIB] + ([Path(project) / "tinh-cach"] if project else [])
+    for d in dirs:
+        for p in sorted(d.glob("*.json")) if d.is_dir() else []:
+            if p.name.startswith("_"):
+                continue
+            try:
+                t = json.loads(p.read_text(encoding="utf-8"))
+            except json.JSONDecodeError as e:
+                err.append(f"{p}: JSON sai: {e}"); continue
+            tid = t.get("id")
+            if tid in out:
+                err.append(f"{p}: trung id `{tid}` voi {out[tid][0]} (tinh cach moi phai dat ma khac)")
+                continue
+            out[tid] = (p, t)
+    return out, err
+
+
+def check_tc(t, cast, name="?"):
+    err = []
+    for k in ("id", "ten", "cu_chi"):
+        if not t.get(k):
+            err.append(f"thieu `{k}`")
+    if t.get("id") and not MA.match(t["id"]):
+        err.append(f"id `{t['id']}` chi dung chu thuong khong dau, so, gach noi")
+    if t.get("id") and not name.startswith("_") and name not in ("?", f"{t['id']}.json"):
+        err.append(f"ten file phai la {t['id']}.json")
+    for k, v in (t.get("cu_chi") or {}).items():
+        if not MA.match(k):
+            err.append(f"cu_chi: ten `{k}` chi dung chu thuong khong dau, gach noi")
+        if v not in cast["gestures"]:
+            err.append(f"cu_chi.{k}: `{v}` khong phai cu chi co san ({', '.join(cast['gestures'])})")
+    for k, v in (t.get("bieu_cam") or {}).items():
+        if not MA.match(k):
+            err.append(f"bieu_cam: ten `{k}` chi dung chu thuong khong dau, gach noi")
+        if v not in cast["exprs"]:
+            err.append(f"bieu_cam.{k}: `{v}` khong phai net mat co san ({', '.join(cast['exprs'])})")
+    gi = t.get("giong") or {}
+    if "speed" in gi and not (isinstance(gi["speed"], (int, float)) and 0.85 <= gi["speed"] <= 1.15):
+        err.append("giong.speed phai trong khoang 0.85 den 1.15")
+    if "pause_before" in gi and not (isinstance(gi["pause_before"], (int, float)) and 0 <= gi["pause_before"] <= 1.5):
+        err.append("giong.pause_before phai trong khoang 0 den 1.5")
+    for c in t.get("dong_tac") or []:
+        if c not in cast["clips"]:
+            err.append(f"dong_tac `{c}` khong co trong clip chibi ({', '.join(cast['clips'])})")
+    return err
+
+
+def check_card(c, cast, name="?", tcs=None):
     """Tra ve danh sach loi cua mot ho so vai."""
     err = []
     if "_loi" in c:
@@ -115,15 +173,18 @@ def check_card(c, cast, name="?"):
             err.append(f"trang_phuc.{ten}: skin `{sk}` khong co (co: {GOC}, {', '.join(cast['skins'])})")
     if hai_d and "mac-dinh" not in tp:
         err.append("trang_phuc can bo `mac-dinh`")
+    tcs = tcs if tcs is not None else read_tc()[0]
     ok = set(cast["gestures"])
-    for sk in tp.values():
-        if sk in cast["skins"]:
-            ok |= set(cast["skins"][sk]["gestures"])
+    if c.get("tinh_cach"):
+        if c["tinh_cach"] not in tcs:
+            err.append(f"tinh_cach `{c['tinh_cach']}` khong co trong thu vien SKILL/tinh-cach/")
+        else:
+            ok |= set(tcs[c["tinh_cach"]][1].get("cu_chi") or {})
     if "chibi" in kieu:
         ok |= {"sweep"} | set(cast["clips"])
     for g in c.get("cu_chi") or []:
         if g not in ok:
-            err.append(f"cu_chi `{g}` khong co trong rig hay skin cua vai (dong tac moi phai lam vao rig truoc)")
+            err.append(f"cu_chi `{g}` khong co trong rig hay tinh cach cua vai (dong tac moi phai lam vao rig truoc)")
     for v in c.get("da_dong") or []:
         if not isinstance(v, dict) or not v.get("video"):
             err.append("da_dong: moi muc can `video`")
@@ -170,14 +231,25 @@ def cmd_danh_sach(a):
 
 def cmd_kiem(a):
     cast = load_cast()
-    cards = read_cards([Path(p) for p in a.files] if a.files else None)
+    tcs, tc_err = read_tc()
     n = 0
+    for e in tc_err:
+        print(f"[LOI] {e}"); n += 1
+    files = [Path(p) for p in a.files]
+    tc_files = [p for p in files if p.resolve().parent == TC_LIB.resolve()] if files else [p for p, _ in tcs.values()]
+    for p in tc_files:
+        t = json.loads(p.read_text(encoding="utf-8"))
+        for e in check_tc(t, cast, p.name):
+            print(f"[LOI] tinh-cach/{p.name}: {e}"); n += 1
+    files = [p for p in files if p not in tc_files]
+    cards = read_cards(files or None) if (files or not a.files) else {}
     for p, c in cards.items():
         for e in check_card(c, cast, p.name):
             print(f"[LOI] {p.name}: {e}"); n += 1
     for e in check_library(read_cards() if a.files else cards, cast):
         print(f"[LOI] {e}"); n += 1
-    print(f"{len(cards)} ho so, {n} loi" if n else f"[OK] {len(cards)} ho so vai hop le")
+    print(f"{len(cards)} ho so vai, {len(tc_files)} tinh cach, {n} loi" if n
+          else f"[OK] {len(cards)} ho so vai, {len(tc_files)} tinh cach hop le")
     return 1 if n else 0
 
 
@@ -191,12 +263,22 @@ def cmd_kiem_casting(a):
     data = json.loads(Path(a.casting).read_text(encoding="utf-8"))
     roles = data if isinstance(data, list) else data.get("roles") or data.get("vai") or []
     cards = {c.get("id"): c for c in read_cards().values() if "_loi" not in c}
-    err, warn, plan = [], [], []
+    project = Path(a.casting).resolve().parent
+    tcs, tc_err = read_tc(project)
+    err, warn, plan = list(tc_err), [], []
+    for tid, (p, t) in tcs.items():
+        if p.resolve().parent != TC_LIB.resolve():
+            err += [f"tinh-cach/{p.name}: {e}" for e in check_tc(t, cast, p.name)]
     seen_char, seen_voice = {}, {}
     for r in roles:
         ten = r.get("role") or r.get("vai_id") or "?"
         char = r.get("character")
         is3d = "model" in r
+        tc = r.get("tinh_cach")
+        if tc and tc not in tcs:
+            err.append(f"{ten}: tinh_cach `{tc}` khong co (thu vien SKILL/tinh-cach/ hoac {project}/tinh-cach/)")
+        if char and not tc:
+            warn.append(f"{ten}: chua chot tinh_cach (nhan vat se dien kieu mac dinh)")
         if char:
             if char not in cast["roster"]:
                 err.append(f"{ten}: character `{char}` khong co trong dan")
@@ -220,6 +302,8 @@ def cmd_kiem_casting(a):
                     err.append(f"{ten}: ho so vai ghi nhan_vat `{card.get('nhan_vat')}`, casting ghi `{char}`")
                 if v and card.get("giong") and card["giong"] != v:
                     err.append(f"{ten}: ho so vai ghi giong `{card['giong']}`, casting ghi `{v}`")
+                if card.get("tinh_cach") and tc != card["tinh_cach"]:
+                    err.append(f"{ten}: ho so vai ghi tinh_cach `{card['tinh_cach']}`, casting ghi `{tc}`")
         stc = r.get("skin_theo_canh")
         if not stc:
             if card and not is3d and r.get("skin") not in (None, GOC, *card.get("trang_phuc", {}).values()):
@@ -256,7 +340,7 @@ def cmd_kiem_casting(a):
             for i, (sk, ss) in enumerate(runs):
                 frm = "" if i == 0 else f"from: T.{ss[0]}"
                 unt = "" if i == len(runs) - 1 else f"until: T.{runs[i + 1][1][0]}"
-                opt = ", ".join(x for x in (f'skin: "{sk}"' if sk != GOC else "", frm, unt) if x)
+                opt = ", ".join(x for x in (f'skin: "{sk}"' if sk != GOC else "", f'tinhCach: "{tc}"' if tc else "", frm, unt) if x)
                 plan.append(f'{char} [{ss[0]}..{ss[-1]}]: add("{char}", {{ x, y, scale, {opt} }})')
     for w in warn:
         print(f"[CANH BAO] {w}")
@@ -267,6 +351,57 @@ def cmd_kiem_casting(a):
         for p in plan:
             print("  " + p)
     print(f"{len(roles)} vai, {len(err)} loi" if err else f"[OK] casting hop le ({len(roles)} vai)")
+    return 1 if err else 0
+
+
+def cmd_tinh_cach(a):
+    tcs, err = read_tc(a.project)
+    for e in err:
+        print(f"[LOI] {e}")
+    print("| Ma | Ten | Mo ta | Nhip doc | Cu chi theo tinh huong | Bieu cam (chibi) | Nguon |")
+    print("|---|---|---|---|---|---|---|")
+    for tid, (p, t) in sorted(tcs.items()):
+        cc = ", ".join(f"{k}={v}" for k, v in (t.get("cu_chi") or {}).items())
+        bc = ", ".join(f"{k}={v}" for k, v in (t.get("bieu_cam") or {}).items())
+        src = "thu vien" if p.resolve().parent == TC_LIB.resolve() else "du an"
+        print(f"| {tid} | {t.get('ten', '')} | {t.get('mo_ta', '')} | {(t.get('giong') or {}).get('speed', 1.0)} | {cc} | {bc} | {src} |")
+    return 1 if err else 0
+
+
+def cmd_ap_giong(a):
+    """Dat speed (va pause_before) theo tinh cach cho cac canh co giong cua vai; khong ghi de canh da co."""
+    project = Path(a.casting).resolve().parent
+    tcs, err = read_tc(project)
+    if err:
+        for e in err:
+            print(f"[LOI] {e}")
+        return 1
+    data = json.loads(Path(a.casting).read_text(encoding="utf-8"))
+    roles = data if isinstance(data, list) else data.get("roles") or data.get("vai") or []
+    sp = Path(a.scenes); scenes = json.loads(sp.read_text(encoding="utf-8"))
+    n = 0
+    for r in roles:
+        if not (r.get("voice") and r.get("tinh_cach") in tcs):
+            continue
+        gi = tcs[r["tinh_cach"]][1].get("giong") or {}
+        for sc in scenes["scenes"]:
+            if sc.get("voice") != r["voice"]:
+                continue
+            for k in ("speed", "pause_before"):
+                if k in gi and k not in sc:
+                    sc[k] = gi[k]; n += 1
+                    print(f"{sc['id']}: {k} = {gi[k]} ({r.get('role')}, {r['tinh_cach']})")
+    sp.write_text(json.dumps(scenes, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    print(f"Da dat {n} gia tri; canh da doi speed thi doc lai bang tts.py --only <canh>" if n else "Khong co gi de dat")
+    return 0
+
+
+def cmd_tinh_cach_js(a):
+    tcs, err = read_tc(a.project)
+    for e in err:
+        print(f"[LOI] {e}", file=sys.stderr)
+    data = {tid: t for tid, (_, t) in tcs.items()}
+    Path(a.out).write_text("window.TINH_CACH = " + json.dumps(data, ensure_ascii=False) + ";\n", encoding="utf-8")
     return 1 if err else 0
 
 
@@ -314,6 +449,8 @@ def cmd_xuat(a):
             card["trang_phuc"] = tp
             if hs.get("cu_chi"):
                 card["cu_chi"] = hs["cu_chi"]
+            if r.get("tinh_cach"):
+                card["tinh_cach"] = r["tinh_cach"]
         else:
             if a.kieu and a.kieu not in card.get("kieu_hinh", []):
                 card.setdefault("kieu_hinh", []).append(a.kieu)
@@ -325,9 +462,17 @@ def cmd_xuat(a):
             dd.append({"video": a.video, "ngay": ngay})
         p = out / f"{vid}.json"
         p.write_text(json.dumps(card, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-        errs = check_card(card, cast, p.name)
+        errs = check_card(card, cast, p.name, read_tc(Path(a.casting).resolve().parent)[0])
         print(f"{'[MOI]' if moi else '[CAP NHAT]'} {p}" + ("" if not errs else "  LOI: " + "; ".join(errs)))
         n += 1; bad += bool(errs)
+    # Tinh cach moi cua du an (chua co trong thu vien) xuat kem de them vao repo cung ho so vai
+    project = Path(a.casting).resolve().parent
+    tcs, _ = read_tc(project)
+    for tid, (p, t) in tcs.items():
+        if p.resolve().parent != TC_LIB.resolve() and any(r.get("tinh_cach") == tid for r in roles):
+            (out / "tinh-cach").mkdir(exist_ok=True)
+            (out / "tinh-cach" / p.name).write_text(p.read_text(encoding="utf-8"), encoding="utf-8")
+            print(f"[TINH CACH MOI] {out / 'tinh-cach' / p.name}")
     print(f"Da ghi {n} ho so vai vao {out}" + (f", {bad} ho so con loi: sua truoc khi them vao repo" if bad else ""))
     return 1 if bad else 0
 
@@ -336,7 +481,10 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = ap.add_subparsers(dest="cmd", required=True)
     s = sub.add_parser("danh-sach"); s.add_argument("--kieu", choices=KIEU); s.set_defaults(fn=cmd_danh_sach)
+    s = sub.add_parser("tinh-cach"); s.add_argument("project", nargs="?"); s.set_defaults(fn=cmd_tinh_cach)
     s = sub.add_parser("kiem"); s.add_argument("files", nargs="*"); s.set_defaults(fn=cmd_kiem)
+    s = sub.add_parser("ap-giong"); s.add_argument("casting"); s.add_argument("scenes"); s.set_defaults(fn=cmd_ap_giong)
+    s = sub.add_parser("tinh-cach-js"); s.add_argument("project"); s.add_argument("out"); s.set_defaults(fn=cmd_tinh_cach_js)
     s = sub.add_parser("kiem-casting"); s.add_argument("casting"); s.set_defaults(fn=cmd_kiem_casting)
     s = sub.add_parser("xuat"); s.add_argument("casting"); s.add_argument("thu_muc")
     s.add_argument("--video", required=True); s.add_argument("--ngay"); s.add_argument("--kieu", choices=KIEU)

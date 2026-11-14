@@ -1,0 +1,29 @@
+{
+  "id": "soi-noi",
+  "ten": "Sôi nổi",
+  "mo_ta": "Năng động, nói nhanh, biểu cảm mạnh, hay vẫy tay.",
+  "loi_thoai": {
+    "cau": "Ngắn, nhiều câu cảm thán",
+    "giong_dieu": "Vui, nhanh",
+    "cau_cua_mieng": []
+  },
+  "giong": {
+    "speed": 1.05
+  },
+  "bieu_cam": {
+    "binh-thuong": "happy",
+    "vui": "happy",
+    "nghe": "happy",
+    "lo": "worried",
+    "ngac-nhien": "surprised",
+    "dua": "wink"
+  },
+  "cu_chi": {
+    "khi-noi": "present",
+    "khi-nghe": "nod",
+    "chao": "wave",
+    "dong-y": "nod",
+    "goi": "wave",
+    "chi": "point"
+  }
+}
