@@ -47,6 +47,7 @@ elif [ "$MODE" = vetay ]; then
 elif [ "$MODE" = venet ]; then
   cp "$STUDIO_SKILL/templates/$FORMAT-venet.html" "$OUT/index.html"
   cp "$STUDIO_SKILL/assets/venet/venet.js" "$OUT/"
+  cp "$STUDIO_SKILL/assets/venet/venet-chu.js" "$OUT/"   # net chu viet tay cho S.write (venet.js nap file nay)
 else
   cp "$STUDIO_SKILL/templates/$FORMAT.html" "$OUT/index.html"
 fi

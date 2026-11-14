@@ -58,6 +58,7 @@ S.text("ngày", 250, 640, { size: 72, anchor: "middle", mark: true });  // chữ
 - `hatch(shape, { gap, angle, w })`: gạch chéo phủ một đa giác **lồi**; `shape` là `poly.circle(cx, cy, r, part)` (`part` là `"bottom"`, `"top"`, `"left"`, `"right"` để lấy nửa hình tròn, bỏ trống thì lấy cả hình), `poly.ellipse(cx, cy, rx, ry)`, `poly.rect(x, y, w, h)` hay mảng điểm. `shade(shape, { gap, color })` là tô mảng bằng nét to, hơi trong.
 - `text(chuỗi, x, y, { size, weight, anchor, color, mark, under, lh })`: chữ **viết ra** từ trái sang phải, bút chạy theo mép chữ. `anchor` là `start`, `middle` hay `end`; xuống dòng bằng `\n` (mỗi dòng viết nối tiếp, `lh` là giãn dòng, mặc định 1,25); `mark: true` hay một mã màu thêm vệt tô bút dạ quang dưới chữ; `under: "red"` thêm nét gạch chân uốn sóng. Chữ dùng font Be Vietnam Pro của template (có đủ dấu tiếng Việt).
 - `wait(giây)`: bút nghỉ một lúc, để khớp nhịp lời đọc.
+- `write(chuỗi, x, y, { size, anchor, color, w, lh, mark, under, at, dur })`: **chữ viết tay thật**, bút đi theo từng nét chữ cái (kể cả dấu thanh, dấu mũ, dấu ngang, râu ơ ư, dấu nặng), khác `text` là chữ hiện dần từ trái sang phải. Cùng tùy chọn với `text` (`mark`, `under`, `anchor`, `\n` xuống dòng); `w` là độ dày nét (mặc định theo `size`). Mỗi chữ cái lệch nhẹ góc, đường cơ sở và cỡ theo hạt giống của cảnh, nên không giống phông chữ in. Ký tự không có trong bộ nét (ví dụ biểu tượng lạ) bị bỏ qua và ghi vào `warnings` (xem `V.warnings` hay `[venet]` trong console). Dùng cho tiêu đề và nhãn ngắn; câu dài nhiều dòng thì viết lâu hơn `text`, nên dùng `dur` hay `ve_net_kiem_tra.sh` để chắc kịp.
 
 **Hình ghép sẵn** (tham số cuối là cỡ; tất cả nhận `color`, `w`): `sun(cx, cy, r)`, `moon`, `check`, `cross`, `heart`, `star`, `bulb` (bóng đèn), `person` (người que), `doc(x, y, w, h)` (tờ giấy), `clock`, `magnifier` (kính lúp), `house`, `tree`. Hình nào thiếu thì ghép từ nét cơ bản hay `path()`.
 
@@ -111,7 +112,8 @@ In mỗi cảnh một dòng: số nét, thời điểm vẽ xong và thời đi�
 - **Tất định**: độ lệch tay vẽ sinh từ hạt giống cố định (`seed`); không dùng `Math.random`, `Date.now`.
 - Không thêm `filter` SVG hay CSS lên nét (blur, shadow): render chậm gấp nhiều lần.
 - `hatch` chỉ đúng với đa giác lồi. Hình lõm thì chia thành các phần lồi, hay dùng `shade` lên hình chữ nhật bao.
-- Chữ **không** vẽ từng nét chữ cái mà hiện dần từ trái sang phải với bút chạy theo mép; đủ để thấy "đang viết" nhưng không giống nét bút thật từng chữ. Muốn nét chữ thật cần một phông chữ nét đơn đã kiểm giấy phép, chưa có trong repo.
+- `text` **không** vẽ từng nét chữ cái mà hiện dần từ trái sang phải với bút chạy theo mép; đủ để thấy "đang viết" nhưng không giống nét bút thật. Muốn nét chữ thật thì dùng `write` (bộ nét `assets/venet/venet-chu.js`, sinh từ phông Patrick Hand giấy phép OFL bằng `bash tools/build_venet_chu.sh`; phông chỉ dùng để tạo bộ nét, không cần nạp vào video).
+- `write` mới được thử trong trình duyệt (Chrome, ảnh chụp ở nhiều thời điểm, đủ dấu tiếng Việt, đúng thứ tự nét); chưa có số đo thời gian render trong HyperFrames. Chạy thử một video mẫu và ghi số đo vào đây trước khi đặt `write` làm mặc định cho chữ chính của cảnh.
 - Chữ dài hơn bề rộng không gian thiết kế sẽ tràn khung: ngắt dòng bằng `\n` hoặc giảm `size`.
 
 ## Kiểm tra
@@ -121,3 +123,5 @@ In mỗi cảnh một dòng: số nét, thời điểm vẽ xong và thời đi�
 ## Ghi công
 
 Ghi vào `credits.md`: "Nét vẽ, chữ viết tay, bàn tay cầm bút: đồ họa tự vẽ của studio (SVG)". Chữ dùng font Be Vietnam Pro cài sẵn trong template, như các kiểu hình khác. Không có tài nguyên ngoài khác.
+
+Video dùng `write` thì ghi thêm: "Chữ viết tay: nét chữ lấy từ phông Patrick Hand (Copyright (c) 2010-2012 Patrick Wagesreiter), SIL Open Font License 1.1". File giấy phép: `assets/venet/LICENSE-patrick-hand-OFL.txt`.
