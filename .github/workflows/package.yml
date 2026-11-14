@@ -45,8 +45,10 @@ jobs:
           node-version: 22
       - name: Kiem venet-chu.js khop nguon
         run: |
-          pip install pillow numpy scipy fonttools
-          bash tools/build_venet_chu.sh --check
+          # venv: tools/build_venet_chu.sh chay python3 -I (bo qua thu muc goi cua nguoi dung), nen goi phai nam trong venv
+          python3 -m venv "$RUNNER_TEMP/venv"
+          "$RUNNER_TEMP/venv/bin/pip" install pillow numpy scipy fonttools
+          PATH="$RUNNER_TEMP/venv/bin:$PATH" bash tools/build_venet_chu.sh --check
   release:
     needs: check
     if: github.event_name != 'pull_request'
