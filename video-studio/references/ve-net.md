@@ -99,6 +99,23 @@ Tất cả khuôn trên dựng được bằng các hàm có sẵn (`person`, `r
 - **Quy trình**: các hình tròn đánh số nối bằng `arrow`, chữ bên cạnh.
 - **Giữ khoảng thở**: chừa ít nhất khoảng 60 đơn vị giữa các hình để bút và bàn tay không che nhau.
 
+## Bảng chung: camera trượt giữa các cảnh
+
+Mặc định mỗi cảnh là một tờ giấy mới và mờ đi khi hết cảnh. Với chuỗi ý nối nhau (bước 1, bước 2, bước 3; nguyên nhân dẫn đến hậu quả) có thể cho các cảnh nằm trên **một tờ giấy lớn**: thêm `tiep` vào `V.scene`, camera trượt sang cạnh cảnh trước, nét đã vẽ ở cảnh trước vẫn ở lại bên ngoài khung.
+
+```js
+const S1 = V.scene("s01", { start: T.s01 });
+const S2 = V.scene("s02", { start: T.s02, tiep: "phai" });   // nằm bên phải cảnh s01, camera trượt sang
+const S3 = V.scene("s03", { start: T.s03, tiep: "xuong" });  // nằm dưới cảnh s02
+```
+
+- `tiep`: `"phai"`, `"trai"`, `"xuong"` hoặc `"len"`, vị trí một khung hình so với cảnh ngay trước. Cảnh không có `tiep` mở tờ giấy mới như cũ. Tên lạ hoặc `tiep` ở cảnh đầu tiên thì tính là cảnh mới và báo ở `warnings`.
+- Camera trượt khoảng 0,8 giây ngay đầu cảnh nối tiếp; cảnh nối tiếp mặc định chờ 0,5 giây rồi mới vào nét đầu (chỉnh bằng `delay`). Bàn tay luôn tính theo khung hình hiện tại, nên vẫn ở đúng đầu bút khi camera đã dừng.
+- Tờ giấy chỉ mờ đi sau cảnh cuối của nó (`fadeOut` của cảnh cuối). Cảnh cuối của cả video giữ đến hết như cũ.
+- Mỗi cảnh vẫn tự tính tọa độ trong khung của mình, nên `space`, `draw` và kiểm tra thời gian vẽ dùng như trước. Chữ HTML trên hình (`.tag`, `.big`, `.source`) cố định theo màn hình, không trượt theo camera; tween chúng theo từng cảnh như bình thường.
+- Nên dùng một hướng liền mạch (chỉ sang phải, hoặc chỉ xuống) cho cả chuỗi; đổi hướng liên tục làm người xem mất định hướng. Chuỗi dài quá khoảng 8 cảnh thì tách thành hai tờ giấy bằng một cảnh không có `tiep`.
+- Chưa có chế độ thu nhỏ để xem toàn bảng.
+
 ## Kiểm tra thời gian vẽ
 
 Sau `inject.py` (để có `T`), chạy:
