@@ -41,6 +41,11 @@ const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const ease = (p) => (p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2);
 const f1 = (v) => (Math.round(v * 10) / 10).toString();
 
+// Nhip but: deu (mac dinh, nhu cu), nhe, manh = cham o dau net, nhanh o giua, cham o cuoi net.
+// pace(a, u) = (1-a)*u + a*smoothstep(u): don dieu, dao ham o hai dau la (1-a) > 0 nen but khong bao gio dung han.
+const NHIP = { deu: 0, nhe: 0.5, manh: 0.85 };
+const pace = (a, u) => { const x = clamp(u, 0, 1); return (1 - a) * x + a * x * x * (3 - 2 * x); };
+
 // Bang mau but: ten ngan hoac ma CSS bat ky
 export const COLORS = {
   ink: "#2a2320", red: "#c8432b", orange: "#e8912d", blue: "#2f6fa8",
@@ -183,7 +188,7 @@ export function createStage(svg, opts = {}) {
       };
       if (o2.alpha != null) attrs["stroke-opacity"] = o2.alpha;
       const p = el("path", attrs, c);
-      const it = { kind: "stroke", el: p, len: 0, at: o2.at, dur: o2.dur, last: -1 };
+      const it = { kind: "stroke", el: p, len: 0, at: o2.at, dur: o2.dur, nhip: o2.nhip, last: -1 };
       const remeasure = () => { it.len = p.getTotalLength(); it.nat = Math.max(0.18, Math.min(1.8, it.len / SPEED)); };
       remeasure();
       it.remeasure = remeasure;
@@ -569,7 +574,17 @@ export function createStage(svg, opts = {}) {
 
   // ---------------------------------------------------------------- thoi gian
   function resolve(s) {
-    s.items.forEach((it) => { if (it.measure) it.measure(); if (it.dur != null) it.explicit = true; });
+    s.items.forEach((it) => {
+      if (it.measure) it.measure();
+      if (it.dur != null) it.explicit = true;
+      // nhip but: rieng tung net (o2.nhip) hoac chung ca khung (createStage opts.nhip); hop quet (wipe) giu deu
+      const m = it.nhip || opts.nhip || "deu";
+      if (!(m in NHIP)) {
+        const msg = `nhip "${m}" khong co (chon deu, nhe, manh); dung deu`;
+        if (!warnings.includes(msg)) warnings.push(msg);
+      }
+      it.pa = it.kind === "wipe" || it.kind === "wait" ? 0 : (NHIP[m] || 0);
+    });
     const life = s.end - s.start;
     const last = scenes[scenes.length - 1] === s;
     const real = s.items.filter((it) => it.kind !== "wait");
@@ -623,7 +638,7 @@ export function createStage(svg, opts = {}) {
       const t0 = it.start - it.tr;
       if (lt < t0) return i === 0 ? null : prev;
       if (lt < it.start) { const e = ease((lt - t0) / it.tr); return [prev[0] + (a[0] - prev[0]) * e, prev[1] + (a[1] - prev[1]) * e]; }
-      if (lt <= it.start + it.dur) return toScreen(s, it.pt((lt - it.start) / it.dur));
+      if (lt <= it.start + it.dur) return toScreen(s, it.pt(pace(it.pa, (lt - it.start) / it.dur)));
       prev = toScreen(s, it.pt(1));
     }
     // Sau net cuoi: ban tay roi khung
@@ -646,7 +661,7 @@ export function createStage(svg, opts = {}) {
       for (const it of s.items) {
         if (it.kind === "wait") continue;
         if (it.measure) it.measure();
-        it.set(clamp((lt - it.start) / it.dur, 0, 1));
+        it.set(pace(it.pa, (lt - it.start) / it.dur));
       }
       cur = s;
     }
