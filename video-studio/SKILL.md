@@ -118,6 +118,8 @@ Script cài HyperFrames, GSAP và font Be Vietnam Pro cục bộ, VieNeu, tải 
 3. Tự áp các sửa đổi kiểm chứng đề xuất vào `scenes.json` và `kich-ban.md`. Câu nào bị đánh "không kiểm chứng được" thì bỏ hoặc viết lại cho an toàn, không giữ nguyên.
 Có nhân vật (line-art, chibi hoặc 3D): trong lời giao việc cho biên kịch, yêu cầu thêm mục "Danh sách vai" ở đầu `kich-ban.md`, mỗi vai một dòng: mã vai không dấu (vd `bac-si`, `be-gai`), tuổi, giới, nghề, tính cách, các cảnh xuất hiện, có thoại riêng hay không; và dùng đúng mã vai đó trong trường `visual` của từng cảnh. Vai chỉ đọc lời dẫn mà không xuất hiện trên hình thì ghi là "người dẫn chuyện".
 
+Trước khi giao việc, xem thư viện hồ sơ vai (vai đã đóng ở các video trước): `python3 SKILL/scripts/vai.py danh-sach --kieu <kiểu hình>`. Vai trong brief khớp một hồ sơ (cùng chức vụ hoặc người dùng gọi đúng tên, vd "lại là Giám đốc Hùng") thì đưa hồ sơ đó cho biên kịch, kèm yêu cầu: dùng đúng `ho_ten`, `cach_goi`, `xung_ho`, `tinh_cach`, ghi `vai_id` vào dòng của vai trong "Danh sách vai", và chỉ cho vai mặc các bộ đồ trong `trang_phuc` của hồ sơ. Vai cần đổi đồ theo cảnh (sáng đi làm, tối về nhà) thì "Danh sách vai" ghi bộ đồ của từng cảnh và lý do đổi.
+
 Kiểu `ve-tay`: trong lời giao việc cho biên kịch, yêu cầu `visual` mỗi cảnh mô tả đúng **một** bức tranh không có chữ (bối cảnh, người, hành động, góc nhìn, màu chủ đạo), thêm trường `focus` (0 đến 1, vị trí ngang của chủ thể chính), và `on_screen.title` chỉ là nhãn ngắn. Người thật không có ảnh đương thời thì vẽ từ xa hoặc từ phía sau. Xem `references/ve-tay.md`.
 
 Kiểu `ve-net`: trong lời giao việc cho biên kịch, yêu cầu `visual` mỗi cảnh mô tả bố cục một tờ giấy bằng hình và nét đơn giản (hình nào, ở đâu, vẽ theo thứ tự nào, trùng thứ tự lời đọc), 2 đến 8 nét mỗi cảnh, và `on_screen.title` là chữ chính sẽ được viết ra bằng bút (tối đa khoảng 8 từ). Cảnh giải thích ý trừu tượng thì theo mục "Biến ý trừu tượng thành hình" của tài liệu đó. Không cần `focus`. Xem `references/ve-net.md`.
@@ -138,12 +140,16 @@ Vì sao dừng ở đây: sửa kịch bản thì rẻ, sửa sau khi đã lồn
 
 ### Bước 3b. Cổng casting: chốt nhân vật (chỉ khi có nhân vật line-art, chibi hoặc 3D)
 
-Như casting diễn viên trước khi quay: chốt ai đóng vai nào, trông thế nào, giọng gì, rồi mới lồng tiếng và dựng hình. Đổi nhân vật sau bước này nghĩa là lồng tiếng và dựng lại, nên dừng ở đây. Video kiểu `2d` thì bỏ qua bước này.
+Như casting diễn viên trước khi quay: chốt ai đóng vai nào, trông thế nào, giọng gì, mặc gì ở từng cảnh, rồi mới lồng tiếng và dựng hình. Đổi nhân vật sau bước này nghĩa là lồng tiếng và dựng lại, nên dừng ở đây. Video kiểu `2d` thì bỏ qua bước này.
+
+**Hồ sơ vai có sẵn** (thư mục `SKILL/vai/`, xem `vai/README.md`): vai có `vai_id` trong "Danh sách vai" thì dùng đúng nhân vật, giọng và bộ đồ trong hồ sơ, không chọn ứng viên khác; bảng casting ghi "dùng lại hồ sơ <vai_id>" để người dùng xác nhận. Người dùng muốn đổi người hay giọng của vai đã có hồ sơ thì làm vai mới (mã khác) hoặc sửa hồ sơ qua repo, không đổi lén trong video.
+
+**Đổi skin theo cảnh** (line-art, chibi): nhân vật không bao giờ đổi, nhưng một vai được mặc nhiều bộ đồ khác nhau ở các cảnh khác nhau nếu kịch bản có lý do (sáng đi làm, tối về nhà). Mọi bộ đồ phải chốt ở cổng này, ghi trong `casting.json` bằng `skin_theo_canh` (mã cảnh -> mã skin, ghi đủ mọi cảnh của vai; `goc` là bộ đồ khóa của nhân vật). Chỉ đổi ở ranh giới hai cảnh, không đổi giữa một cảnh. Ảnh thử vai đặt mỗi bộ đồ của vai một người đứng cạnh nhau. Nhân vật 3D chưa đổi skin theo cảnh được.
 
 **Line-art** (dàn nhân vật đã khóa trong `references/nhan-vat-line-art.md`, không tải gì):
 1. Mỗi vai trong "Danh sách vai" chọn 1 đến 2 nhân vật trong dàn hợp tuổi, giới, nghề, và một skin hợp vai (sếp, luật sư, bác sĩ...; xem mục "Skin theo vai" cuối `references/nhan-vat-line-art.md`; ghi `skin` trong `casting.json`); vai có thoại chọn giọng VieNeu như mục 2 bên dưới. Không có nhân vật hợp vai thì dùng người gần nhất và báo người dùng.
 2. Thử vai bằng ảnh: `bash SKILL/scripts/new_project.sh ~/studio/<slug>/casting portrait lineart`, viết khối `SETUP` đặt các ứng viên đứng thành hàng (cách nhau khoảng 260 px ở `scale` 3,5, cùng quay phải), lớp chữ ghi mã vai dưới chân từng người, rồi `hyperframes snapshot --at 1 --no-end -o snaps`. Nghe thử giọng như mục 4 bên dưới.
-3. Gửi bảng casting (vai, nhân vật, giọng), ảnh và giọng thử. Dừng lại chờ. Chốt: `casting.json` mỗi vai ghi `role`, `character` (mã trong dàn), `voice`, `scenes`; và `casting.md`. Từ đây không đổi nhân vật hay giọng.
+3. Gửi bảng casting (vai, nhân vật, giọng), ảnh và giọng thử. Dừng lại chờ. Chốt: `casting.json` mỗi vai ghi `role`, `character` (mã trong dàn), `voice`, `scenes`, `skin` hoặc `skin_theo_canh`, `vai_id` nếu dùng lại hồ sơ, và `ho_so` (họ tên, chức vụ, tuổi, tính cách, xưng hô, cử chỉ hay dùng, theo các trường của `vai/README.md`) cho vai mới; và `casting.md`. Chạy `python3 SKILL/scripts/vai.py kiem-casting ~/studio/<slug>/casting.json` đến khi không còn lỗi. Từ đây không đổi nhân vật, giọng hay bộ đồ của từng cảnh.
 
 **Chibi** (cùng dàn nhân vật đã khóa, xem `references/nhan-vat-chibi.md`, không tải gì): làm như line-art ở trên, chỉ khác lệnh thử vai: `bash SKILL/scripts/new_project.sh ~/studio/<slug>/casting portrait chibi`, đặt các ứng viên đứng thành hàng (cách nhau khoảng 300 px ở `scale` 1,4, cùng quay phải, nhiều hơn 3 người thì xếp nhiều hàng), cho mỗi người một biểu cảm (`expr`) để người dùng thấy nét mặt. Chốt `casting.json` và `casting.md` như line-art.
 
@@ -187,7 +193,7 @@ bash SKILL/scripts/new_project.sh ~/studio/<slug> portrait     # nếu có TikTo
 bash SKILL/scripts/new_project.sh ~/studio/<slug> landscape    # nếu có YouTube
 ```
 
-Có nhân vật line-art: thêm tham số `lineart` cho từng lệnh trên (không cần tải gì); nhân vật chibi: thêm tham số `chibi`. Với cả hai, trong lời giao việc cho dựng cảnh thêm dòng `Casting: <PROJECT>/casting.json (đã chốt, dùng đúng mã nhân vật; không đổi)`. Ở bước 6 và QA, nhân vật trên hình sai so với `casting.md` là lỗi mức "Chặn".
+Có nhân vật line-art: thêm tham số `lineart` cho từng lệnh trên (không cần tải gì); nhân vật chibi: thêm tham số `chibi`. Với cả hai, trong lời giao việc cho dựng cảnh thêm dòng `Casting: <PROJECT>/casting.json (đã chốt, dùng đúng mã nhân vật; không đổi)`. Vai có `skin_theo_canh`: chép thêm phần "Khung hiện" mà `vai.py kiem-casting` in ra vào lời giao việc. Ở bước 6 và QA, nhân vật trên hình sai so với `casting.md` là lỗi mức "Chặn".
 
 Kiểu `ve-tay`: thêm tham số `vetay` cho từng lệnh trên, rồi chuẩn bị tranh cho mọi khổ đã tạo: `python3 SKILL/scripts/ve_tay_anh.py ~/studio/<slug>` (thêm `--paper <màu>` nếu phong cách không dùng giấy mặc định; màu này phải trùng biến `--paper` trong `index.html`). Trong lời giao việc cho dựng cảnh, thêm dòng `Kiểu hình ve-tay, phong cách <mã>: đọc SKILL/references/ve-tay.md`. Video vẽ tay agent tự render bản nháp như 2D.
 
@@ -239,7 +245,7 @@ Tự xem `qa/preview/contact_sheet.png` trước: lỗi rõ ràng (chữ tràn, 
 python3 SKILL/scripts/package.py ~/studio/<slug> --thumb-at <giây của khung hình đẹp nhất>
 ```
 
-Gửi từng file trong `output/` bằng công cụ gửi file (không gửi thư mục). Video có nhân vật (line-art, chibi hoặc 3D): nếu casting có vai không có trong dàn và phải dùng người gần nhất, hoặc tạo nhân vật mới chưa có trong dàn diễn viên, hỏi người dùng có muốn thêm vào dàn diễn viên của skill để tập sau dùng lại không (thêm bằng cách cập nhật skill, vì workspace không giữ lại sang cuộc chat khác). Tin nhắn cuối ngắn: gói gồm gì, thời lượng, điểm cần người dùng tự làm khi đăng (chọn nhãn nội dung AI nếu nền tảng yêu cầu, tải phụ đề .srt lên YouTube, ghim bình luận nguồn nếu hồ sơ yêu cầu).
+Gửi từng file trong `output/` bằng công cụ gửi file (không gửi thư mục). Video có nhân vật: lưu vai vào thư viện hồ sơ vai bằng `python3 SKILL/scripts/vai.py xuat ~/studio/<slug>/casting.json ~/studio/<slug>/output/vai --video <slug> --kieu <kiểu hình>` (vai mới thành hồ sơ mới, vai dùng lại được thêm video vào `da_dong`), gửi các file đó, và nói ngắn với người dùng: muốn video sau dùng lại các vai này thì thêm các file vào `video-studio/vai/` của repo rồi cài lại skill (workspace không giữ sang chat khác). Video có nhân vật (line-art, chibi hoặc 3D): nếu casting có vai không có trong dàn và phải dùng người gần nhất, hoặc tạo nhân vật mới chưa có trong dàn diễn viên, hỏi người dùng có muốn thêm vào dàn diễn viên của skill để tập sau dùng lại không (thêm bằng cách cập nhật skill, vì workspace không giữ lại sang cuộc chat khác). Tin nhắn cuối ngắn: gói gồm gì, thời lượng, điểm cần người dùng tự làm khi đăng (chọn nhãn nội dung AI nếu nền tảng yêu cầu, tải phụ đề .srt lên YouTube, ghim bình luận nguồn nếu hồ sơ yêu cầu).
 
 ## Quy tắc chung
 

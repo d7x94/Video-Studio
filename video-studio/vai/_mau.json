@@ -1,0 +1,20 @@
+{
+  "id": "giam-doc-hung",
+  "ho_ten": "Trần Văn Hùng",
+  "cach_goi": "Giám đốc Hùng",
+  "chuc_vu": "Giám đốc công ty",
+  "noi_lam": "Công ty vận tải (hư cấu)",
+  "tuoi": 48,
+  "tinh_cach": "Nghiêm, nói ngắn, quan tâm nhân viên",
+  "xung_ho": "Xưng tôi; gọi nhân viên là em",
+  "nhan_vat": "anh-duc",
+  "giong": "Minh Đức",
+  "kieu_hinh": ["line-art", "chibi"],
+  "trang_phuc": {
+    "mac-dinh": "sep",
+    "o-nha": "goc"
+  },
+  "cu_chi": ["ra-lenh", "thuyet-phuc", "talk", "nod"],
+  "da_dong": [],
+  "ghi_chu": "File mẫu (tên bắt đầu bằng _ nên vai.py bỏ qua). Chép thành <id>.json rồi sửa."
+}

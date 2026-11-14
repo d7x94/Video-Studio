@@ -24,7 +24,7 @@ Có hai kiểu tay chân, chọn khi `C.add`:
 Giới hạn hiện có (đừng viết kịch bản đòi những thứ này):
 - Chỉ nhìn chính diện, hơi nghiêng về một phía; quay trái hoặc phải bằng cách lật gương nhanh (đồ cầm tay đổi bên theo).
 - Đi, chạy theo chiều ngang; ngồi trên ghế nhìn chính diện (kiểu `chibi` ngồi trông như ngồi xổm, nên dùng `que` cho cảnh ngồi). Không nằm, không cúi nhặt đồ, không leo trèo.
-- Đồ cầm thêm ngoài dàn chỉ có đèn pin (kiểu `que`). Không đổi trang phục, màu, đạo cụ giữa video (muốn nhân vật mặc đồ theo vai thì chọn skin ở casting, xem mục Skin theo vai cuối tài liệu).
+- Đồ cầm thêm ngoài dàn chỉ có đèn pin (kiểu `que`). Không tự đổi trang phục, màu, đạo cụ giữa video. Muốn nhân vật mặc đồ theo vai thì chọn skin ở casting; muốn đổi đồ theo cảnh thì chốt `skin_theo_canh` ở casting (xem mục Skin theo vai cuối tài liệu).
 - Động tác sinh hoạt (đánh răng, ăn, uống, nghe điện thoại, khóc, sợ, lạnh, reo mừng, nhảy) chỉ có ở kiểu `que`, qua 10 clip chuyển động thật ở mục Động tác mocap. Tay không cầm đồ vật: bàn chải, cốc, điện thoại là ngầm hiểu.
 
 ## Dàn nhân vật
@@ -160,7 +160,14 @@ C.at(T.s04, () => { sep.say(3.4); sep.act("ra-lenh", 3.4); });                 /
 
 Quy tắc:
 - Kính thuộc về nhân vật, không thuộc skin: ai đeo kính vẫn đeo kính khi đổi skin, ai không đeo thì không có.
-- Skin chốt ở cổng casting (`casting.json` mỗi vai ghi `character` và `skin`) rồi khóa như nhân vật; không đổi skin giữa video.
+- Skin chốt ở cổng casting (`casting.json` mỗi vai ghi `character` và `skin`) rồi khóa như nhân vật. Vai cần đổi đồ theo cảnh thì ghi `skin_theo_canh` (mã cảnh -> mã skin, `goc` là bộ đồ khóa) ở casting; chỉ đổi ở ranh giới hai cảnh, không đổi giữa một cảnh, và không thêm bộ đồ nào chưa chốt.
+- Cách dựng khi đổi skin theo cảnh: thêm cùng nhân vật nhiều lần, mỗi bản một skin, với khung hiện `from`/`until` (giây) nối tiếp nhau ở đầu cảnh đổi đồ. `python3 SKILL/scripts/vai.py kiem-casting casting.json` in sẵn các dòng này. Hai bản của cùng nhân vật trùng khung hiện thì thư viện báo lỗi.
+
+```js
+const hung = C.add("anh-duc", { x: 540, y: 1700, scale: 1.4, skin: "sep", until: T.s03 });   // s01-s02: đi làm
+const hungNha = C.add("anh-duc", { x: 540, y: 1700, scale: 1.4, from: T.s03 });               // s03 trở đi: bộ đồ gốc
+C.at(T.s03 + 0.2, () => hungNha.say(2));   // hẹn giờ cho đúng bản đang hiện
+```
 - Skin chỉ dùng được mẫu đồ đã có trong rig (xem `SUPPORTED` trong `assets/chibi/src/rig.ts`). Muốn đồ mới (vest dài, đồng phục cảnh sát...) phải vẽ vào cả hai rig rồi mới thêm skin; thư viện báo lỗi "chua ve ban chibi" nếu thiếu.
 - Tên cử chỉ riêng chỉ là biệt danh; không thêm động tác mới. Thêm skin: viết vào `LIST` trong `skins.ts`, build lại (xem `assets/lineart/src/BUILD.md`).
 - Cặp nhân vật và skin không bị giới hạn theo giới, nhưng đồ mặc kiểu `aodai`, `baba`, `dress` chưa có skin nên chỉ có trong bộ đồ khóa của nhân vật.

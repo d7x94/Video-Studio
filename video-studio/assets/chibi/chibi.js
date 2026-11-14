@@ -1190,6 +1190,15 @@ function createChibiStage(svg, opt) {
   let cast = [];
   let cues = [];
   let simT = 0, built = false, n = 0;
+  const windows = [];
+  const spans = {};
+  function checkWindow(id, w0, w1, windowed) {
+    if (!(w0 < w1)) throw new Error(`${id}: from (${w0}) phai nho hon until (${w1})`);
+    const list = spans[id] ?? (spans[id] = []);
+    for (const [a, b, wd] of list) if ((windowed || wd) && w0 < b - 1e-9 && a < w1 - 1e-9)
+      throw new Error(`${id} da co tren san khau trong khoang ${a}..${b}: mot nhan vat chi hien mot ban cung luc (doi skin thi dat from/until noi tiep)`);
+    list.push([w0, w1, windowed]);
+  }
   const C = {
     svg,
     back,
@@ -1206,8 +1215,11 @@ function createChibiStage(svg, opt) {
     },
     add(who, o) {
       const spec = withSkin(typeof who === "string" ? byId(who) : who, o.skin);
+      const w0 = o.from ?? -Infinity, w1 = o.until ?? Infinity;
+      checkWindow(spec.id, w0, w1, o.from !== void 0 || o.until !== void 0);
       const c = applyGestureAliases(createChibi(people, spec, o, `ch${n++}`, sticker), o.skin);
       cast.push(c);
+      if (o.from !== void 0 || o.until !== void 0) windows.push([c, w0, w1]);
       return c;
     },
     at(t, fn) {
@@ -1237,6 +1249,7 @@ function createChibiStage(svg, opt) {
         fire(simT);
         for (const c of cast) c.update(simT, dt, speechAt);
       }
+      for (const [c, w0, w1] of windows) c.root.style.display = simT >= w0 - 1e-9 && simT < w1 - 1e-9 ? "" : "none";
     }
   };
   function fire(now) {
@@ -1251,6 +1264,8 @@ function createChibiStage(svg, opt) {
     cues = [];
     simT = 0;
     n = 0;
+    windows.length = 0;
+    for (const k of Object.keys(spans)) delete spans[k];
     setupFn?.(C);
     for (const c of cast) c.update(0, 0, speechAt);
     built = true;
@@ -1259,6 +1274,7 @@ function createChibiStage(svg, opt) {
 }
 export {
   LOOKS,
+  MOCAP,
   OUT,
   ROSTER,
   SKINS,

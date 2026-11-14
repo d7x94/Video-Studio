@@ -47,6 +47,16 @@ export function createChibiStage(svg: SVGSVGElement, opt: { width: number; heigh
   let cast: Chibi[] = [];
   let cues: Array<{ t: number; fn: () => void; done: boolean }> = [];
   let simT = 0, built = false, n = 0;
+  const windows: Array<[Chibi, number, number]> = [];
+  const spans: Record<string, Array<[number, number, boolean]>> = {};
+  function checkWindow(id: string, w0: number, w1: number, windowed: boolean) {
+    if (!(w0 < w1)) throw new Error(`${id}: from (${w0}) phai nho hon until (${w1})`);
+    const list = (spans[id] ??= []);
+    // Chi kiem khi co ban dung from/until (video cu dat cung nhan vat hai lan khong khung hien van chay nhu truoc).
+    for (const [a, b, wd] of list) if ((windowed || wd) && w0 < b - 1e-9 && a < w1 - 1e-9)
+      throw new Error(`${id} da co tren san khau trong khoang ${a}..${b}: mot nhan vat chi hien mot ban cung luc (doi skin thi dat from/until noi tiep)`);
+    list.push([w0, w1, windowed]);
+  }
 
   const C: ChibiStage = {
     svg, back, people, front, width, height,
@@ -54,8 +64,11 @@ export function createChibiStage(svg: SVGSVGElement, opt: { width: number; heigh
     setup(fn) { setupFn = fn; built = false; },
     add(who, o) {
       const spec = withSkin(typeof who === 'string' ? byId(who) : who, o.skin);
+      const w0 = o.from ?? -Infinity, w1 = o.until ?? Infinity;
+      checkWindow(spec.id, w0, w1, o.from !== undefined || o.until !== undefined);
       const c = applyGestureAliases(createChibi(people, spec, o, `ch${n++}`, sticker), o.skin);
       cast.push(c);
+      if (o.from !== undefined || o.until !== undefined) windows.push([c, w0, w1]);
       return c;
     },
     at(t, fn) { cues.push({ t, fn, done: false }); },
@@ -83,12 +96,14 @@ export function createChibiStage(svg: SVGSVGElement, opt: { width: number; heigh
         fire(simT);
         for (const c of cast) c.update(simT, dt, speechAt);
       }
+      for (const [c, w0, w1] of windows) c.root.style.display = simT >= w0 - 1e-9 && simT < w1 - 1e-9 ? '' : 'none';
     },
   };
   function fire(now: number) { for (const q of cues) if (!q.done && q.t <= now + 1e-9) { q.done = true; q.fn(); } }
   function rebuild() {
     for (const layer of [back, people, front]) while (layer.firstChild) layer.removeChild(layer.firstChild);
-    cast = []; cues = []; simT = 0; n = 0;
+    cast = []; cues = []; simT = 0; n = 0; windows.length = 0;
+    for (const k of Object.keys(spans)) delete spans[k];
     setupFn?.(C);
     for (const c of cast) c.update(0, 0, speechAt);
     built = true;

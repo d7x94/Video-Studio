@@ -38,7 +38,9 @@ export type Item = 'den-pin';
 /** limbs: 'chibi' (tay ong, mac dinh) hoac 'que' (tay chan net que, dau mut cham tron). */
 export interface ChibiOptions { x: number; y: number; scale?: number; dir?: 1 | -1; limbs?: 'chibi' | 'que';
   /** Skin theo vai (xem lineart/src/cast/skins.ts), vd 'sep', 'luat-su'. Khong ghi thi mac bo do khoa trong roster. */
-  skin?: string }
+  skin?: string;
+  /** Khung hien (giay): chi hien khi from <= t < until; dung de doi skin theo canh (xem san khau). */
+  from?: number; until?: number }
 export interface Chibi {
   readonly spec: Spec;
   readonly root: SVGGElement;
