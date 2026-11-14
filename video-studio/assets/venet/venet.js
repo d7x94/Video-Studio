@@ -11,6 +11,10 @@
 //   S.sun(300, 320, 70, { color: "orange" });
 //   ... trong render(t): V.render(t);
 // Toa do trong canh la "khong gian thiet ke" (mac dinh 1000 x 1000), tu co vao vung an toan cua khung hinh.
+//   S.write(...) viet chu bang tung net chu that (bo net trong venet-chu.js, tieng Viet day du dau); S.text(...) la chu
+//   hien dan tu trai sang phai bang font cua template.
+
+import CHU from "./venet-chu.js";
 
 const NS = "http://www.w3.org/2000/svg";
 
@@ -434,6 +438,124 @@ export function createStage(svg, opts = {}) {
               u.last = -1;
               u.remeasure();
             };
+          }
+        });
+        return out[0];
+      },
+
+      // ---- chu viet tay: but viet tung net chu that (bo net venet-chu.js, tu phong Patrick Hand), co du dau tieng Viet
+      // o: size (56), anchor (start|middle|end), color, w (do day net, mac dinh theo size), lh (gian dong 1.25),
+      //    mark (mau to vet), under (mau gach chan), at, dur. Xuong dong bang \n, moi dong viet tiep nhau.
+      // Ky tu khong co trong bo net bi bo qua va ghi vao warnings.
+      write(str, x, y, o2 = {}) {
+        const size = o2.size || 56;
+        const sw = o2.w || Math.max(3.5, size * 0.092);
+        const lines = String(str).normalize("NFC").split("\n");
+        const out = [];
+        lines.forEach((ln, i) => {
+          const ty = y + i * size * (o2.lh || 1.25);
+          const r = rng(s.seed * 31 + 977 + s.items.length * 13);   // rieng, de khong lam lech nhung net khac cua canh
+          const glyphs = [];
+          let cx = 0;
+          for (const ch of ln) {
+            if (ch === " ") { cx += 0.26 * size; continue; }
+            const strokes = CHU.g[ch];
+            if (!strokes) {
+              const m = `canh ${id}: khong co net chu cho ky tu "${ch}" (bo qua)`;
+              if (!warnings.includes(m)) warnings.push(m);
+              cx += 0.4 * size;
+              continue;
+            }
+            glyphs.push({ strokes, cx, rot: (r() - 0.5) * 0.06, dy: (r() - 0.5) * 0.024 * size, sc: 1 + (r() - 0.5) * 0.06 });
+            cx += (CHU.adv[ch] || 0.5) * size;
+          }
+          const width = Math.max(cx, size * 0.3);
+          const x0 = (o2.anchor === "middle" ? x - width / 2 : o2.anchor === "end" ? x - width : x);
+          const paths = [];
+          const g = el("g", {}, c);
+          let acc = 0;
+          for (const gl of glyphs) {
+            const cs = Math.cos(gl.rot), sn = Math.sin(gl.rot);
+            for (const st of gl.strokes) {
+              const P = [];
+              for (let k = 0; k < st.length; k += 2) {
+                const px = st[k] * gl.sc, py = st[k + 1] * gl.sc;
+                P.push([x0 + gl.cx + (px * cs - py * sn) * size, ty + gl.dy + (px * sn + py * cs) * size]);
+              }
+              let d;
+              if (P.length === 1) d = `M${f1(P[0][0])} ${f1(P[0][1])} l0.01 0`;
+              else if (P.length === 2) d = `M${f1(P[0][0])} ${f1(P[0][1])} L${f1(P[1][0])} ${f1(P[1][1])}`;
+              else {
+                d = `M${f1(P[0][0])} ${f1(P[0][1])}`;
+                for (let k = 1; k < P.length - 1; k++) {
+                  d += ` Q${f1(P[k][0])} ${f1(P[k][1])} ${f1((P[k][0] + P[k + 1][0]) / 2)} ${f1((P[k][1] + P[k + 1][1]) / 2)}`;
+                }
+                d += ` L${f1(P[P.length - 1][0])} ${f1(P[P.length - 1][1])}`;
+              }
+              const p = el("path", {
+                d, fill: "none", stroke: col(o2.color), "stroke-width": sw,
+                "stroke-linecap": "round", "stroke-linejoin": "round", opacity: 0,
+              }, g);
+              const len = Math.max(p.getTotalLength(), 0.5);
+              paths.push({ el: p, len, c0: acc, a: P[0], b: P[P.length - 1], last: -1 });
+              acc += len + size * 0.12;          // nhac but giua hai net: bu mot doan nho de ban tay kip chuyen
+            }
+          }
+          const total = Math.max(acc - size * 0.12, 1);
+          let mk = null;
+          if (o2.mark) {
+            const rect = el("rect", { fill: col(o2.mark === true ? "mark" : o2.mark) }, c);
+            c.insertBefore(rect, g);
+            mk = wipeItem(rect, () => ({ x: x0 - 8, y: ty - size * 0.48, width: width + 16, height: size * 0.62 }),
+              { at: i === 0 ? o2.at : undefined }, clamp(width / 500, 0.25, 1.2), 0.5);
+            const setM = mk.set;
+            mk.set = (u) => {
+              const b = mk.bb;
+              rect.setAttribute("x", f1(b.x)); rect.setAttribute("y", f1(b.y));
+              rect.setAttribute("width", f1(b.width)); rect.setAttribute("height", f1(b.height));
+              setM(u);
+            };
+          }
+          const it = {
+            kind: "write", el: g, at: !o2.mark && i === 0 ? o2.at : undefined, dur: o2.dur, last: -1,
+            nat: clamp(total / SPEED, 0.35, 3.5),
+          };
+          it.pt = (u) => {
+            const L = total * clamp(u, 0, 1);
+            let pr = null;
+            for (const q of paths) {
+              if (L < q.c0) return pr ? [pr.b[0] + (q.a[0] - pr.b[0]) * clamp((L - (q.c0 - size * 0.12)) / (size * 0.12), 0, 1),
+                pr.b[1] + (q.a[1] - pr.b[1]) * clamp((L - (q.c0 - size * 0.12)) / (size * 0.12), 0, 1)] : q.a;
+              if (L <= q.c0 + q.len) {
+                const pt = q.el.getPointAtLength(L - q.c0);
+                return [pt.x, pt.y];
+              }
+              pr = q;
+            }
+            return pr ? pr.b : [x0, ty];
+          };
+          it.set = (u) => {
+            if (u === it.last) return;
+            it.last = u;
+            const L = total * u;
+            for (const q of paths) {
+              const v = clamp((L - q.c0) / q.len, 0, 1);
+              if (v === q.last) continue;
+              q.last = v;
+              if (v <= 0) { q.el.setAttribute("opacity", 0); continue; }
+              q.el.setAttribute("opacity", 1);
+              if (v >= 1) q.el.removeAttribute("stroke-dasharray");
+              else {
+                q.el.setAttribute("stroke-dasharray", `${q.len.toFixed(1)} ${q.len.toFixed(1)}`);
+                q.el.setAttribute("stroke-dashoffset", (q.len * (1 - v)).toFixed(1));
+              }
+            }
+          };
+          out.push(add(it));
+          if (o2.under) {
+            const n = Math.max(4, Math.round(width / 40)), yy = ty + size * 0.18, pts = [];
+            for (let q = 0; q <= n; q++) pts.push(`${f1(x0 + (width * q) / n)} ${f1(yy + (q % 2 ? 3 : -2))}`);
+            strokeItem("M" + pts.join(" L"), { color: o2.under, w: 5 });
           }
         });
         return out[0];
