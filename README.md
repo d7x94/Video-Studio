@@ -18,6 +18,7 @@ video-studio/          thư mục skill (đúng như được cài vào claude.a
   agents/              thẻ nhiệm vụ từng vai
   profiles/            hồ sơ thể loại
   vai/                 thư viện hồ sơ vai (vai đã casting, dùng lại ở video sau; kiểm bằng scripts/vai.py)
+  tinh-cach/           thư viện tính cách (cách diễn: lời thoại, nhịp đọc, biểu cảm, cử chỉ theo tình huống)
   references/          tài liệu tham khảo
   scripts/             setup, lồng tiếng, ghép phụ đề, render, đóng gói
   templates/           composition HyperFrames (2D, 3D, line-art, chibi, vẽ tay, vẽ nét; dọc và ngang)

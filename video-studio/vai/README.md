@@ -2,7 +2,7 @@
 
 Mỗi vai đã casting ở một video được lưu thành một file `<ma-vai>.json` để video sau dùng lại đúng người, đúng tên, đúng giọng, đúng bộ đồ. File bắt đầu bằng `_` (như `_mau.json`) là mẫu, không được tính.
 
-**Nhân vật và vai khác nhau.** Nhân vật là diễn viên trong dàn đã khóa (mặt, dáng, màu da, tóc, kính, giọng). Vai là người mà diễn viên đóng trong phim: họ tên, chức vụ, tuổi, tính cách, các bộ đồ (skin) và các cử chỉ hay dùng. Một nhân vật có thể đóng nhiều vai ở các video khác nhau, nhưng trong một video chỉ đóng một vai, và luôn giữ một giọng.
+**Nhân vật và vai khác nhau.** Nhân vật là diễn viên trong dàn đã khóa (mặt, dáng, màu da, tóc, kính, giọng). Vai là người mà diễn viên đóng trong phim: họ tên, chức vụ, tuổi, các bộ đồ (skin) và một tính cách (cách diễn, thư viện `SKILL/tinh-cach/`). Một nhân vật có thể đóng nhiều vai ở các video khác nhau, nhưng trong một video chỉ đóng một vai, và luôn giữ một giọng.
 
 ## Các trường
 
@@ -14,13 +14,14 @@ Mỗi vai đã casting ở một video được lưu thành một file `<ma-vai>
 | `chuc_vu` | có | Chức vụ, nghề |
 | `noi_lam` | | Nơi làm việc (hư cấu) |
 | `tuoi` | | Số tuổi; phải hợp dáng của nhân vật: trẻ em 3 đến 15, người lớn 18 đến 59, cao tuổi 60 trở lên |
-| `tinh_cach`, `xung_ho` | | Giúp biên kịch viết thoại đúng giọng vai |
+| `tinh_cach` | | Mã tính cách trong `SKILL/tinh-cach/` (cách diễn: lời thoại, nhịp đọc, biểu cảm, cử chỉ) |
+| `xung_ho` | | Xưng hô riêng của vai với người khác (vd "gọi nhân viên là em"); bổ sung cho `loi_thoai` của tính cách |
 | `nhan_vat` | có với line-art, chibi | Mã nhân vật trong dàn (`references/nhan-vat-line-art.md`) |
 | `dien_vien_3d` | có với 3D | Mã diễn viên trong `assets/sim3d/cast.json` |
 | `giong` | | Giọng VieNeu (`references/giong-doc.md`). Hai hồ sơ cùng nhân vật phải cùng giọng |
 | `kieu_hinh` | có | Các kiểu hình vai đã đóng: `line-art`, `chibi`, `3d` |
 | `trang_phuc` | có | Tên bộ đồ -> mã skin. Phải có `mac-dinh`. Mã `goc` là bộ đồ khóa của nhân vật trong dàn |
-| `cu_chi` | | Cử chỉ hay dùng: cử chỉ có sẵn (`wave`, `point`, `present`, `talk`, `bow`, `nod`), tên cử chỉ riêng của skin trong `trang_phuc`; với chibi thêm `sweep` và động tác sinh hoạt (`danh-rang`, `an`...) |
+| `cu_chi` | | Cử chỉ hay dùng: cử chỉ có sẵn (`wave`, `point`, `present`, `talk`, `bow`, `nod`), tên cử chỉ trong `cu_chi` của tính cách; với chibi thêm `sweep` và động tác sinh hoạt (`danh-rang`, `an`...) |
 | `da_dong` | | Các video đã đóng: `{ "video": slug, "ngay": "YYYY-MM-DD" }` |
 | `ghi_chu` | | Ghi chú tự do |
 

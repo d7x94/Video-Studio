@@ -36,10 +36,12 @@ elif [ "$MODE" = lineart ]; then
   cp "$STUDIO_SKILL/templates/$FORMAT-lineart.html" "$OUT/index.html"
   cp "$STUDIO_SKILL/assets/lineart/lineart.js" "$OUT/"
   echo "window.SPEECH = { fps: 30, env: [] };" > "$OUT/speech.js"
+  echo "window.TINH_CACH = {};" > "$OUT/tinh-cach.js"   # inject.py ghi lai tu thu vien tinh cach
 elif [ "$MODE" = chibi ]; then
   cp "$STUDIO_SKILL/templates/$FORMAT-chibi.html" "$OUT/index.html"
   cp "$STUDIO_SKILL/assets/chibi/chibi.js" "$OUT/"
   echo "window.SPEECH = { fps: 30, env: [] };" > "$OUT/speech.js"
+  echo "window.TINH_CACH = {};" > "$OUT/tinh-cach.js"   # inject.py ghi lai tu thu vien tinh cach
 elif [ "$MODE" = vetay ]; then
   cp "$STUDIO_SKILL/templates/$FORMAT-vetay.html" "$OUT/index.html"
   cp "$STUDIO_SKILL/assets/vetay/vetay.js" "$OUT/"

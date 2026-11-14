@@ -1,0 +1,28 @@
+{
+  "id": "lo-lang",
+  "ten": "Hay lo lắng",
+  "mo_ta": "Người dân, hành khách gặp chuyện chưa biết xử lý: hay lo, hỏi lại, yên tâm dần khi được hướng dẫn.",
+  "loi_thoai": {
+    "cau": "Câu hỏi, ngập ngừng",
+    "giong_dieu": "Lo, hơi vội",
+    "cau_cua_mieng": []
+  },
+  "giong": {
+    "speed": 1.0
+  },
+  "bieu_cam": {
+    "binh-thuong": "worried",
+    "vui": "happy",
+    "nghe": "worried",
+    "lo": "worried",
+    "ngac-nhien": "surprised",
+    "yen-tam": "neutral"
+  },
+  "cu_chi": {
+    "khi-noi": "talk",
+    "khi-nghe": "nod",
+    "hoi": "present",
+    "cam-on": "bow",
+    "dong-y": "nod"
+  }
+}

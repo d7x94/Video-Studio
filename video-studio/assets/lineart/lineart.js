@@ -184,8 +184,40 @@ function pendulum(stiffness = 10, damping = 1.1, a = 0) {
   };
 }
 
-// cast/rig.ts
+// cast/tinh-cach.ts
 var GESTURES = ["wave", "point", "present", "talk", "bow", "nod"];
+var EXPRS = ["neutral", "happy", "wink", "deadpan", "surprised", "worried"];
+function tinhCachById(id) {
+  const all = globalThis.TINH_CACH ?? {};
+  const tc = all[id];
+  if (!tc) throw new Error(`khong co tinh cach ${id} (tinh-cach.js co: ${Object.keys(all).join(", ") || "khong co"}; chay lai inject.py)`);
+  return tc;
+}
+function applyTinhCach(c, id) {
+  const tc = id ? tinhCachById(id) : void 0;
+  const cc = tc?.cu_chi ?? {}, bc = tc?.bieu_cam ?? {};
+  const act = c.act.bind(c);
+  c.act = (name, seconds) => act(cc[name] ?? name, seconds);
+  if (c.expr) {
+    const expr = c.expr.bind(c);
+    c.expr = (name, seconds) => expr(bc[name] ?? name, seconds);
+    if (bc["binh-thuong"] && c.exprBase) c.exprBase(bc["binh-thuong"]);
+  }
+  const d = c;
+  d.noi = (s) => {
+    if (c.say) {
+      c.say(s);
+      if (cc["khi-noi"]) act(cc["khi-noi"], s);
+    } else act(cc["khi-noi"] ?? "talk", s);
+  };
+  d.nghe = (s) => {
+    if (bc["nghe"] && c.expr) c.expr(bc["nghe"], s);
+    if (cc["khi-nghe"]) act(cc["khi-nghe"], Math.min(s, 1.6));
+  };
+  return d;
+}
+
+// cast/rig.ts
 var ADULT = { thigh: 23, shin: 23, torso: 31, neck: 4.2, rx: 4, ry: 4.9, upper: 16, fore: 15.5, legW: 4.2, armW: 3.6, chest: 6.4, back: 5.6, swing: 15, foot: 1, gait: { kind: "walk" } };
 var BODIES = {
   adult: ADULT,
@@ -904,7 +936,7 @@ var byId = (id) => {
 };
 
 // cast/skins.ts
-var fromRoster = (id, label, gestures) => {
+var fromRoster = (id, label) => {
   const s = byId(id);
   return {
     id: label,
@@ -921,8 +953,7 @@ var fromRoster = (id, label, gestures) => {
       prop: s.prop,
       propColor: s.propColor,
       shoeColor: s.shoeColor
-    },
-    gestures
+    }
   };
 };
 var LIST = [
@@ -930,14 +961,12 @@ var LIST = [
   {
     id: "sep",
     label: "Sep / giam doc",
-    outfit: { top: "jacket", topColor: "#2f3441", sleeve: "long", bottom: "trousers", bottomColor: "#1f232b", extras: ["tie"], prop: "none", shoeColor: "#1b1b1b" },
-    gestures: { "ra-lenh": "point", "thuyet-phuc": "present", "tra-loi": "talk" }
+    outfit: { top: "jacket", topColor: "#2f3441", sleeve: "long", bottom: "trousers", bottomColor: "#1f232b", extras: ["tie"], prop: "none", shoeColor: "#1b1b1b" }
   },
   {
     id: "luat-su",
     label: "Luat su",
-    outfit: { top: "jacket", topColor: "#3b3f4a", sleeve: "long", bottom: "trousers", bottomColor: "#2b2d34", extras: [], prop: "books", propColor: "#6b4f3a", shoeColor: "#1b1b1b" },
-    gestures: { "trinh-ho-so": "present", "phan-tich": "talk", "chi-dieu-khoan": "point" }
+    outfit: { top: "jacket", topColor: "#3b3f4a", sleeve: "long", bottom: "trousers", bottomColor: "#2b2d34", extras: [], prop: "books", propColor: "#6b4f3a", shoeColor: "#1b1b1b" }
   },
   {
     id: "nhan-vien-van-phong",
@@ -945,9 +974,9 @@ var LIST = [
     outfit: { top: "shirt", topColor: "#ece6d6", sleeve: "long", bottom: "trousers", bottomColor: "#2f3540", extras: ["tie"], prop: "briefcase" }
   },
   // Bo do theo nghe da co trong dan: ai cung mac duoc
-  fromRoster("bac-si-minh", "bac-si", { "kham": "point", "giai-thich": "present" }),
-  fromRoster("dieu-duong-lan", "dieu-duong", { "huong-dan": "present" }),
-  fromRoster("can-bo-thu", "can-bo-kiem-dich", { "kiem-tra": "point", "huong-dan": "present" }),
+  fromRoster("bac-si-minh", "bac-si"),
+  fromRoster("dieu-duong-lan", "dieu-duong"),
+  fromRoster("can-bo-thu", "can-bo-kiem-dich"),
   fromRoster("anh-tuan", "cong-nhan"),
   fromRoster("anh-khoa", "hanh-khach")
 ];
@@ -964,13 +993,6 @@ function withSkin(spec, skinId) {
   const extras = [...sk.outfit.extras ?? []];
   if (glasses && !extras.includes("glasses")) extras.push("glasses");
   return { ...spec, ...sk.outfit, extras };
-}
-function applyGestureAliases(c, skinId) {
-  const map = skinId ? skinById(skinId).gestures : void 0;
-  if (!map) return c;
-  const base = c.act.bind(c);
-  c.act = (name, seconds) => base(map[name] ?? name, seconds);
-  return c;
 }
 
 // cast/stage.ts
@@ -1011,7 +1033,7 @@ function createLineStage(svg, opt) {
       const w0 = o.from ?? -Infinity, w1 = o.until ?? Infinity;
       checkWindow(spec.id, w0, w1, o.from !== void 0 || o.until !== void 0);
       const sh = el("ellipse", { rx: 9 * (o.scale ?? 1), ry: 1.4 * (o.scale ?? 1), fill: "#1c1c1c", opacity: 0.07, cy: o.y + 1 }, people);
-      const c = applyGestureAliases(createCharacter(people, spec, o), o.skin);
+      const c = applyTinhCach(createCharacter(people, spec, o), o.tinhCach);
       cast.push(c);
       shadows.push([c, sh]);
       if (o.from !== void 0 || o.until !== void 0) windows.push([c, sh, w0, w1]);
@@ -1072,11 +1094,13 @@ function createLineStage(svg, opt) {
   return L;
 }
 export {
+  EXPRS,
   GESTURES,
   PAPER,
   PEN,
   ROSTER,
   SKINS,
+  applyTinhCach,
   blot,
   byId,
   clamp2 as clamp,
@@ -1097,6 +1121,7 @@ export {
   smooth2 as smooth,
   solid,
   spring,
+  tinhCachById,
   windAt,
   withSkin,
   wobble

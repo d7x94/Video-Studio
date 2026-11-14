@@ -80,23 +80,23 @@ Thư viện nét vẽ gốc: github.com/JDhruv14/line-art-animation (giấy phé
 
 ## Skin theo vai
 
-Nhân vật cố định (khuôn mặt, dáng, màu da, tóc, kính, giọng). Mỗi vai mặc một **skin**: trang phục, màu, mũ, đồ đeo, đạo cụ, kèm tên cử chỉ riêng của vai. Không ghi `skin` thì nhân vật mặc bộ đồ khóa trong roster như trước. Nguồn: `assets/lineart/src/cast/skins.ts` (dùng chung line-art và chibi).
+Mỗi vai có ba lớp: **nhân vật** (khuôn mặt, dáng, màu da, tóc, kính, giọng; khóa cứng), **skin** (trang phục, màu, mũ, đồ đeo, đạo cụ) và **tính cách** (cách diễn: lời thoại, nhịp đọc, biểu cảm, cử chỉ theo tình huống; xem mục Tính cách bên dưới). Không ghi `skin` thì nhân vật mặc bộ đồ khóa trong roster như trước. Nguồn skin: `assets/lineart/src/cast/skins.ts` (dùng chung line-art và chibi).
 
 ```js
-const sep = C.add("bac-si-minh", { x: 405, y: 1100, scale: 1, skin: "sep" });   // L.add cho line-art, cùng tùy chọn
-C.at(T.s04, () => { sep.say(3.4); sep.act("ra-lenh", 3.4); });                 // "ra-lenh" -> point
+const sep = L.add("bac-si-minh", { x: 405, y: 1100, scale: 1, skin: "sep", tinhCach: "nghiem-khac" });
+L.at(T.s04, () => { sep.noi(3.4); sep.act("ra-lenh", 3.4); });   // "ra-lenh" -> point theo tính cách nghiem-khac
 ```
 
-| Skin | Đồ | Cử chỉ theo vai (-> cử chỉ có sẵn) |
-|---|---|---|
-| `sep` | áo vest tối, cà vạt, quần tối | `ra-lenh` -> point, `thuyet-phuc` -> present, `tra-loi` -> talk |
-| `luat-su` | áo vest xám, quần tối, cầm hồ sơ (đạo cụ `books`) | `trinh-ho-so` -> present, `phan-tich` -> talk, `chi-dieu-khoan` -> point |
-| `nhan-vien-van-phong` | sơ mi, cà vạt, cặp da | (dùng cử chỉ chung) |
-| `bac-si` | áo blouse, ống nghe | `kham` -> point, `giai-thich` -> present |
-| `dieu-duong` | đồng phục xanh ngọc, mũ, khẩu trang | `huong-dan` -> present |
-| `can-bo-kiem-dich` | áo xanh nhạt, mũ kê-pi, thẻ đeo, bìa hồ sơ | `kiem-tra` -> point, `huong-dan` -> present |
-| `cong-nhan` | mũ bảo hộ, áo phản quang | (chung) |
-| `hanh-khach` | áo khoác, mũ lưỡi trai, khẩu trang, vali | (chung) |
+| Skin | Đồ |
+|---|---|
+| `sep` | áo vest tối, cà vạt, quần tối |
+| `luat-su` | áo vest xám, quần tối, cầm hồ sơ (đạo cụ `books`) |
+| `nhan-vien-van-phong` | sơ mi, cà vạt, cặp da |
+| `bac-si` | áo blouse, ống nghe |
+| `dieu-duong` | đồng phục xanh ngọc, mũ, khẩu trang |
+| `can-bo-kiem-dich` | áo xanh nhạt, mũ kê-pi, thẻ đeo, bìa hồ sơ |
+| `cong-nhan` | mũ bảo hộ, áo phản quang |
+| `hanh-khach` | áo khoác, mũ lưỡi trai, khẩu trang, vali |
 
 Quy tắc:
 - Kính thuộc về nhân vật, không thuộc skin: ai đeo kính vẫn đeo kính khi đổi skin, ai không đeo thì không có.
@@ -109,5 +109,22 @@ const hungNha = L.add("anh-duc", { x: 960, y: 900, scale: 4, from: T.s03 });    
 L.at(T.s03 + 0.2, () => hungNha.act("talk", 2));   // hẹn giờ cho đúng bản đang hiện
 ```
 - Skin chỉ dùng được mẫu đồ đã có trong rig (xem `SUPPORTED` trong `assets/chibi/src/rig.ts`). Muốn đồ mới (vest dài, đồng phục cảnh sát...) phải vẽ vào cả hai rig rồi mới thêm skin; thư viện báo lỗi "chua ve ban chibi" nếu thiếu.
-- Tên cử chỉ riêng chỉ là biệt danh; không thêm động tác mới. Thêm skin: viết vào `LIST` trong `skins.ts`, build lại (xem `assets/lineart/src/BUILD.md`).
+- Skin chỉ là đồ mặc; cử chỉ riêng theo vai (`ra-lenh`, `kham`...) nằm ở tính cách. Thêm skin: viết vào `LIST` trong `skins.ts`, build lại (xem `assets/lineart/src/BUILD.md`).
 - Cặp nhân vật và skin không bị giới hạn theo giới, nhưng đồ mặc kiểu `aodai`, `baba`, `dress` chưa có skin nên chỉ có trong bộ đồ khóa của nhân vật.
+
+## Tính cách (cách diễn)
+
+Tính cách là cách một vai diễn, tách khỏi người đóng và đồ mặc: một giám đốc hiền và một giám đốc khó tính có thể cùng nhân vật, cùng skin `sep`. Thư viện ở `SKILL/tinh-cach/` (xem `tinh-cach/README.md`; `python3 SKILL/scripts/vai.py tinh-cach` in bảng). Tính cách chốt ở casting cho cả video, không đổi theo cảnh; cảm xúc từng cảnh do kịch bản quyết, tính cách quyết vai đó thể hiện cảm xúc ra sao.
+
+```js
+const hung = L.add("anh-duc", { x: 540, y: 1700, scale: 1.4, skin: "sep", tinhCach: "nghiem-khac" });
+L.at(T.s02, () => { hung.noi(2.3); hung.act("ra-lenh", 2.3); });
+L.at(T.s03, () => hung.nghe(2));
+```
+
+- `cu_chi`: tên tình huống -> cử chỉ có sẵn (`wave`, `point`, `present`, `talk`, `bow`, `nod`). Gọi `nv.act("ra-lenh", 2)` thì ra cử chỉ mà tính cách gán cho "ra-lenh"; tên không có trong tính cách thì chuyển thẳng cho thư viện. `khi-noi`, `khi-nghe` dùng cho `noi()`, `nghe()`.
+- `bieu_cam`: chỉ có tác dụng ở chibi (line-art không có mặt), line-art bỏ qua.
+- `nv.noi(giây)`: cử chỉ `khi-noi` của tính cách (không có thì `talk`). Line-art không có miệng nên đây là cách "nói".
+- `nv.nghe(giây)`: cử chỉ `khi-nghe` (thường là gật đầu) nếu tính cách có.
+- Lời thoại và nhịp đọc (`loi_thoai`, `giong`) dành cho biên kịch và `vai.py ap-giong`, không ảnh hưởng hình.
+- `tinh-cach.js` do `inject.py` sinh từ thư viện và `PROJECT/tinh-cach/`; ghi `tinhCach` sai mã thì thư viện báo lỗi ngay khi dựng.

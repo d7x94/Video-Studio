@@ -1,0 +1,29 @@
+{
+  "id": "than-thien",
+  "ten": "Thân thiện",
+  "mo_ta": "Cởi mở, hay cười, nói nhẹ nhàng, lắng nghe và gật đầu.",
+  "loi_thoai": {
+    "cau": "Vừa phải, có lời hỏi han",
+    "giong_dieu": "Ấm, gần gũi",
+    "cau_cua_mieng": []
+  },
+  "giong": {
+    "speed": 1.0
+  },
+  "bieu_cam": {
+    "binh-thuong": "neutral",
+    "vui": "happy",
+    "nghe": "happy",
+    "lo": "worried",
+    "ngac-nhien": "surprised",
+    "dua": "wink"
+  },
+  "cu_chi": {
+    "khi-noi": "present",
+    "khi-nghe": "nod",
+    "chao": "wave",
+    "dong-y": "nod",
+    "giai-thich": "present",
+    "moi": "present"
+  }
+}

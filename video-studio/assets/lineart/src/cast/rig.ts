@@ -16,9 +16,8 @@ export type Hair = 'short' | 'side' | 'bun' | 'long' | 'ponytail' | 'pigtails';
 export type Hat = 'none' | 'nonla' | 'cap' | 'hardhat' | 'officer' | 'nurse';
 export type Extra = 'mask' | 'glasses' | 'stethoscope' | 'redscarf' | 'vest' | 'lanyard' | 'tie';
 export type Prop = 'none' | 'clipboard' | 'books' | 'briefcase' | 'basket' | 'backpack' | 'cane' | 'ganh' | 'suitcase';
-/** Cu chi co san (scripts/vai.py doc danh sach nay tu lineart.js de kiem ho so vai). */
-export const GESTURES = ['wave', 'point', 'present', 'talk', 'bow', 'nod'] as const;
-export type Gesture = typeof GESTURES[number];
+import { GESTURES, type Gesture } from './tinh-cach.ts';
+export { GESTURES, type Gesture };
 
 export interface Spec {
   id: string; name: string; role: string;

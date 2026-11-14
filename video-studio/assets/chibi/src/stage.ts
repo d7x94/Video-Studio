@@ -9,7 +9,8 @@
 //   function render(t) { C.render(t); }
 import type { Spec } from '../../lineart/src/cast/rig.ts';
 import { byId } from '../../lineart/src/cast/roster.ts';
-import { withSkin, applyGestureAliases } from '../../lineart/src/cast/skins.ts';
+import { withSkin } from '../../lineart/src/cast/skins.ts';
+import { applyTinhCach, type Dien } from '../../lineart/src/cast/tinh-cach.ts';
 import { createChibi, type Chibi, type ChibiOptions } from './rig.ts';
 import { el, fill, line, f, OUT, W } from './svg.ts';
 
@@ -18,7 +19,7 @@ export interface ChibiStage {
   back: SVGGElement; people: SVGGElement; front: SVGGElement;
   width: number; height: number;
   setup(fn: (C: ChibiStage) => void): void;
-  add(who: string | Spec, opt: ChibiOptions): Chibi;
+  add(who: string | Spec, opt: ChibiOptions): Chibi & Dien;
   at(t: number, fn: () => void): void;
   render(t: number): void;
   /** Lam toi canh (dem, phong toi): lop toi va vien toi phu len nen, nam sau nhan vat. */
@@ -66,7 +67,7 @@ export function createChibiStage(svg: SVGSVGElement, opt: { width: number; heigh
       const spec = withSkin(typeof who === 'string' ? byId(who) : who, o.skin);
       const w0 = o.from ?? -Infinity, w1 = o.until ?? Infinity;
       checkWindow(spec.id, w0, w1, o.from !== undefined || o.until !== undefined);
-      const c = applyGestureAliases(createChibi(people, spec, o, `ch${n++}`, sticker), o.skin);
+      const c = applyTinhCach(createChibi(people, spec, o, `ch${n++}`, sticker), o.tinhCach);
       cast.push(c);
       if (o.from !== undefined || o.until !== undefined) windows.push([c, w0, w1]);
       return c;

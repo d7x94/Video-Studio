@@ -211,7 +211,7 @@ var byId = (id) => {
 };
 
 // lineart/src/cast/skins.ts
-var fromRoster = (id, label, gestures) => {
+var fromRoster = (id, label) => {
   const s = byId(id);
   return {
     id: label,
@@ -228,8 +228,7 @@ var fromRoster = (id, label, gestures) => {
       prop: s.prop,
       propColor: s.propColor,
       shoeColor: s.shoeColor
-    },
-    gestures
+    }
   };
 };
 var LIST = [
@@ -237,14 +236,12 @@ var LIST = [
   {
     id: "sep",
     label: "Sep / giam doc",
-    outfit: { top: "jacket", topColor: "#2f3441", sleeve: "long", bottom: "trousers", bottomColor: "#1f232b", extras: ["tie"], prop: "none", shoeColor: "#1b1b1b" },
-    gestures: { "ra-lenh": "point", "thuyet-phuc": "present", "tra-loi": "talk" }
+    outfit: { top: "jacket", topColor: "#2f3441", sleeve: "long", bottom: "trousers", bottomColor: "#1f232b", extras: ["tie"], prop: "none", shoeColor: "#1b1b1b" }
   },
   {
     id: "luat-su",
     label: "Luat su",
-    outfit: { top: "jacket", topColor: "#3b3f4a", sleeve: "long", bottom: "trousers", bottomColor: "#2b2d34", extras: [], prop: "books", propColor: "#6b4f3a", shoeColor: "#1b1b1b" },
-    gestures: { "trinh-ho-so": "present", "phan-tich": "talk", "chi-dieu-khoan": "point" }
+    outfit: { top: "jacket", topColor: "#3b3f4a", sleeve: "long", bottom: "trousers", bottomColor: "#2b2d34", extras: [], prop: "books", propColor: "#6b4f3a", shoeColor: "#1b1b1b" }
   },
   {
     id: "nhan-vien-van-phong",
@@ -252,9 +249,9 @@ var LIST = [
     outfit: { top: "shirt", topColor: "#ece6d6", sleeve: "long", bottom: "trousers", bottomColor: "#2f3540", extras: ["tie"], prop: "briefcase" }
   },
   // Bo do theo nghe da co trong dan: ai cung mac duoc
-  fromRoster("bac-si-minh", "bac-si", { "kham": "point", "giai-thich": "present" }),
-  fromRoster("dieu-duong-lan", "dieu-duong", { "huong-dan": "present" }),
-  fromRoster("can-bo-thu", "can-bo-kiem-dich", { "kiem-tra": "point", "huong-dan": "present" }),
+  fromRoster("bac-si-minh", "bac-si"),
+  fromRoster("dieu-duong-lan", "dieu-duong"),
+  fromRoster("can-bo-thu", "can-bo-kiem-dich"),
   fromRoster("anh-tuan", "cong-nhan"),
   fromRoster("anh-khoa", "hanh-khach")
 ];
@@ -272,12 +269,38 @@ function withSkin(spec, skinId) {
   if (glasses && !extras.includes("glasses")) extras.push("glasses");
   return { ...spec, ...sk.outfit, extras };
 }
-function applyGestureAliases(c, skinId) {
-  const map = skinId ? skinById(skinId).gestures : void 0;
-  if (!map) return c;
-  const base = c.act.bind(c);
-  c.act = (name, seconds) => base(map[name] ?? name, seconds);
-  return c;
+
+// lineart/src/cast/tinh-cach.ts
+var GESTURES = ["wave", "point", "present", "talk", "bow", "nod"];
+var EXPRS = ["neutral", "happy", "wink", "deadpan", "surprised", "worried"];
+function tinhCachById(id) {
+  const all = globalThis.TINH_CACH ?? {};
+  const tc = all[id];
+  if (!tc) throw new Error(`khong co tinh cach ${id} (tinh-cach.js co: ${Object.keys(all).join(", ") || "khong co"}; chay lai inject.py)`);
+  return tc;
+}
+function applyTinhCach(c, id) {
+  const tc = id ? tinhCachById(id) : void 0;
+  const cc = tc?.cu_chi ?? {}, bc = tc?.bieu_cam ?? {};
+  const act = c.act.bind(c);
+  c.act = (name, seconds) => act(cc[name] ?? name, seconds);
+  if (c.expr) {
+    const expr = c.expr.bind(c);
+    c.expr = (name, seconds) => expr(bc[name] ?? name, seconds);
+    if (bc["binh-thuong"] && c.exprBase) c.exprBase(bc["binh-thuong"]);
+  }
+  const d = c;
+  d.noi = (s) => {
+    if (c.say) {
+      c.say(s);
+      if (cc["khi-noi"]) act(cc["khi-noi"], s);
+    } else act(cc["khi-noi"] ?? "talk", s);
+  };
+  d.nghe = (s) => {
+    if (bc["nghe"] && c.expr) c.expr(bc["nghe"], s);
+    if (cc["khi-nghe"]) act(cc["khi-nghe"], Math.min(s, 1.6));
+  };
+  return d;
 }
 
 // chibi/src/svg.ts
@@ -958,6 +981,7 @@ function createChibi(layer, spec, opt, uid, sticker = 7) {
   let mo = null;
   let moPrev = null;
   const mv = new Array(20).fill(0), mvPrev = new Array(20).fill(0);
+  let baseExpr = "neutral";
   let exprState = { name: "neutral", t1: Infinity };
   let speakUntil = -1, speakFrom = -1;
   let now = 0;
@@ -1039,6 +1063,10 @@ function createChibi(layer, spec, opt, uid, sticker = 7) {
     },
     expr(name, seconds) {
       exprState = { name, t1: seconds ? now + seconds : Infinity };
+    },
+    exprBase(name) {
+      if (exprState.name === baseExpr && exprState.t1 === Infinity) exprState = { name, t1: Infinity };
+      baseExpr = name;
     },
     say(seconds) {
       speakFrom = now;
@@ -1151,7 +1179,7 @@ function createChibi(layer, spec, opt, uid, sticker = 7) {
         p.tail?.setAttribute("transform", tr);
       }
       face.root.setAttribute("transform", "translate(6 0)");
-      if (exprState.t1 <= t) exprState = { name: "neutral", t1: Infinity };
+      if (exprState.t1 <= t) exprState = { name: baseExpr, t1: Infinity };
       const ex = exprState.name;
       const period = 3.1 + blinkSeed * 1.6;
       const ph = (t + blinkSeed * period) % period;
@@ -1217,7 +1245,7 @@ function createChibiStage(svg, opt) {
       const spec = withSkin(typeof who === "string" ? byId(who) : who, o.skin);
       const w0 = o.from ?? -Infinity, w1 = o.until ?? Infinity;
       checkWindow(spec.id, w0, w1, o.from !== void 0 || o.until !== void 0);
-      const c = applyGestureAliases(createChibi(people, spec, o, `ch${n++}`, sticker), o.skin);
+      const c = applyTinhCach(createChibi(people, spec, o, `ch${n++}`, sticker), o.tinhCach);
       cast.push(c);
       if (o.from !== void 0 || o.until !== void 0) windows.push([c, w0, w1]);
       return c;
@@ -1273,12 +1301,15 @@ function createChibiStage(svg, opt) {
   return C;
 }
 export {
+  EXPRS,
+  GESTURES,
   LOOKS,
   MOCAP,
   OUT,
   ROSTER,
   SKINS,
   W,
+  applyTinhCach,
   byId,
   createChibi,
   createChibiStage,
@@ -1290,5 +1321,6 @@ export {
   shade,
   skinById,
   speechAt,
+  tinhCachById,
   withSkin
 };

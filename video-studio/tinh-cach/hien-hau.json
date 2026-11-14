@@ -1,0 +1,27 @@
+{
+  "id": "hien-hau",
+  "ten": "Hiền hậu (người cao tuổi)",
+  "mo_ta": "Chậm rãi, hiền, hay cười, cúi chào; dùng cho ông bà.",
+  "loi_thoai": {
+    "cau": "Chậm, có lời dặn dò",
+    "giong_dieu": "Ân cần",
+    "cau_cua_mieng": []
+  },
+  "giong": {
+    "speed": 0.92
+  },
+  "bieu_cam": {
+    "binh-thuong": "neutral",
+    "vui": "happy",
+    "nghe": "happy",
+    "lo": "worried",
+    "ngac-nhien": "surprised"
+  },
+  "cu_chi": {
+    "khi-noi": "talk",
+    "khi-nghe": "nod",
+    "chao": "bow",
+    "dong-y": "nod",
+    "dan-do": "present"
+  }
+}
