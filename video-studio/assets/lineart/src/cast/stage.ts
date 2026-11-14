@@ -20,7 +20,11 @@ import { withSkin, applyGestureAliases } from './skins.ts';
 export interface StageOptions { width: number; height: number; paper?: string; ink?: string }
 export interface AddOptions { x: number; y: number; scale?: number; dir?: 1 | -1; phase?: number;
   /** Skin theo vai (xem cast/skins.ts), vd 'sep', 'luat-su'. Khong ghi thi mac bo do khoa trong roster. */
-  skin?: string }
+  skin?: string;
+  /** Khung hien (giay): nhan vat chi hien khi from <= t < until. Dung de doi skin theo canh:
+   *  them cung nhan vat nhieu lan, moi ban mot skin, khung hien noi tiep nhau o ranh gioi canh.
+   *  Hai ban cua cung mot nhan vat khong duoc trung khung hien. */
+  from?: number; until?: number }
 export interface LineStage {
   svg: SVGSVGElement;
   /** Layers inside the ink filter, back to front: back (props, set), people, front. */
@@ -54,6 +58,7 @@ export function createLineStage(svg: SVGSVGElement, opt: StageOptions): LineStag
   let cues: Array<{ t: number; fn: () => void; done: boolean }> = [];
   let simT = 0, built = false;
   const shadows: Array<[Character, SVGEllipseElement]> = [];
+  const windows: Array<[Character, SVGEllipseElement, number, number]> = [];
 
   const L: LineStage = {
     svg, back, people, front, width, height,
@@ -61,9 +66,12 @@ export function createLineStage(svg: SVGSVGElement, opt: StageOptions): LineStag
     setup(fn) { setupFn = fn; built = false; },
     add(who, o) {
       const spec = withSkin(typeof who === 'string' ? byId(who) : who, o.skin);
+      const w0 = o.from ?? -Infinity, w1 = o.until ?? Infinity;
+      checkWindow(spec.id, w0, w1, o.from !== undefined || o.until !== undefined);
       const sh = el('ellipse', { rx: 9 * (o.scale ?? 1), ry: 1.4 * (o.scale ?? 1), fill: '#1c1c1c', opacity: 0.07, cy: o.y + 1 }, people);
       const c = applyGestureAliases(createCharacter(people, spec, o), o.skin);
       cast.push(c); shadows.push([c, sh]);
+      if (o.from !== undefined || o.until !== undefined) windows.push([c, sh, w0, w1]);
       return c;
     },
     at(t, fn) { cues.push({ t, fn, done: false }); },
@@ -84,15 +92,29 @@ export function createLineStage(svg: SVGSVGElement, opt: StageOptions): LineStag
         for (const c of cast) c.update(simT, dt, w);
       }
       for (const [c, sh] of shadows) sh.setAttribute('cx', f(c.x));
+      for (const [c, sh, w0, w1] of windows) {
+        const d = simT >= w0 - 1e-9 && simT < w1 - 1e-9 ? '' : 'none';
+        c.g.style.display = d; sh.style.display = d;
+      }
     },
   };
 
   function fire(now: number) {
     for (const q of cues) if (!q.done && q.t <= now + 1e-9) { q.done = true; q.fn(); }
   }
+  const spans: Record<string, Array<[number, number, boolean]>> = {};
+  function checkWindow(id: string, w0: number, w1: number, windowed: boolean) {
+    if (!(w0 < w1)) throw new Error(`${id}: from (${w0}) phai nho hon until (${w1})`);
+    const list = (spans[id] ??= []);
+    // Chi kiem khi co ban dung from/until (video cu dat cung nhan vat hai lan khong khung hien van chay nhu truoc).
+    for (const [a, b, wd] of list) if ((windowed || wd) && w0 < b - 1e-9 && a < w1 - 1e-9)
+      throw new Error(`${id} da co tren san khau trong khoang ${a}..${b}: mot nhan vat chi hien mot ban cung luc (doi skin thi dat from/until noi tiep)`);
+    list.push([w0, w1, windowed]);
+  }
   function rebuild() {
     for (const layer of [back, people, front]) while (layer.firstChild) layer.removeChild(layer.firstChild);
-    cast = []; cues = []; shadows.length = 0; simT = 0;
+    cast = []; cues = []; shadows.length = 0; windows.length = 0; simT = 0;
+    for (const k of Object.keys(spans)) delete spans[k];
     setupFn?.(L);
     for (const c of cast) c.update(0, 0, windAt(0));
     built = true;

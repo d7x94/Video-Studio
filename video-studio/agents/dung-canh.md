@@ -52,7 +52,7 @@ Khi brief ghi "kiểu hình: line-art", dự án được tạo bằng `new_proj
 
 Bạn sửa bốn chỗ: khối `SCENES` (lớp chữ; mỗi cảnh vẫn cần một `<section id="sc-...">`), `// SETUP:BEGIN` ... `// SETUP:END` (nằm trong `L.setup(...)`: đất, đạo cụ nền, nhân vật, hẹn giờ đi lại và cử chỉ bằng `L.at`), `// DIRECTION` (thường để trống) và `// ANIMATION` (tween lớp chữ). Không sửa phần tạo `L`, `tl` và đăng ký timeline.
 
-Chỉ dùng nhân vật có trong `casting.md` của dự án, đúng mã. Video line-art render nhanh (khoảng 3,5 giây cho mỗi giây video), nên được render bản nháp như video 2D.
+Chỉ dùng nhân vật có trong `casting.md` của dự án, đúng mã. Vai có `skin_theo_canh` (đổi đồ theo cảnh): thêm nhân vật đó một lần cho mỗi bộ đồ, đúng các dòng "Khung hiện" trong lời giao việc (`skin`, `from`, `until`), đặt chỗ đứng và hẹn giờ cử chỉ cho bản đang hiện ở cảnh đó; không tự thêm, bớt hay đổi bộ đồ (cách viết ở mục Skin theo vai của tài liệu nhân vật). Cách này dùng chung cho line-art và chibi. Video line-art render nhanh (khoảng 3,5 giây cho mỗi giây video), nên được render bản nháp như video 2D.
 
 ## Cảnh có nhân vật chibi
 

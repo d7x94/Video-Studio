@@ -185,6 +185,7 @@ function pendulum(stiffness = 10, damping = 1.1, a = 0) {
 }
 
 // cast/rig.ts
+var GESTURES = ["wave", "point", "present", "talk", "bow", "nod"];
 var ADULT = { thigh: 23, shin: 23, torso: 31, neck: 4.2, rx: 4, ry: 4.9, upper: 16, fore: 15.5, legW: 4.2, armW: 3.6, chest: 6.4, back: 5.6, swing: 15, foot: 1, gait: { kind: "walk" } };
 var BODIES = {
   adult: ADULT,
@@ -990,6 +991,7 @@ function createLineStage(svg, opt) {
   let cues = [];
   let simT = 0, built = false;
   const shadows = [];
+  const windows = [];
   const L = {
     svg,
     back,
@@ -1006,10 +1008,13 @@ function createLineStage(svg, opt) {
     },
     add(who, o) {
       const spec = withSkin(typeof who === "string" ? byId(who) : who, o.skin);
+      const w0 = o.from ?? -Infinity, w1 = o.until ?? Infinity;
+      checkWindow(spec.id, w0, w1, o.from !== void 0 || o.until !== void 0);
       const sh = el("ellipse", { rx: 9 * (o.scale ?? 1), ry: 1.4 * (o.scale ?? 1), fill: "#1c1c1c", opacity: 0.07, cy: o.y + 1 }, people);
       const c = applyGestureAliases(createCharacter(people, spec, o), o.skin);
       cast.push(c);
       shadows.push([c, sh]);
+      if (o.from !== void 0 || o.until !== void 0) windows.push([c, sh, w0, w1]);
       return c;
     },
     at(t, fn) {
@@ -1031,6 +1036,11 @@ function createLineStage(svg, opt) {
         for (const c of cast) c.update(simT, dt, w);
       }
       for (const [c, sh] of shadows) sh.setAttribute("cx", f(c.x));
+      for (const [c, sh, w0, w1] of windows) {
+        const d = simT >= w0 - 1e-9 && simT < w1 - 1e-9 ? "" : "none";
+        c.g.style.display = d;
+        sh.style.display = d;
+      }
     }
   };
   function fire(now) {
@@ -1039,12 +1049,22 @@ function createLineStage(svg, opt) {
       q.fn();
     }
   }
+  const spans = {};
+  function checkWindow(id, w0, w1, windowed) {
+    if (!(w0 < w1)) throw new Error(`${id}: from (${w0}) phai nho hon until (${w1})`);
+    const list = spans[id] ?? (spans[id] = []);
+    for (const [a, b, wd] of list) if ((windowed || wd) && w0 < b - 1e-9 && a < w1 - 1e-9)
+      throw new Error(`${id} da co tren san khau trong khoang ${a}..${b}: mot nhan vat chi hien mot ban cung luc (doi skin thi dat from/until noi tiep)`);
+    list.push([w0, w1, windowed]);
+  }
   function rebuild() {
     for (const layer of [back, people, front]) while (layer.firstChild) layer.removeChild(layer.firstChild);
     cast = [];
     cues = [];
     shadows.length = 0;
+    windows.length = 0;
     simT = 0;
+    for (const k of Object.keys(spans)) delete spans[k];
     setupFn?.(L);
     for (const c of cast) c.update(0, 0, windAt(0));
     built = true;
@@ -1052,6 +1072,7 @@ function createLineStage(svg, opt) {
   return L;
 }
 export {
+  GESTURES,
   PAPER,
   PEN,
   ROSTER,
