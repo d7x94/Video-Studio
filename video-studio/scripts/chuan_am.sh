@@ -63,6 +63,8 @@ while [ "$NORM" = 1 ] && [ $N -lt 3 ]; do
   echo "[INFO] true peak $P dB sau khi ma hoa, ma hoa lai tieng voi tran $CEIL dBFS" >&2
   encode "$CEIL"; R=$(measure)
 done
+# Giu moc gio cua ban goc: nhac_nen.py so moc gio de biet ban nao la ban moi render; file moi hon se bi coi la ban chua co nhac va ghep nhac chong len nhac
+touch -r "$OUT" "$TMP"
 mv -f "$TMP" "$OUT"
 echo "$R"
 if [ "$NORM" = 1 ]; then

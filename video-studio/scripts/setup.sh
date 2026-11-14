@@ -55,11 +55,13 @@ if [ "${1:-}" = "--check" ]; then
 fi
 
 # 3. Goi Node: HyperFrames, GSAP (cai cuc bo vi CDN bi chan), font Be Vietnam Pro
-if [ ! -f "$TOOLS/.node_done" ] || [ ! -d "$TOOLS/node_modules/three" ]; then
+# .node_done ghi cac ban da ghim: doi pin o tren thi cai lai thay vi bo qua
+NODE_PINS="hyperframes@$HF_VER gsap@$GSAP_VER be-vietnam-pro@$FONT_VER three@$THREE_VER"
+if [ "$(cat "$TOOLS/.node_done" 2>/dev/null)" != "$NODE_PINS" ] || [ ! -d "$TOOLS/node_modules/three" ]; then
   [ -f "$TOOLS/package.json" ] || echo '{ "name": "studio-tools", "private": true }' > "$TOOLS/package.json"
   ( cd "$TOOLS" && npm i --no-audit --no-fund "hyperframes@$HF_VER" "gsap@$GSAP_VER" "@fontsource/be-vietnam-pro@$FONT_VER" "three@$THREE_VER" >/dev/null 2>&1 ) \
     || fail "npm install that bai"
-  touch "$TOOLS/.node_done"
+  echo "$NODE_PINS" > "$TOOLS/.node_done"
 fi
 ok "hyperframes $HF_VER, gsap $GSAP_VER, be-vietnam-pro $FONT_VER, three $THREE_VER"
 
