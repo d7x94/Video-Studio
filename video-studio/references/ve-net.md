@@ -1,6 +1,6 @@
 # Cảnh vẽ nét (kiểu hình `ve-net`)
 
-Mỗi cảnh là một tờ giấy. Bút **vẽ từng nét thật**: đường thẳng, vòng tròn, tia sáng, nét gạch chéo tô bóng, mũi tên, và chữ được viết ra từ trái sang phải; bàn tay cầm bút chạy theo đầu nét, kiểu "whiteboard animation". Mọi nét là SVG do studio tự vẽ bằng code, nên **không cần người dùng tạo ảnh** (khác `ve-tay`) và hợp với mọi chủ đề: giải thích cơ chế, quy trình từng bước, so sánh, định nghĩa, mẹo nhanh.
+Mỗi cảnh là một tờ giấy. Bút **vẽ từng nét thật**: đường thẳng, vòng tròn, tia sáng, nét gạch chéo tô bóng, mũi tên, và chữ được viết ra từ trái sang phải; bàn tay cầm bút chạy theo đầu nét, kiểu "whiteboard animation". Mọi nét là SVG do studio tự vẽ bằng code (riêng bàn tay là ảnh PNG, xem mục "Bàn tay"), nên **không cần người dùng tạo ảnh** (khác `ve-tay`) và hợp với mọi chủ đề: giải thích cơ chế, quy trình từng bước, so sánh, định nghĩa, mẹo nhanh.
 
 Kiểm chứng ngày 2026-11-13: chạy trọn quy trình với video mẫu 4 cảnh (lồng tiếng, `inject.py`, `hyperframes check` 0 lỗi, render hai khổ, `check_output.py` ĐẠT).
 
@@ -30,6 +30,16 @@ Video 60 giây hai khổ, mỗi khổ 1 bản nháp và 1 bản cuối: khoảng
 1. **Bước 2, biên kịch**: trường `visual` mô tả bố cục tờ giấy: những hình nào, ở đâu, vẽ theo thứ tự nào (thứ tự này là thứ tự bút vẽ, nên trùng thứ tự lời đọc). `on_screen.title` là chữ chính sẽ được **viết ra bằng bút** (ngắn, tối đa khoảng 8 từ). Mỗi cảnh nên có từ 2 đến 8 nét hay hình; cảnh quá nhiều hình thì không kịp vẽ.
 2. **Không có bước tranh (3c)**: sau khi duyệt kịch bản (và lồng tiếng) thì dựng luôn.
 3. **Bước 5**: `new_project.sh <PROJECT> <khổ> venet` cho từng khổ. Agent dựng cảnh viết `V.scene(...)` cho mỗi cảnh, rồi `inject.py`, rồi `ve_net_kiem_tra.sh` (xem mục Kiểm tra thời gian vẽ).
+
+## Bàn tay
+
+Bàn tay cầm bút là ảnh PNG nền trong (`assets/venet/hand.png`, bóng `hand-shadow.png`), `new_project.sh` chép vào `build/<khổ>/assets/`. Bản trước vẽ tay bằng SVG trong code, nhìn cứng và giả nên đã thay. Ảnh do người dùng tạo bằng Grok (prompt kiểu minh họa nét mảnh nâu, nền xanh lá thuần `#00FF00`, tay phải cầm bút xanh chéo 45 độ lên trên trái, tay áo xanh nhạt bị cắt ở góc dưới phải), tách nền bằng `tools/tach_ban_tay.py`.
+
+- Đầu bút nằm ở góc tọa độ của nhóm tay: `venet.js` đặt ảnh lệch `(-10,08, -10,08)` để đầu bút trùng đúng đầu nét; xoay quanh đầu bút.
+- Ảnh gốc bị cắt ở mép dưới, nên `venet.js` vẽ thêm một dải tay áo (polygon cùng màu, hai cạnh theo hướng cánh tay) kéo xuống đáy khung. Đã soát bằng ảnh chụp ở nhiều vị trí; còn một mối nối màu rất nhạt ở đáy ảnh gốc.
+- Chỉ một tư thế cầm bút, ngón tay không cử động; chưa thử khổ ngang (dùng cùng ảnh, tỉ lệ theo `handScale`).
+- Đổi bàn tay khác: tạo ảnh cùng bố cục, chạy `python3 tools/tach_ban_tay.py anh.jpg thu-muc-ra`, chép `hand.png`, `hand-shadow.png` vào `assets/venet/`, rồi đo lại đầu bút, màu tay áo và hai cạnh tay áo, sửa các số có chú thích trong `venet.js` (hàm `createStage`, đoạn `HK`). Chạy thử trọn một video trước khi commit. Script ra ảnh gần giống bản đã commit nhưng không trùng từng điểm ảnh.
+- Muốn bỏ bàn tay: `hand: false` ở `V.scene`.
 
 ## Thư viện `venet.js`
 
@@ -66,7 +76,7 @@ S.text("ngày", 250, 640, { size: 72, anchor: "middle", mark: true });  // chữ
 
 **Màu bút**: `ink` (mặc định), `red`, `orange`, `blue`, `green`, `yellow`, `gray`, `pink`, `mark`; hoặc mã CSS bất kỳ. Giấy kem `--paper` đổi được trong `index.html`.
 
-**Thứ tự và nhịp.** Các nét vẽ lần lượt đúng thứ tự gọi hàm; bàn tay vào từ góc dưới phải, nhấc bút đi từ nét này sang nét khác, rồi rời khung sau nét cuối. Muốn một nét bắt đầu đúng lúc lời đọc nhắc tới thì đặt `at` (tính từ đầu cảnh, lấy từ độ dài đoạn lời trong `timeline.json`); khi đã dùng `at`, thư viện không tự co giãn tốc độ bút nữa.
+**Thứ tự và nhịp.** Các nét vẽ lần lượt đúng thứ tự gọi hàm; bàn tay vào từ góc dưới phải, nhấc bút đi từ nét này sang nét khác, rồi rời khung sau nét cuối. Khi chuyển nét, tay nhấc lên theo đường cong và hơi to ra, bóng đổ lùi xa hơn; lúc vẽ, cổ tay xoay nhẹ theo vị trí ngang trên giấy và rung rất nhẹ (hàm của thời gian, không ngẫu nhiên). Muốn một nét bắt đầu đúng lúc lời đọc nhắc tới thì đặt `at` (tính từ đầu cảnh, lấy từ độ dài đoạn lời trong `timeline.json`); khi đã dùng `at`, thư viện không tự co giãn tốc độ bút nữa.
 
 ## Biến ý trừu tượng thành hình
 
@@ -157,6 +167,6 @@ python3 SKILL/scripts/nhac_nen.py <PROJECT> --chi-hieu-ung                      
 
 ## Ghi công
 
-Ghi vào `credits.md`: "Nét vẽ, chữ viết tay, bàn tay cầm bút: đồ họa tự vẽ của studio (SVG)". Chữ dùng font Be Vietnam Pro cài sẵn trong template, như các kiểu hình khác. Không có tài nguyên ngoài khác.
+Ghi vào `credits.md`: "Nét vẽ: đồ họa tự vẽ của studio (SVG). Bàn tay cầm bút: ảnh do người dùng tạo bằng Grok (xAI)". Chữ dùng font Be Vietnam Pro cài sẵn trong template, như các kiểu hình khác. Không có tài nguyên ngoài khác.
 
 Video dùng `write` thì ghi thêm: "Chữ viết tay: nét chữ lấy từ phông Patrick Hand (Copyright (c) 2010-2012 Patrick Wagesreiter), SIL Open Font License 1.1". File giấy phép: `assets/venet/LICENSE-patrick-hand-OFL.txt`.
