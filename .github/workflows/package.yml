@@ -51,6 +51,13 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
         run: |
+          # Nhieu PR merge sat nhau thi cac lan chay co the toi tre, sai thu tu.
+          # Chi dang khi commit nay van la dau main, de ban cu khong ghi de ban moi.
+          head=$(gh api "repos/$GH_REPO/commits/main" --jq .sha)
+          if [ "$head" != "$GITHUB_SHA" ]; then
+            echo "Bo qua: ${GITHUB_SHA::7} khong con la dau main (${head::7}); lan chay cua commit moi hon se dang."
+            exit 0
+          fi
           gh release delete latest -y --cleanup-tag || true
           gh release create latest dist/video-studio.zip \
             --target "$GITHUB_SHA" \
