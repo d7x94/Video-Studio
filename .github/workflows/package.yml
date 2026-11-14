@@ -35,6 +35,20 @@ jobs:
           name: video-studio-zip
           path: dist/video-studio.zip
           retention-days: 7
+  venet-chu:
+    # Kiem venet-chu.js khop phong Patrick Hand. Tach job rieng, khong chan phat hanh: ket qua phu thuoc phien ban Pillow, numpy, scipy, fonttools (chua ghim).
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Kiem venet-chu.js khop nguon
+        run: |
+          # venv: tools/build_venet_chu.sh chay python3 -I (bo qua thu muc goi cua nguoi dung), nen goi phai nam trong venv
+          python3 -m venv "$RUNNER_TEMP/venv"
+          "$RUNNER_TEMP/venv/bin/pip" install pillow numpy scipy fonttools
+          PATH="$RUNNER_TEMP/venv/bin:$PATH" bash tools/build_venet_chu.sh --check
   release:
     needs: check
     if: github.event_name != 'pull_request'

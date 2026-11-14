@@ -25,7 +25,7 @@ r = json.loads(html.unescape(m.group(1)))
 if os.environ.get("JSON_OUT"):
     open(os.environ["JSON_OUT"], "w", encoding="utf-8").write(json.dumps(r, ensure_ascii=False))
 for s in r["scenes"]:
-    flag = "  <-- KHONG KIP" if s["drawEnd"] + 0.5 > s["end"] + 0.05 and s["items"] else ""
+    flag = "  <-- KHONG KIP (net cuoi phai ve xong truoc khi canh ket thuc 0,5 giay de ban tay kip roi khung)" if s["drawEnd"] + 0.5 > s["end"] + 0.05 and s["items"] else ""
     print("%s: %d net, ve xong luc %.2fs, canh ket thuc %.2fs%s" % (s["id"], s["items"], s["drawEnd"], s["end"], flag))
 for w in r["warnings"]:
     print("[CANH BAO]", w)
