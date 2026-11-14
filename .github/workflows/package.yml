@@ -56,6 +56,7 @@ jobs:
     permissions:
       contents: write
     steps:
+      - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
         with:
           name: video-studio-zip
@@ -72,8 +73,9 @@ jobs:
             echo "Bo qua: ${GITHUB_SHA::7} khong con la dau main (${head::7}); lan chay cua commit moi hon se dang."
             exit 0
           fi
+          VER=$(tr -d '[:space:]' < video-studio/VERSION)
           gh release delete latest -y --cleanup-tag || true
           gh release create latest dist/video-studio.zip \
             --target "$GITHUB_SHA" \
-            --title "video-studio (ban moi nhat)" \
-            --notes "Tu dong dong goi tu commit ${GITHUB_SHA::7}. Tai video-studio.zip, vao claude.ai > Settings > Skills de tai len thay ban cu."
+            --title "video-studio v$VER (ban moi nhat)" \
+            --notes "Phien ban $VER. Tu dong dong goi tu commit ${GITHUB_SHA::7}. Tai video-studio.zip, vao claude.ai > Settings > Skills de tai len thay ban cu."

@@ -38,7 +38,7 @@ tools/
 
 ## Cài và cập nhật skill
 
-1. Tải `video-studio.zip` ở mục [Releases](../../releases/tag/latest) (GitHub Actions tự đóng gói mỗi lần `main` đổi), hoặc chạy `bash tools/package_skill.sh`.
+1. Tải `video-studio.zip` ở mục [Releases](../../releases/tag/latest) (GitHub Actions tự đóng gói mỗi lần `main` đổi), hoặc chạy `bash tools/package_skill.sh`. Phiên bản hiện tại nằm ở `video-studio/VERSION`, lịch sử ở `CHANGELOG.md`.
 2. Vào claude.ai > Settings > Skills, tải zip lên để thay bản cũ. Bản mới có hiệu lực ở các cuộc chat mở sau đó.
 
 ## Ghi công
