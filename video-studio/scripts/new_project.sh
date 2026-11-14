@@ -50,6 +50,8 @@ elif [ "$MODE" = venet ]; then
   cp "$STUDIO_SKILL/templates/$FORMAT-venet.html" "$OUT/index.html"
   cp "$STUDIO_SKILL/assets/venet/venet.js" "$OUT/"
   cp "$STUDIO_SKILL/assets/venet/venet-chu.js" "$OUT/"   # net chu viet tay cho S.write (venet.js nap file nay)
+  mkdir -p "$OUT/assets"
+  cp "$STUDIO_SKILL/assets/venet/hand.png" "$STUDIO_SKILL/assets/venet/hand-shadow.png" "$OUT/assets/"   # anh ban tay cam but (venet.js nap theo duong dan assets/hand.png)
 else
   cp "$STUDIO_SKILL/templates/$FORMAT.html" "$OUT/index.html"
 fi

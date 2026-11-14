@@ -110,31 +110,73 @@ function hatchPath(pts, deg, gap, rand, inset) {
   return segs.map((sg) => `M${f1(sg[0][0])} ${f1(sg[0][1])} L${f1(sg[1][0])} ${f1(sg[1][1])}`).join(" ");
 }
 
-// ---------------------------------------------------------------- ban tay cam but
-// Goc toa do = dau ngoi but; tay nam phia duoi ben phai. (Cung hinh ban tay voi vetay.js)
-const SKIN = "#f1c7a1", SKIN_D = "#d9a27c", INK = "#3b2620";
-function finger(g, pts, w) {
-  const d = "M" + pts.map((q) => q.join(" ")).join(" L");
-  el("path", { d, fill: "none", stroke: INK, "stroke-width": w + 9, "stroke-linecap": "round", "stroke-linejoin": "round" }, g);
-  el("path", { d, fill: "none", stroke: SKIN, "stroke-width": w, "stroke-linecap": "round", "stroke-linejoin": "round" }, g);
+// ---------------------------------------------------------------- ban tay cam but (ban chi tiet)
+// Goc toa do = dau ngoi but; tay nam phia duoi ben phai. Ve bang path to mau gradient, vien nau mem (khong filter).
+const SKIN = "#f0c4a0", SKIN_D = "#d49a76", SKIN_L = "#f8dcc2", LINE = "#9a6446", INK = "#3b2620";
+function limbD(pts, ws) {
+  const L = [], R = [];
+  for (let i = 0; i < pts.length; i++) {
+    const p = pts[i], a = pts[Math.max(0, i - 1)], b = pts[Math.min(pts.length - 1, i + 1)];
+    let tx = b[0] - a[0], ty = b[1] - a[1]; const n = Math.hypot(tx, ty) || 1; tx /= n; ty /= n;
+    const h = ws[i] / 2;
+    L.push([p[0] - ty * h, p[1] + tx * h]); R.push([p[0] + ty * h, p[1] - tx * h]);
+  }
+  const k = pts.length - 1, q = pts[k], r = pts[k - 1];
+  let dx = q[0] - r[0], dy = q[1] - r[1]; const m = Math.hypot(dx, dy) || 1; dx /= m; dy /= m;
+  const c = ws[k] * 0.62, f = (v) => v.toFixed(1);
+  let d = "M" + L.map((v) => f(v[0]) + " " + f(v[1])).join(" L");
+  d += ` C${f(L[k][0] + dx * c)} ${f(L[k][1] + dy * c)} ${f(R[k][0] + dx * c)} ${f(R[k][1] + dy * c)} ${f(R[k][0])} ${f(R[k][1])}`;
+  d += " L" + R.slice().reverse().map((v) => f(v[0]) + " " + f(v[1])).join(" L") + " Z";
+  return d;
 }
-function drawHand(g) {
-  const o = { stroke: INK, "stroke-width": 4.5, "stroke-linejoin": "round" };
-  el("path", Object.assign({ d: "M212 300 L560 560 L660 430 L282 222 Z", fill: "#fbfaf6" }, o), g);
-  el("path", Object.assign({ d: "M206 296 L278 216 L312 236 L238 322 Z", fill: "#e6e1d4" }, o), g);
-  finger(g, [[150, 178], [98, 150], [44, 94]], 30);
-  el("path", Object.assign({ d: "M114 116 C150 94 214 110 252 160 C282 202 272 262 232 292 C192 320 140 302 120 262 C100 222 94 152 114 116 Z", fill: SKIN }, o), g);
-  finger(g, [[208, 272], [180, 274]], 24);
-  finger(g, [[188, 248], [152, 242]], 28);
-  finger(g, [[168, 220], [124, 202]], 30);
-  el("path", Object.assign({ d: "M0 0 L21.5 17.2 L6.3 26.8 Z", fill: "#e8dcc4" }, o), g);
-  el("path", { d: "M0 0 L7 5.6 L2 8.8 Z", fill: INK }, g);
-  el("path", Object.assign({ d: "M21.5 17.2 L138.4 202.2 L123.2 211.8 L6.3 26.8 Z", fill: "#4f6d8f" }, o), g);
-  el("path", { d: "M17 22 L131 205", stroke: "#86a3c2", "stroke-width": 4, "stroke-linecap": "round" }, g);
-  finger(g, [[170, 140], [116, 124], [44, 46]], 30);
-  el("ellipse", { cx: 46, cy: 44, rx: 9, ry: 6, transform: "rotate(57 46 44)", fill: "#f7dcc4", stroke: SKIN_D, "stroke-width": 2.5 }, g);
-  el("path", { d: "M84 98 C90 92 98 92 102 98", fill: "none", stroke: SKIN_D, "stroke-width": 3.5, "stroke-linecap": "round" }, g);
-  el("path", { d: "M196 170 C214 182 230 184 244 178", fill: "none", stroke: SKIN_D, "stroke-width": 4, "stroke-linecap": "round" }, g);
+let HAND_N = 0;
+function drawHand(g, shadow) {
+  const id = "vh" + (HAND_N++);
+  if (!shadow) {
+    const df = el("defs", {}, g);
+    const lg = (gid, x1, y1, x2, y2, stops) => { const gr = el("linearGradient", { id: gid, gradientUnits: "userSpaceOnUse", x1, y1, x2, y2 }, df); stops.forEach(([o, c]) => el("stop", { offset: o, "stop-color": c }, gr)); };
+    lg(id + "s", 120, 100, 340, 330, [[0, SKIN_L], [0.55, SKIN], [1, SKIN_D]]);
+    lg(id + "f", 40, 40, 200, 220, [[0, SKIN_L], [1, SKIN]]);
+    lg(id + "c", 300, 200, 560, 560, [[0, "#6f8fae"], [1, "#4a6684"]]);
+    lg(id + "p", 0, 30, 30, 10, [[0, "#3f5c7c"], [0.5, "#7f9fc0"], [1, "#3f5c7c"]]);
+  }
+  const fillOf = (k) => (shadow ? INK : `url(#${id}${k})`);
+  const ln = shadow ? {} : { stroke: LINE, "stroke-width": 3, "stroke-linejoin": "round" };
+  const P = (d, fill, extra) => el("path", Object.assign({ d, fill }, ln, extra || {}), g);
+  // tay ao va co tay ao
+  P("M318 180 L660 410 L540 610 L262 352 Z", fillOf("c"), shadow ? {} : { stroke: "#34495f" });
+  if (!shadow) {
+    P("M318 180 L366 212 L298 384 L262 352 Z", "#e9e5dc", { stroke: "#8a8478" });
+    el("path", { d: "M420 300 C450 360 470 420 470 480 M500 330 C520 380 540 430 545 470", fill: "none", stroke: "#3d5672", "stroke-width": 3, opacity: 0.6 }, g);
+  }
+  // ngon giua, ap uap, ut co lai ben duoi
+  P(limbD([[232, 226], [198, 246], [172, 258]], [38, 34, 30]), fillOf("f"));
+  P(limbD([[258, 258], [228, 278], [206, 290]], [34, 30, 26]), fillOf("f"));
+  P(limbD([[284, 288], [262, 306], [246, 316]], [28, 24, 20]), fillOf("f"));
+  // ngon cai
+  P(limbD([[200, 236], [168, 210], [122, 168], [86, 130], [54, 100]], [50, 46, 38, 32, 26]), fillOf("f"));
+  if (!shadow) {
+    el("ellipse", { cx: 62, cy: 108, rx: 9, ry: 6, transform: "rotate(42 62 108)", fill: "#f7dcc8", stroke: "#c99075", "stroke-width": 2 }, g);
+    el("path", { d: "M96 150 C104 138 116 134 126 138", fill: "none", stroke: SKIN_D, "stroke-width": 2.5, "stroke-linecap": "round" }, g);
+  }
+  // but
+  P("M0 0 L21.5 17.2 L6.3 26.8 Z", shadow ? INK : "#e8dcc4", shadow ? {} : { stroke: INK, "stroke-width": 2.5 });
+  if (!shadow) el("path", { d: "M0 0 L7 5.6 L2 8.8 Z", fill: INK }, g);
+  P("M21.5 17.2 L150 222 L134.8 231.6 L6.3 26.8 Z", shadow ? INK : "#4f6d8f", shadow ? {} : { stroke: "#2c3f55", "stroke-width": 2.5 });
+  if (!shadow) el("path", { d: "M16 21 L143 224", stroke: "#9cb6d1", "stroke-width": 4, "stroke-linecap": "round", opacity: 0.8 }, g);
+  // ngon tro nam tren but
+  P(limbD([[215, 158], [188, 140], [128, 108], [76, 74], [40, 46]], [40, 38, 33, 29, 25]), fillOf("f"));
+  if (!shadow) {
+    el("ellipse", { cx: 46, cy: 50, rx: 10, ry: 7, transform: "rotate(36 46 50)", fill: "#f7dcc8", stroke: "#c99075", "stroke-width": 2 }, g);
+    el("path", { d: "M92 72 C96 86 100 92 106 96 M140 100 C144 114 148 120 154 124", fill: "none", stroke: SKIN_D, "stroke-width": 2.5, "stroke-linecap": "round" }, g);
+  }
+  // mu ban tay
+  el("path", { d: "M160 124 C202 102 258 122 302 164 C334 194 356 226 366 258 L334 344 C292 340 240 320 200 290 C166 262 142 230 140 190 C140 160 146 134 160 124 Z", fill: fillOf("s") }, g);
+  if (!shadow) el("path", { d: "M223 118 C250 124 278 141 302 164 C334 194 356 226 366 258 M334 344 C292 340 250 324 214 300", fill: "none", stroke: LINE, "stroke-width": 3, "stroke-linecap": "round" }, g);
+  if (!shadow) {
+    el("path", { d: "M214 166 C232 178 244 192 252 206", fill: "none", stroke: SKIN_D, "stroke-width": 2.5, opacity: 0.5, "stroke-linecap": "round" }, g);
+    [[190, 138], [238, 196], [262, 230], [284, 262]].forEach(([x, y]) => el("ellipse", { cx: x, cy: y, rx: 11, ry: 6, transform: `rotate(-35 ${x} ${y})`, fill: SKIN_L, opacity: 0.7 }, g));
+  }
 }
 
 // ---------------------------------------------------------------- san khau
@@ -154,8 +196,20 @@ export function createStage(svg, opts = {}) {
   const layer = el("g", {}, svg);
   const handG = el("g", { opacity: 0 }, svg);
   const handScale = opts.handScale || (Math.min(W, H) / 1080) * 1.2;
+  // Ban tay la anh PNG (assets/hand.png 559x902, bong assets/hand-shadow.png), nguon: anh do nguoi dung tao bang Grok, tach nen bang tools/tach_ban_tay.py.
+  // Hang so duoi day gan voi dung anh nay: dau but o (10.08, 10.08) trong anh; polygon la doan tay ao keo dai xuong day khung
+  // (canh trai doc 0,316, canh phai doc 0,45, mau #a6ccee do tu hang cuoi cua anh). Doi anh tay thi do lai va sua cac so nay (ve-net.md, muc Ban tay).
+  const HK = 1 / 1.2;   // anh luu o do phan giai 1:1 khi handScale = 1.2
+  const mk = (g, shadow) => {
+    const gg = el("g", { transform: `scale(${HK}) translate(${-10.08} ${-10.08})` }, g);
+    if (!shadow) el("polygon", { points: "536,720 1968,3902 1297,3902 349,900 439,900 439,720", fill: "#a6ccee" }, gg);
+    else el("polygon", { points: "536,720 1968,3902 1297,3902 349,900 439,900 439,720", fill: "#282019" }, gg);
+    el("image", { href: shadow ? "assets/hand-shadow.png" : "assets/hand.png", x: 0, y: 0, width: 559, height: 902 }, gg);
+  };
+  const shade = el("g", { opacity: 0.14 }, handG);
+  mk(shade, true);
   const hand = el("g", {}, handG);
-  drawHand(hand);
+  mk(hand, false);
   // Vung an toan de ve: tranh nhan tren (.tag) va phu de duoi (xem template)
   const area = opts.area || (portrait ? { x: 40, y: 370, w: W - 80, h: 1000 } : { x: 80, y: 140, w: W - 160, h: 800 });
   const scenes = [];
@@ -664,20 +718,24 @@ export function createStage(svg, opts = {}) {
     const real = s.items.filter((it) => it.kind !== "wait");
     if (!s.hand || !real.length) return null;
     let prev = out;
+    const arc = (p, q, e) => { const dd = Math.hypot(q[0] - p[0], q[1] - p[1]); const up = Math.min(60, dd * 0.18) * Math.sin(Math.PI * e); return [p[0] + (q[0] - p[0]) * e, p[1] + (q[1] - p[1]) * e - up]; };
     for (let i = 0; i < real.length; i++) {
       const it = real[i];
       const a = toScreen(s, it.pt(0));
       const t0 = it.start - it.tr;
-      if (lt < t0) return i === 0 ? null : prev;
-      if (lt < it.start) { const e = ease((lt - t0) / it.tr); return [prev[0] + (a[0] - prev[0]) * e, prev[1] + (a[1] - prev[1]) * e]; }
-      if (lt <= it.start + it.dur) return toScreen(s, it.pt(pace(it.pa, (lt - it.start) / it.dur)));
+      if (lt < t0) return i === 0 ? null : prev.concat([0]);
+      if (lt < it.start) {
+        const e = ease((lt - t0) / it.tr);
+        const lift = i === 0 ? 1 - e : Math.sin(Math.PI * e);
+        return arc(prev, a, e).concat([lift]);
+      }
+      if (lt <= it.start + it.dur) return toScreen(s, it.pt(pace(it.pa, (lt - it.start) / it.dur))).concat([0]);
       prev = toScreen(s, it.pt(1));
     }
-    // Sau net cuoi: ban tay roi khung
     const t1 = real[real.length - 1].start + real[real.length - 1].dur;
     if (lt > t1 + T_OUT) return null;
     const e = ease((lt - t1) / T_OUT);
-    return [prev[0] + (out[0] - prev[0]) * e, prev[1] + (out[1] - prev[1]) * e];
+    return arc(prev, out, e).concat([e]);
   }
 
   function render(t) {
@@ -704,7 +762,16 @@ export function createStage(svg, opts = {}) {
     if (pos && hasBoard) { pos[0] += cur.bx - cam[0]; pos[1] += cur.by - cam[1]; }
     if (pos) {
       handG.setAttribute("opacity", 1);
-      hand.setAttribute("transform", `translate(${pos[0].toFixed(1)} ${pos[1].toFixed(1)}) scale(${handScale.toFixed(3)})`);
+      const lift = pos[2] || 0;
+      // co tay xoay theo vi tri ngang tren giay, rung rat nhe (ham cua t, tat dinh)
+      const ang = -7 + 12 * (pos[0] / W) + 0.9 * Math.sin(t * 1.7) + 0.5 * Math.sin(t * 3.9);
+      const jx = 0.8 * Math.sin(t * 23.0) + 0.5 * Math.sin(t * 37.0), jy = 0.8 * Math.cos(t * 19.0);
+      const sc = handScale * (1 + 0.05 * lift);
+      const x = pos[0] + jx * (1 - lift), y = pos[1] + jy * (1 - lift);
+      hand.setAttribute("transform", `translate(${x.toFixed(1)} ${y.toFixed(1)}) rotate(${ang.toFixed(2)}) scale(${sc.toFixed(3)})`);
+      const so = (10 + 34 * lift) * handScale;
+      shade.setAttribute("opacity", (0.16 - 0.07 * lift).toFixed(3));
+      shade.setAttribute("transform", `translate(${(x + so).toFixed(1)} ${(y + so * 1.15).toFixed(1)}) rotate(${ang.toFixed(2)}) scale(${sc.toFixed(3)})`);
     } else {
       handG.setAttribute("opacity", 0);
     }
