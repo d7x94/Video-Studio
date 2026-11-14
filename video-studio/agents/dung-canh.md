@@ -68,7 +68,7 @@ Bạn sửa bốn chỗ: khối `SCENES` (mỗi cảnh một `<section id="sc-..
 
 ## Cảnh vẽ nét
 
-Khi brief ghi "kiểu hình: ve-net", dự án được tạo bằng `new_project.sh ... venet`, không có ảnh nào cần chuẩn bị. Đọc `<SKILL>/references/ve-net.md` trước khi viết: API `venet.js` (nét cơ bản, hình ghép sẵn, `text`, `hatch`), không gian thiết kế, màu bút, cách đặt nhịp.
+Khi brief ghi "kiểu hình: ve-net", dự án được tạo bằng `new_project.sh ... venet`, không có ảnh nào cần chuẩn bị. Đọc `<SKILL>/references/ve-net.md` trước khi viết: API `venet.js` (nét cơ bản, hình ghép sẵn, `text`, `hatch`), không gian thiết kế, màu bút, cách đặt nhịp, và mục "Bảng chung" khi chuỗi cảnh nối nhau (camera trượt thay vì mỗi cảnh một tờ giấy mới).
 
 Bạn sửa ba chỗ: khối `SCENES` (mỗi cảnh một `<section id="sc-..." class="clip scene" data-start="0" data-duration="1"></section>`, để trống được; `inject.py` cần thẻ này), `// SETUP:BEGIN` ... `// SETUP:END` (mỗi cảnh một `V.scene("<id>", { start: T.<id>, space: ... })` rồi các lệnh vẽ theo đúng thứ tự lời đọc; chữ chính của cảnh là `S.text` lấy từ `on_screen.title`) và `// ANIMATION` (thường để trống). Dùng cùng một đoạn mã cho cả hai khổ khi được (tọa độ tự co theo khung); chỉ rẽ nhánh bằng `V.pick(dọc, ngang)` hay `V.portrait` khi bố cục thật sự khác. Sau `inject.py`, chạy `bash <SKILL>/scripts/ve_net_kiem_tra.sh build/<khổ>` và bớt nét hay bớt chữ cho tới khi không còn `KHONG KIP`. Không thêm `filter` lên nét. Video vẽ nét render khoảng 3,3 giây cho mỗi giây video, vẫn render bản nháp như video 2D.
 

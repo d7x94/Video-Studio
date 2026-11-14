@@ -133,6 +133,9 @@ const SPEED = 900;        // toc do but tu nhien: don vi thiet ke tren giay
 const T_IN = 0.5;         // thoi gian ban tay tu ngoai khung vao net dau
 const T_MOVE = 0.14;      // thoi gian nhac but di chuyen giua hai net
 const T_OUT = 0.5;        // thoi gian ban tay roi khung sau net cuoi
+const T_CAM = 0.8;        // thoi gian camera truot sang canh noi tiep tren cung mot bang
+const D_JOIN = 0.5;       // giay cho truoc net dau cua canh noi tiep (camera dang truot)
+const DIR = { phai: [1, 0], trai: [-1, 0], xuong: [0, 1], len: [0, -1] };
 
 export function createStage(svg, opts = {}) {
   const W = opts.width || 1920, H = opts.height || 1080;
@@ -150,10 +153,11 @@ export function createStage(svg, opts = {}) {
   const warnings = [];
   let uid = 0;
   let finalized = false;
+  let hasBoard = false;
 
   function scene(id, o) {
     const s = Object.assign({
-      start: 0, end: null, delay: 0.2, draw: null, fadeOut: 0.35, space: [1000, 1000], hand: true,
+      start: 0, end: null, delay: o && o.tiep ? D_JOIN : 0.2, draw: null, fadeOut: 0.35, space: [1000, 1000], hand: true,
       seed: 11 + uid * 17,
     }, o, { id, items: [] });
     uid++;
@@ -451,7 +455,7 @@ export function createStage(svg, opts = {}) {
     const life = s.end - s.start;
     const last = scenes[scenes.length - 1] === s;
     const real = s.items.filter((it) => it.kind !== "wait");
-    const tail = (last ? 0 : s.fadeOut) + 0.3;
+    const tail = s.fo + 0.3;
     if (s.draw == null) s.draw = Math.max(1.2, life - s.delay - tail - T_OUT);
     const hasAt = s.items.some((it) => it.at != null);
     const travel = real.length ? T_IN + (real.length - 1) * T_MOVE : 0;
@@ -482,6 +486,22 @@ export function createStage(svg, opts = {}) {
       s.last = i + 1 === scenes.length;
       if (s.end == null) s.end = !s.last ? scenes[i + 1].start : (opts.duration || s.start + 8);
     });
+    // Bang chung: canh co tiep: "phai" | "trai" | "xuong" | "len" nam canh canh truoc tren cung mot to giay,
+    // camera truot sang, canh truoc khong bi xoa; bang chi mo di sau canh cuoi cua bang
+    scenes.forEach((s, i) => {
+      const prev = scenes[i - 1], dir = s.tiep ? DIR[s.tiep] : null;
+      if (s.tiep && !dir) warnings.push(`canh ${s.id}: tiep "${s.tiep}" khong co (chon phai, trai, xuong, len); tinh la canh moi`);
+      if (s.tiep && dir && !prev) warnings.push(`canh ${s.id}: tiep nhung khong co canh truoc; tinh la canh moi`);
+      if (dir && prev) {
+        s.from = prev; s.bx = prev.bx + dir[0] * W; s.by = prev.by + dir[1] * H; s.board = prev.board;
+        s.g.setAttribute("transform", `translate(${f1(s.bx)} ${f1(s.by)})`);
+      } else {
+        s.from = null; s.bx = 0; s.by = 0; s.board = { first: s, last: s };
+      }
+      s.board.last = s;
+    });
+    scenes.forEach((s) => { s.fo = s.board.last === s && !s.last ? s.fadeOut : 0; });
+    hasBoard = scenes.some((s) => s.from);
     scenes.forEach(resolve);
     finalized = true;
     // Bao cao thoi gian de scripts/ve_net_kiem_tra.sh doc ra (khong anh huong hinh)
@@ -489,6 +509,18 @@ export function createStage(svg, opts = {}) {
   }
 
   const toScreen = (s, p) => [s.ox + p[0] * s.k, s.oy + p[1] * s.k];
+
+  // Vi tri camera tren bang chung: dung o canh dang ve, truot (ease) trong T_CAM giay dau cua canh noi tiep
+  function camAt(t) {
+    let s = null;
+    for (const x of scenes) { if (t >= x.start - 0.001) s = x; else break; }
+    if (!s) return [0, 0];
+    if (s.from) {
+      const u = clamp((t - s.start) / T_CAM, 0, 1);
+      if (u < 1) { const e = ease(u); return [s.from.bx + (s.bx - s.from.bx) * e, s.from.by + (s.by - s.from.by) * e]; }
+    }
+    return [s.bx, s.by];
+  }
 
   function handAt(s, lt) {
     const out = [W * 1.08, H * 1.12];
@@ -515,10 +547,11 @@ export function createStage(svg, opts = {}) {
     if (!finalized) finalize();
     let cur = null;
     for (const s of scenes) {
-      const vis = t >= s.start - 0.001 && t < s.end;
+      const bd = s.board.last;
+      const vis = t >= s.start - 0.001 && t < bd.end;
       if (!vis) { s.g.setAttribute("opacity", 0); continue; }
-      const toEnd = s.end - t;
-      const o = !s.last && toEnd < s.fadeOut ? toEnd / s.fadeOut : 1;
+      const toEnd = bd.end - t;
+      const o = bd.fo > 0 && toEnd < bd.fo ? toEnd / bd.fo : 1;
       s.g.setAttribute("opacity", clamp(o, 0, 1).toFixed(3));
       const lt = t - s.start;
       for (const it of s.items) {
@@ -528,7 +561,10 @@ export function createStage(svg, opts = {}) {
       }
       cur = s;
     }
+    const cam = hasBoard ? camAt(t) : [0, 0];
+    if (hasBoard) layer.setAttribute("transform", `translate(${f1(-cam[0])} ${f1(-cam[1])})`);
     const pos = cur ? handAt(cur, t - cur.start) : null;
+    if (pos && hasBoard) { pos[0] += cur.bx - cam[0]; pos[1] += cur.by - cam[1]; }
     if (pos) {
       handG.setAttribute("opacity", 1);
       hand.setAttribute("transform", `translate(${pos[0].toFixed(1)} ${pos[1].toFixed(1)}) scale(${handScale.toFixed(3)})`);
