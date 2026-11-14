@@ -48,7 +48,17 @@ Nếu brief là kiểu `ve-net`, `visual` của cảnh giải thích một ý tr
 
 `id` liên tục s01, s02... `voice` và `speed` lấy theo brief, không có thì theo hồ sơ. `claims` để trống `[]` nếu cảnh không có thông tin cần kiểm chứng.
 
-**2. `<PROJECT>/kich-ban.md`**: bảng dễ đọc cho người duyệt: cột Cảnh, Lời đọc, Chữ trên hình, Hình. Đầu file ghi: tiêu đề, thời lượng ước tính, số cảnh, hồ sơ đã dùng.
+**2. `<PROJECT>/kich-ban.md`**: bảng dễ đọc cho người duyệt: cột Cảnh, Lời đọc, Chữ trên hình, Hình. Đầu file ghi: tiêu đề, thời lượng ước tính, số cảnh, hồ sơ đã dùng, rồi mục "Phương án cấu trúc" (xem bên dưới).
+
+## Phương án cấu trúc
+
+Trước khi viết cảnh, nghĩ ra ba cách dẫn dắt khác nhau cho cùng một nội dung, chọn một, rồi mới viết `scenes.json` theo cách đã chọn. Ba cách khác nhau ở **cách mở và thứ tự ý**, không khác ở dữ kiện: cả ba dùng cùng tập `claims`, không phương án nào được thêm số liệu hay khuyến cáo mà phương án khác không có. Ví dụ các hướng: mở bằng tình huống đời thường, mở bằng con số hoặc câu hỏi, đi từ kết luận rồi giải thích, đi theo thứ tự thời gian hoặc từng bước.
+
+Cả ba phải nằm trong khung của hồ sơ thể loại (số cảnh, cảnh kết, dòng nguồn, quy ước riêng). Hồ sơ đã ấn định rất chặt thì ba phương án chỉ khác ở cách mở cảnh 1 và thứ tự các ý ở giữa.
+
+Ghi vào `kich-ban.md`, ngay dưới phần đầu file, mỗi phương án tối đa hai dòng: tên, cảnh mở nói gì, thứ tự ý, hợp với ai, rủi ro chính. Đánh dấu phương án đã chọn và một câu lý do theo đối tượng và nền tảng trong brief (TikTok cần mở thật nhanh, YouTube cho phép dẫn dắt dài hơn). Không viết ba kịch bản đầy đủ. Video dưới 30 giây thì mỗi phương án một dòng.
+
+Người duyệt kịch bản thấy mục này ở cổng duyệt 1 và có thể chọn phương án khác; khi đó viết lại `scenes.json` và `kich-ban.md` theo phương án mới. Đây không phải cổng dừng thêm. Chạy không giám sát thì tự chọn và ghi rõ trong báo cáo cuối.
 
 ## Viết lời đọc cho máy đọc
 
@@ -71,4 +81,4 @@ Chữ trên hình không chép lại lời đọc: nó là "điểm nhấn" củ
 
 ## Khi xong
 
-Trả về cho điều phối viên: số cảnh, thời lượng ước tính, danh sách `claims` cần kiểm chứng, và những chỗ bạn phải tự giả định vì brief không nói rõ.
+Trả về cho điều phối viên: số cảnh, thời lượng ước tính, phương án cấu trúc đã chọn (một dòng), danh sách `claims` cần kiểm chứng, và những chỗ bạn phải tự giả định vì brief không nói rõ.
