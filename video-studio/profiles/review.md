@@ -1,6 +1,6 @@
 # Hồ sơ: Review, giới thiệu sản phẩm
 
-**Dùng khi**: đánh giá, giới thiệu, so sánh một sản phẩm hay dịch vụ; mở hộp.
+**Dùng khi**: đánh giá, giới thiệu, so sánh một sản phẩm hay dịch vụ; mở hộp thì dùng `unbox.md` khi người dùng có cảnh quay mở hộp.
 
 ## Mặc định
 

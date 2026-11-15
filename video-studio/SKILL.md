@@ -5,7 +5,7 @@ description: "Studio san xuat video tieng Viet nhieu agent. Nhan mot yeu cau vid
 
 # Video Studio
 
-Phiên bản skill: 1.1.0 (khớp file `VERSION`; xem `CHANGELOG.md` trong repo).
+Phiên bản skill: 1.2.0 (khớp file `VERSION`; xem `CHANGELOG.md` trong repo).
 
 Bạn là **điều phối viên** của một studio sản xuất video. Người dùng giao một yêu cầu; bạn dẫn nó qua 8 bước đến khi có gói thành phẩm sẵn sàng đăng. Người dùng chỉ phải làm 4 việc: giao việc, duyệt kịch bản, duyệt bản xem trước, tải thành phẩm. Video có nhân vật (line-art, chibi hoặc 3D) thêm một việc: chốt dàn nhân vật ở cổng casting (bước 3b), giống casting diễn viên trước khi quay phim. Video vẽ tay (`ve-tay`) thêm một việc: tạo tranh theo câu lệnh studio viết sẵn (bước 3c), vì studio không tự tạo được ảnh. Kiểu `ve-net` (bút vẽ từng nét bằng code) không cần tranh nên không thêm việc nào. Mọi thứ khác là việc của studio. Khi người dùng chưa có chủ đề và nhờ tìm ý tưởng, thêm một việc ở bước 0a: chọn một ý trong bảng ý tưởng.
 
@@ -53,6 +53,7 @@ Chủ đề video thì vô hạn, nhưng **thể loại** quyết định cách 
 | `thu-tuc.md` | Hướng dẫn thủ tục hành chính, quy trình (kiểm dịch y tế...) |
 | `kien-thuc.md` | Giải thích kiến thức, mẹo công nghệ |
 | `review.md` | Review, giới thiệu sản phẩm |
+| `unbox.md` | Mở hộp sản phẩm từ góc nhìn người tiêu dùng, trên cảnh quay thật của người dùng |
 | `ke-chuyen.md` | Kể chuyện, hoạt hình đồ họa |
 
 Không khớp hồ sơ nào: dùng hồ sơ gần nhất, báo người dùng, và đề nghị tạo hồ sơ mới (một file theo cấu trúc các hồ sơ có sẵn). Hồ sơ là chỗ người dùng tùy biến studio, đừng ghi cứng quy tắc thể loại vào lõi này.
@@ -230,7 +231,7 @@ python3 SKILL/scripts/nhac_nen.py . --kieu <kiểu trong brief> renders/preview_
 python3 SKILL/scripts/check_output.py timeline.json renders/preview_portrait.mp4 --frames qa/preview
 ```
 
-`render.sh` tự bỏ qua nếu file đích đã có và mới hơn composition, nên bản nháp agent dựng cảnh đã render sẽ được dùng lại, không render lần hai. Video 3D: bản nháp cũng mất khoảng 13 giây cho mỗi giây video (không nhanh hơn bản cuối), nên chạy `render.sh` ở chế độ nền (Bash `run_in_background`) và báo người dùng thời gian dự kiến; lệnh chạy thường bị cắt ở 10 phút.
+`render.sh` tự bỏ qua nếu file đích đã có và mới hơn composition, nên bản nháp agent dựng cảnh đã render sẽ được dùng lại, không render lần hai. Video 3D: bản nháp cũng mất khoảng 13 giây cho mỗi giây video (không nhanh hơn bản cuối), nên chạy `render.sh` ở chế độ nền (Bash `run_in_background`) và báo người dùng thời gian dự kiến; lệnh chạy thường bị cắt ở 10 phút. Chạy nền bằng `setsid nohup bash render.sh ... > log 2>&1 < /dev/null &` rồi chờ theo vòng (mỗi lệnh chờ tối đa 10 phút); chạy `nohup ... &` trơn có thể bị hủy khi lệnh cha kết thúc (`render_cancelled_parent_exited`). Gom mọi sửa chữ và lời đọc (cả sửa theo QA) trước, rồi mới render bản cuối một lần.
 
 Tự xem `qa/preview/contact_sheet.png` trước: lỗi rõ ràng (chữ tràn, che phụ đề, cảnh trống) thì sửa luôn rồi mới gửi. Gửi người dùng file preview và contact sheet, hỏi: nội dung, giọng đọc (cách đọc từ ngữ, số, tên riêng), hình ảnh, nhịp, nhạc nền (giữ, đổi kiểu, nhỏ hơn bằng `--muc`, bỏ). Dừng lại chờ. Phản hồi về giọng thì sửa `scenes.json` (viết lại cách ghi để đọc đúng) rồi `tts.py --only`.
 

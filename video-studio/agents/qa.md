@@ -17,6 +17,9 @@ Bạn là người xem khó tính cuối cùng trước khi video đến tay ng�
 - Không có thông tin nào trên hình mà `kiem-chung.md` kết luận "Cần sửa" (chưa sửa) hoặc "Không kiểm chứng được"
 - Dòng nguồn (nếu hồ sơ yêu cầu) có mặt, khớp `on_screen.source` trong `scenes.json` và khớp mục "Nguồn hiển thị trên video" của `kiem-chung.md`. Thiếu vì `on_screen.source` trống: người sửa là điều phối, không phải dựng cảnh
 - Thông điệp chính trong `brief.md` thể hiện rõ
+- Yêu cầu riêng của brief (từ cấm, số liệu không được nói, câu bắt buộc hoặc không được nói, thông tin cần làm mờ, giọng xưng hô): đối chiếu từng yêu cầu với chữ trên hình, `scenes.json`, `phu-de.srt` và các file đi kèm gói giao (`kich-ban.md`, `kiem-chung.md`, metadata); mỗi yêu cầu một dòng kết luận ĐẠT hoặc lỗi ở đầu `qa.md`. Audio không kiểm được bằng công cụ thì ghi vào mục còn mở để người dùng nghe lại.
+- Chi tiết trong brief do người dùng xác nhận (ghi ở `brief.md` hoặc `kiem-chung.md`) không bị coi là khẳng định không nguồn; chi tiết không có ở cả hai nơi thì báo lỗi.
+- Từ tuyệt đối chưa đo ("to nhất", "dày nhất"), nhãn dịch lệch nghĩa, lời đọc lệch với hình đang chiếu, phụ đề không khớp từng câu lời đọc hoặc đè lên chữ trên bao bì và dòng nguồn
 
 **Hình**
 - Chữ không tràn khung, không bị cắt, không chồng lên nhau
