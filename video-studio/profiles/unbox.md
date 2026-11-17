@@ -51,6 +51,10 @@ Dịch nhãn đúng nghĩa (ví dụ "Translucent" là trong mờ, không phải
 
 Đoạn ảnh chụp sản phẩm, mặt sau, mặt bên, đáy: mỗi ảnh một ý ngắn về thương hiệu, công dụng theo nhãn, cách dùng theo nhãn, nơi sản xuất. Thông tin thương hiệu lấy từ bài báo hoặc trang chính thức đã mở đọc, ghi vào `kiem-chung.md`; trang chính thức có thể đã bán phiên bản mới khác sản phẩm trong video, không lấy thông số từ đó. Tìm trang sản phẩm theo đúng mã SKU in trên tem phụ (ví dụ AV10175bt2MBKV2), vì cùng hãng có nhiều mã gần giống (khác chất liệu, chuẩn, độ dài); trang bán của mã khác không dùng làm căn cứ. Tin về chủ sở hữu, năm thành lập của hãng là nguồn hạng 2 nếu chưa mở được trang giới thiệu chính thức: ghi rõ và để người dùng quyết. Nhãn chứng nhận có mã QR (ví dụ Ultra High Speed HDMI) kiểm được bằng ứng dụng của tổ chức cấp nhãn; chỉ nói được là "quét để kiểm tra", không nói cáp đã đạt khi chưa quét. Nhãn tiếng Hàn đọc từ khung hình gốc và ghi là "theo nhãn".
 
+## Chữ ghi trên video
+
+Dòng nguồn trên hình ở cảnh dùng thông tin ngoài là bắt buộc (xem phần phân loại thông tin). Làm bằng `scripts/chu_may_chu.py` (chữ hiện từng chữ như máy đánh chữ, dòng nguồn nhỏ bên dưới); chữ chính chỉ là từ khóa ngắn của ý đang đọc, không chép cả câu. Chữ quan sát (thùng, vật chèn, hộp, dây) không cần nguồn; chữ lấy từ tem hoặc hình trên hộp ghi "Theo tem phụ trên hộp" hay "Theo hình trên hộp".
+
 ## Hình
 
 - Mọi cảnh dùng cảnh quay thật. Quay ngang: nền mờ, khung giữa; quay dọc: cắt phủ. Zoom 0,22 khi mô tả hình có "ZOOM", mặc định 0,08. Tốc độ phát 0,5 đến 1,5, thiếu thì giữ khung hình cuối.
