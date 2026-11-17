@@ -16,6 +16,7 @@ FONT_VER="5.3.0"
 VIENEU_VER="3.8.4"
 ONNX_VER="1.29.0"
 THREE_VER="0.184.0"
+OPENCV_VER="5.0.0.93"   # che do video co san (lam mo, kiem khung); kiem chung 2026-11-17
 
 ok()   { echo "[OK]   $*"; }
 warn() { echo "[CANH BAO] $*"; }
@@ -72,6 +73,14 @@ if [ "$(pyver vieneu)" != "$VIENEU_VER" ] || [ "$(pyver onnxruntime)" != "$ONNX_
     || fail "pip install vieneu/onnxruntime that bai"
 fi
 ok "vieneu $(pyver vieneu), onnxruntime $(pyver onnxruntime)"
+
+# 4b. OpenCV cho cac script lam mo va kiem khung (che do video co san); chap nhan ban opencv-python da co dung pin
+cv_ver() { for p in opencv-python-headless opencv-python opencv-contrib-python-headless opencv-contrib-python; do v="$(pyver $p)"; [ -n "$v" ] && { echo "$v"; return; }; done; }
+if [ "$(cv_ver)" != "$OPENCV_VER" ]; then
+  pip install --break-system-packages -q "opencv-python-headless==$OPENCV_VER" >/dev/null 2>&1 \
+    || fail "pip install opencv-python-headless that bai"
+fi
+ok "opencv $(cv_ver)"
 
 # 5. File moi truong cho cac script khac
 cat > "$ENV_FILE" <<EOF

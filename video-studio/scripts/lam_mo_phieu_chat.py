@@ -7,7 +7,7 @@ Dung:
 
 --vung X0,X1,Y0,Y1 (diem anh) la khung quan tam; ngoai khung khong bi dong vao.
 
-Khac lam_mo_vung_trang.py (xem SKILL.md, che do video co san):
+Khac lam_mo_vung_trang.py (xem references/che-do-video-co-san.md):
 - Chi nhan vung trang (V>190, S<45) trong --vung, lam day them (--no, mac dinh 7 thay vi 17) nen khong lem sang tay, nen.
 - Bo thanh phan trang nam trong tem do ("hang de vo"): neu hon 45% vien quanh thanh phan la mau do thi do la chu trang
   trong tem, khong phai phieu.

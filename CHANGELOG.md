@@ -2,6 +2,22 @@
 
 Quy ước số phiên bản `MAJOR.MINOR.PATCH`, ghi ở `video-studio/VERSION` và dòng "Phiên bản skill" trong `video-studio/SKILL.md` (hai nơi phải khớp, CI kiểm tra khi đóng gói). Thêm kiểu hình hoặc tính năng thì tăng MINOR; sửa lỗi thì tăng PATCH; đổi lớn làm hỏng cách dùng cũ thì tăng MAJOR. Mỗi lần gộp PR thay đổi skill: tăng số, sửa hai nơi trên và thêm mục mới ở đầu file này.
 
+## [1.7.0] - 2026-11-17
+
+Chuẩn hóa phần cơ học của chế độ lồng tiếng cho video có sẵn (đã lặp lại nhiều lần trong ngày với video khui hàng; lỗi nằm ở cùng mấy chỗ: làm mờ, mốc ảnh tĩnh, câu không chắc). Phần phán đoán (viết lời, chọn nguồn thương hiệu, chọn vùng che) vẫn do người duyệt.
+
+- Thêm `scripts/kiem_khung_lam_mo.py`: bảng khung kiểm làm mờ mỗi 0,1 giây (ảnh gốc, ảnh đã mờ, vùng bị mờ), cảnh báo khi vùng mờ chạm tem đỏ (`DO`), da (`DA`), mờ quá rộng (`MO-LAN`), hoặc vùng trắng còn sắc nét (`CON-TRANG`, cần `--vung-trang`). Chỉ báo điểm nghi ngờ, không thay mắt người.
+- Thêm `scripts/so_khang_dinh.py`: sổ khẳng định `khang-dinh.json` (mỗi câu thuộc `nhan`, `quan-sat`, `nguon-ngoai` hoặc `khong-khang-dinh`), chặn câu `quan-sat` chưa xác nhận hoặc thiếu mốc giây, câu nhạy cảm chưa xác nhận, nguồn ngoài thiếu đơn vị, link thẳng, ngày hoặc nằm trên tên miền không cho phép; ghi `kiem-chung.md` từ sổ.
+- Thêm `scripts/phan_tich_dau_vao.py`: một lệnh ra thông số, tiếng gốc, bảng ảnh tĩnh (`freezedetect`), mốc đổi cảnh, bảng khung mỗi giây, khung độ phân giải gốc cho đọc chữ, và `job.json` mẫu.
+- Thêm `scripts/job.py` (`kiem`, `lam-mo`, `sinh`, `dung`): `job.json` gom giọng, tốc độ, các bước làm mờ, mốc ảnh tĩnh, cue, chữ ghi trên hình, kiểu nhạc; `job.py` sinh `ghep.json`, `dong.json` và gọi các script sẵn có.
+- Thêm `scripts/kiem_loi_doc.py`: báo lời chồng (lỗi chặn), khoảng cách dưới 0,2 giây, gạch nối kiểu đánh vần, đại từ xưng hô (đếm theo cảnh, ngưỡng do người dùng đặt), từ khen tuyệt đối, tên riêng viết nguyên dạng trong `narration`, lời dài hơn đoạn ảnh tĩnh; in tiếng mỗi giây từng cảnh.
+- Tách mục "Chế độ lồng tiếng cho video có sẵn" ra `references/che-do-video-co-san.md` (kèm mục Job và thứ tự chạy); `SKILL.md` chỉ giữ phần tóm tắt và trỏ sang.
+- `scripts/setup.sh`: cài `opencv-python-headless==5.0.0.93` (ghim; chấp nhận bản opencv-python đã có đúng pin), vì các script làm mờ và kiểm khung cần gói này.
+- `scripts/dung_lai_video_co_san.sh`: khi `chuan_am.sh` chỉ báo âm lượng lệch mục tiêu (đã ghi file chuẩn hóa) thì vẫn chép ra `output/` và in lại cảnh báo ở cuối; lỗi thật của `chuan_am.sh` (dòng `[LOI]`) vẫn dừng chuỗi. Trước đây `set -e` dừng cả chuỗi và không chép ra gói. Đây là chỗ duy nhất đổi hành vi của script cũ.
+- `profiles/unbox.md`: trỏ tới bảng khung kiểm làm mờ và sổ khẳng định. `lam_mo_phieu_chat.py`, `lam_mo_vung_trang.py`: đổi tham chiếu sang `references/che-do-video-co-san.md` (chỉ đổi chữ).
+- Đã chạy thử: năm script mới trên video tổng hợp (mờ đúng, mờ thiếu, mờ lấn sang tem đỏ và da; sổ khẳng định đủ ca chặn và ca đạt; lời chồng, xưng hô, viết tắt) và chuỗi `job.py kiem`, `lam-mo`, `dung` với giọng đọc thật của `tts.py` (Hải Đăng), có kéo dài ảnh tĩnh và ghi chữ. Chạy `setup.sh` đầy đủ, rồi một video mẫu 2D khổ dọc trọn quy trình (`tts.py`, `new_project.sh`, `inject.py`, `hyperframes check` đạt, `render.sh final` 14 giây cho 6,4 giây video, `chuan_am.sh`, `check_output.py` ĐẠT).
+- Chưa kiểm: các script mới chưa chạy trên video khui hàng thật (chỉ video tổng hợp), nên ngưỡng `DO`, `DA`, `CON-TRANG` chưa được hiệu chỉnh trên phiếu và tem thật; danh sách từ khen tuyệt đối, cụm câu nhạy cảm và tên miền cấm là danh sách đề xuất, cần bổ sung khi gặp ca mới; chưa nghe lại bằng tai cách đọc "A-đáp", "ô bê giê e", "ét pê ép"; `kiem_loi_doc.py` không có ngưỡng tiếng mỗi giây vì chưa có số đo đủ.
+
 ## [1.6.0] - 2026-11-17
 
 Bài học từ một job khui hàng kem nền OBgE (720x1280, 88 giây, người dùng chê làm mờ quá lố và yêu cầu bỏ thông tin không chắc).
