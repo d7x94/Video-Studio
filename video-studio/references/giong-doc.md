@@ -56,3 +56,12 @@ Dùng có chủ ý, mỗi chỗ một lý do:
 
 - Hải Đăng, tốc độ 1.0: khoảng 4,2 tiếng mỗi giây, đo trên một job khui hàng (14 đoạn, 243 tiếng trong 57,5 giây lời đọc, chưa tính khoảng nghỉ giữa cảnh). Nhanh hơn ước tính của Mai Anh trong `agents/bien-kich.md`; chia ngân sách lời theo giọng thực tế, chưa đo các giọng khác.
 - Tên thương hiệu lẫn chữ hoa thường hay chỉ số (OBgE, SPF50+): trong `narration` đánh vần từng chữ cái hoặc viết theo cách đọc ("ô bê giê e", "ét pê ép năm mươi cộng"), chữ chuẩn để ở `subtitle`. Chưa kiểm được bằng tai trong phiên, nên nhờ người dùng nghe lại.
+- Chữ viết tắt (đo trên Hải Đăng, tốc độ 1.0): viết có gạch nối kiểu "H-D-M-I", "H-D-R" bị đọc rời từng chữ, chậm và nghe ngắt quãng; người dùng đã báo cả hai. Bảng cách viết liền đã dùng sau khi sửa (người dùng chưa xác nhận lại bằng tai):
+
+| Chữ chuẩn (`subtitle`) | `narration` | Ghi chú đo |
+|---|---|---|
+| HDMI | hát đê em ai | câu "Cáp ... hai mét" 2,2 giây thay vì 3,4 giây khi viết "H-D-M-I" |
+| HDR | hát đi rờ | câu thử 3,3 giây thay vì 4,6 giây khi viết "H-D-R" |
+| 4K, 8K | bốn ca, tám ca | |
+
+  Cách chọn cách viết cho một viết tắt mới: đọc thử 4 đến 6 biến thể trong cùng một câu mẫu rồi so thời lượng, bản viết liền ngắn hơn rõ rệt so với bản đánh vần; thời lượng chỉ là chỉ báo thô (đếm khoảng lặng bằng `silencedetect` không phân biệt được các bản), nên vẫn nhờ người dùng nghe lại và ghi kết quả vào bảng. Tên thương hiệu nước ngoài (Belkin, Foxconn) chưa kiểm bằng tai: đã viết phiên âm "Bel-kin", "Fốc-con", kết quả chưa được người dùng xác nhận.

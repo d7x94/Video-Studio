@@ -12,6 +12,8 @@ gop them khung hinh ke ben de khong be sot khi tay xoay nhanh. Vung do duoc lam 
 Gioi han da biet (xem SKILL.md, che do video co san):
 - Chi chay trong [--tu, --den]. Phai tu chon --den bang mat: ngoai moc do phieu da quay di,
   nguong trang bat nham van go va bong tay.
+- Phieu boc nghieng, bi tay che mot phan hoac rach thanh manh nho thi nguong trang bo sot: dung lam_mo_tay.py (khung dat tay)
+  cho doan do. Luon xuat khung moi 0,1 giay de kiem tra, bao OK cua script khong dam bao khong lo phieu.
 - Ma QR in tren hop (khong nam tren phieu) khong bi lam mo neu khong co nen trang du lon.
 - Khung hinh co phan nen mo (clip ngang trong khung doc) thi dat --vung la dai clip o giua
   va --le la be rong dai sang o mep, neu khong nen mo se bi bat nham.

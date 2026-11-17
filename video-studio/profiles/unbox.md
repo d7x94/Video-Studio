@@ -26,7 +26,7 @@ Hỏi một lần ở bước 0, gom thành một tin:
 
 ## Giọng
 
-Người mua đang mở hộp và nhìn tận tay, không phải nhân viên cửa hàng đọc thông số. Dùng "mình thấy", "mình chưa rõ", "mình chưa thử". Không khuyên mua, không dùng từ khen tuyệt đối. Người dùng có thể yêu cầu giảm đại từ xưng hô: viết câu không chủ ngữ ("Hàng đã về rồi", "Mở nắp, đầu thỏi là..."), chỉ giữ "mình" khi thật cần. Mỗi cảnh có số liệu nên có một quan sát hoặc cảm nhận đi kèm.
+Người mua đang mở hộp và nhìn tận tay, không phải nhân viên cửa hàng đọc thông số. Dùng "mình thấy", "mình chưa rõ", "mình chưa thử". Không khuyên mua, không dùng từ khen tuyệt đối. Người dùng có thể yêu cầu giảm đại từ xưng hô: viết câu không chủ ngữ ("Hàng đã về rồi", "Mở nắp, đầu thỏi là..."), chỉ giữ "mình" khi thật cần. Mở đầu mẫu: "Hàng về rồi. Vỏ thùng chỉ nhăn nhẹ ở góc, không bị móp méo." Mô tả tình trạng thùng, vật chèn, hộp, dây là quan sát từ khung hình, không phải kiểm bằng tay: ghi rõ trong `kiem-chung.md` để người quay xác nhận. Mỗi cảnh có số liệu nên có một quan sát hoặc cảm nhận đi kèm.
 
 ## Phân loại thông tin (bắt buộc)
 
@@ -49,7 +49,7 @@ Dịch nhãn đúng nghĩa (ví dụ "Translucent" là trong mờ, không phải
 
 ## Ảnh tĩnh cuối video
 
-Đoạn ảnh chụp sản phẩm, mặt sau, mặt bên, đáy: mỗi ảnh một ý ngắn về thương hiệu, công dụng theo nhãn, cách dùng theo nhãn, nơi sản xuất. Thông tin thương hiệu lấy từ bài báo hoặc trang chính thức đã mở đọc, ghi vào `kiem-chung.md`; trang chính thức có thể đã bán phiên bản mới khác sản phẩm trong video, không lấy thông số từ đó. Nhãn tiếng Hàn đọc từ khung hình gốc và ghi là "theo nhãn".
+Đoạn ảnh chụp sản phẩm, mặt sau, mặt bên, đáy: mỗi ảnh một ý ngắn về thương hiệu, công dụng theo nhãn, cách dùng theo nhãn, nơi sản xuất. Thông tin thương hiệu lấy từ bài báo hoặc trang chính thức đã mở đọc, ghi vào `kiem-chung.md`; trang chính thức có thể đã bán phiên bản mới khác sản phẩm trong video, không lấy thông số từ đó. Tìm trang sản phẩm theo đúng mã SKU in trên tem phụ (ví dụ AV10175bt2MBKV2), vì cùng hãng có nhiều mã gần giống (khác chất liệu, chuẩn, độ dài); trang bán của mã khác không dùng làm căn cứ. Tin về chủ sở hữu, năm thành lập của hãng là nguồn hạng 2 nếu chưa mở được trang giới thiệu chính thức: ghi rõ và để người dùng quyết. Nhãn chứng nhận có mã QR (ví dụ Ultra High Speed HDMI) kiểm được bằng ứng dụng của tổ chức cấp nhãn; chỉ nói được là "quét để kiểm tra", không nói cáp đã đạt khi chưa quét. Nhãn tiếng Hàn đọc từ khung hình gốc và ghi là "theo nhãn".
 
 ## Hình
 
@@ -65,6 +65,8 @@ Dịch nhãn đúng nghĩa (ví dụ "Translucent" là trong mờ, không phải
 - Phụ đề khớp từng câu lời đọc; phụ đề dài không đè chữ trên bao bì hay dòng nguồn.
 - Số liệu cấm không còn ở `scenes.json`, `phu-de.srt`, `kich-ban.md`, `kiem-chung.md`, `loi-doc-*.json`, metadata (gói giao kèm các file này).
 - Gom mọi sửa chữ trước khi render toàn bộ để chỉ render một lần.
+- Làm mờ phiếu giao hàng: xem lại khung mỗi 0,1 giây cả đoạn có phiếu (kể cả lúc bóc phiếu và mảnh giấy rách trong tay); chỉ báo OK của script chưa đủ.
+- Video có nhạc nền: mức -13 dB cho video lời thưa, chạy lại nhạc nền sau mỗi lần ghép lại (xem `scripts/dung_lai_video_co_san.sh`).
 - Duyệt từng cảnh bằng render nháp trước khi render toàn bộ.
 
 ## Metadata
