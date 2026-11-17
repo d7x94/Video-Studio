@@ -69,7 +69,8 @@ Dòng nguồn trên hình ở cảnh dùng thông tin ngoài là bắt buộc (x
 - Phụ đề khớp từng câu lời đọc; phụ đề dài không đè chữ trên bao bì hay dòng nguồn.
 - Số liệu cấm không còn ở `scenes.json`, `phu-de.srt`, `kich-ban.md`, `kiem-chung.md`, `loi-doc-*.json`, metadata (gói giao kèm các file này).
 - Gom mọi sửa chữ trước khi render toàn bộ để chỉ render một lần.
-- Làm mờ phiếu giao hàng: xem lại khung mỗi 0,1 giây cả đoạn có phiếu (kể cả lúc bóc phiếu và mảnh giấy rách trong tay); chỉ báo OK của script chưa đủ.
+- Làm mờ phiếu giao hàng: xem lại khung mỗi 0,1 giây cả đoạn có phiếu (kể cả lúc bóc phiếu và mảnh giấy rách trong tay); chỉ báo OK của script chưa đủ. Che chặt: chỉ phiếu, không che tem đỏ "hàng dễ vỡ", băng keo, tay hay thùng (dùng `scripts/lam_mo_phieu_chat.py`, hai lượt); mép phiếu trắng lộ ra ở cạnh thùng sau khi úp vẫn phải che bằng ô nhỏ.
+- Câu quan sát về hàng (cọ tháo rời được, vỏ không trầy) chỉ giữ khi hình hoặc nhãn thấy rõ; không chắc thì bỏ.
 - Video có nhạc nền: mức -13 dB cho video lời thưa, chạy lại nhạc nền sau mỗi lần ghép lại (xem `scripts/dung_lai_video_co_san.sh`).
 - Duyệt từng cảnh bằng render nháp trước khi render toàn bộ.
 
