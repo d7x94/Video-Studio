@@ -70,7 +70,7 @@ echo "$R"
 if [ "$NORM" = 1 ]; then
   OI=$(echo "$R" | awk '$1 == "I:" { print $2 }'); OP=$(echo "$R" | awk '$1 == "Peak:" { print $2 }')
   if awk -v i="$OI" -v p="$OP" 'BEGIN { exit !(i + 0 < -15 || i + 0 > -13 || p + 0 > -1) }'; then
-    echo "[CANH BAO] chua dat muc tieu (-14 LUFS, dinh <= -1 dB): do duoc $OI LUFS, dinh $OP dB. Giam nhac nen roi chay lai" >&2
+    echo "[CANH BAO] chua dat muc tieu (-14 LUFS, dinh <= -1 dB): do duoc $OI LUFS, dinh $OP dB. Neu co nhac nen thi giam bang nhac_nen.py --muc roi chay lai; loi doc thuan thi nghe lai, loi doc ro thi chap nhan" >&2
     exit 1
   fi
 fi

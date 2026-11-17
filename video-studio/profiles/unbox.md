@@ -17,7 +17,7 @@
 ## Đầu vào cần có
 
 Hỏi một lần ở bước 0, gom thành một tin:
-1. Cảnh quay (video và ảnh), đã làm mờ hoặc chọn đoạn không lộ thông tin cá nhân (địa chỉ, tên, số điện thoại, mã vận đơn). Xin danh sách đoạn thùng giao hàng không có nhãn.
+1. Cảnh quay (video và ảnh), đã làm mờ hoặc chọn đoạn không lộ thông tin cá nhân (địa chỉ, tên, số điện thoại, mã vận đơn). Xin danh sách đoạn thùng giao hàng không có nhãn, hoặc làm mờ vùng phiếu bằng `scripts/lam_mo_vung_trang.py` (chế độ video có sẵn trong `SKILL.md`).
 2. Giọng đọc và xưng hô.
 3. Số liệu hoặc điều không được nói (ví dụ tổng số lượng).
 4. Chi tiết sản phẩm khó hiểu cần người dùng xác nhận (cơ cấu, công dụng của bộ phận lạ). Ghi vào `brief.md` và `kiem-chung.md`, nếu không QA sẽ coi là khẳng định không nguồn.
@@ -26,7 +26,7 @@ Hỏi một lần ở bước 0, gom thành một tin:
 
 ## Giọng
 
-Người mua đang mở hộp và nhìn tận tay, không phải nhân viên cửa hàng đọc thông số. Dùng "mình thấy", "mình chưa rõ", "mình chưa thử". Không khuyên mua, không dùng từ khen tuyệt đối. Mỗi cảnh có số liệu nên có một quan sát hoặc cảm nhận đi kèm.
+Người mua đang mở hộp và nhìn tận tay, không phải nhân viên cửa hàng đọc thông số. Dùng "mình thấy", "mình chưa rõ", "mình chưa thử". Không khuyên mua, không dùng từ khen tuyệt đối. Người dùng có thể yêu cầu giảm đại từ xưng hô: viết câu không chủ ngữ ("Hàng đã về rồi", "Mở nắp, đầu thỏi là..."), chỉ giữ "mình" khi thật cần. Mỗi cảnh có số liệu nên có một quan sát hoặc cảm nhận đi kèm.
 
 ## Phân loại thông tin (bắt buộc)
 
@@ -46,6 +46,10 @@ Dịch nhãn đúng nghĩa (ví dụ "Translucent" là trong mờ, không phải
 5. **Phụ kiện, quà tặng**: mở, cho thấy bên trong, thông số.
 6. **Điểm cần lưu ý**: chữ nhỏ, ngôn ngữ nhãn, lời trên bao bì.
 7. **Điều chưa thử và tóm tắt bộ hàng**. Nói rõ chưa thử độ bền, độ kín, chịu nhiệt; không có cảnh quay thì nói thẳng, không dựng giả.
+
+## Ảnh tĩnh cuối video
+
+Đoạn ảnh chụp sản phẩm, mặt sau, mặt bên, đáy: mỗi ảnh một ý ngắn về thương hiệu, công dụng theo nhãn, cách dùng theo nhãn, nơi sản xuất. Thông tin thương hiệu lấy từ bài báo hoặc trang chính thức đã mở đọc, ghi vào `kiem-chung.md`; trang chính thức có thể đã bán phiên bản mới khác sản phẩm trong video, không lấy thông số từ đó. Nhãn tiếng Hàn đọc từ khung hình gốc và ghi là "theo nhãn".
 
 ## Hình
 

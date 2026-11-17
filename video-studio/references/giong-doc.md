@@ -51,3 +51,8 @@ Dùng có chủ ý, mỗi chỗ một lý do:
 - Nghỉ ngắn hơn (0,15 đến 0,25 giây) giữa hai cảnh cùng một mạch liệt kê.
 - `speed` 0,9 đến 0,95 cho cảnh có khuyến cáo, số liệu hay thao tác người xem phải nhớ; không dùng dưới 0,9 cho cả bài.
 - Khoảng nghỉ trước cảnh nằm trong thời gian hình của cảnh trước, nên cảnh trước giữ hình lâu hơn tương ứng; rút ngắn khoảng nghỉ thì cảnh trước ngắn lại. Video `ve-net` đổi khoảng nghỉ xong phải chạy lại `ve_net_kiem_tra.sh` (khi thử, cảnh 2,2 giây có hình đồng hồ 8 nét bị báo `KHONG KIP`).
+
+## Tốc độ đọc và tên riêng
+
+- Hải Đăng, tốc độ 1.0: khoảng 4,2 tiếng mỗi giây, đo trên một job khui hàng (14 đoạn, 243 tiếng trong 57,5 giây lời đọc, chưa tính khoảng nghỉ giữa cảnh). Nhanh hơn ước tính của Mai Anh trong `agents/bien-kich.md`; chia ngân sách lời theo giọng thực tế, chưa đo các giọng khác.
+- Tên thương hiệu lẫn chữ hoa thường hay chỉ số (OBgE, SPF50+): trong `narration` đánh vần từng chữ cái hoặc viết theo cách đọc ("ô bê giê e", "ét pê ép năm mươi cộng"), chữ chuẩn để ở `subtitle`. Chưa kiểm được bằng tai trong phiên, nên nhờ người dùng nghe lại.
