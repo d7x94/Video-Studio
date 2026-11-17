@@ -71,7 +71,7 @@ Máy đọc không hiểu ngữ cảnh như người, nên viết sao cho chỉ 
 
 ## Độ dài
 
-Giọng Mai Anh đọc khoảng 3,5 tiếng mỗi giây (đo thực tế, đã gồm chỗ nghỉ ngắn). Studio thêm khoảng 0,35 giây giữa các cảnh (hoặc `pause_before` nếu cảnh có). Ước tính: 60 giây video tương ứng khoảng 190 tiếng lời đọc. Giữ tổng lời đọc trong khoảng ±10% mục tiêu.
+Giọng Mai Anh đọc khoảng 3,5 tiếng mỗi giây (đo thực tế, đã gồm chỗ nghỉ ngắn); giọng Hải Đăng nhanh hơn, xem `references/giong-doc.md`. Studio thêm khoảng 0,35 giây giữa các cảnh (hoặc `pause_before` nếu cảnh có). Ước tính: 60 giây video tương ứng khoảng 190 tiếng lời đọc. Giữ tổng lời đọc trong khoảng ±10% mục tiêu.
 
 Mỗi cảnh 1 đến 3 câu, khoảng 3 đến 10 giây. Cảnh quá dài làm hình đứng yên lâu; cảnh quá ngắn làm chữ trên hình không kịp đọc.
 
