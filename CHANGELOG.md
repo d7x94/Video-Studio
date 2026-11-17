@@ -2,6 +2,15 @@
 
 Quy ước số phiên bản `MAJOR.MINOR.PATCH`, ghi ở `video-studio/VERSION` và dòng "Phiên bản skill" trong `video-studio/SKILL.md` (hai nơi phải khớp, CI kiểm tra khi đóng gói). Thêm kiểu hình hoặc tính năng thì tăng MINOR; sửa lỗi thì tăng PATCH; đổi lớn làm hỏng cách dùng cũ thì tăng MAJOR. Mỗi lần gộp PR thay đổi skill: tăng số, sửa hai nơi trên và thêm mục mới ở đầu file này.
 
+## [1.6.0] - 2026-11-17
+
+Bài học từ một job khui hàng kem nền OBgE (720x1280, 88 giây, người dùng chê làm mờ quá lố và yêu cầu bỏ thông tin không chắc).
+
+- Thêm `scripts/lam_mo_phieu_chat.py`: làm mờ phiếu giao hàng chặt hơn `lam_mo_vung_trang.py`. Chỉ nhận vùng trắng trong `--vung X0,X1,Y0,Y1`, bỏ thành phần nằm trong tem đỏ (chữ trắng "hàng dễ vỡ" bị bắt nhầm), nở bao lồi 7 px thay vì 17, giữ nguyên hình cho mảnh nhỏ (mép phiếu lộ ra ở cạnh thùng sau khi úp, phóng to thấy vạch mã vạch). Chạy hai lượt (dải clip, rồi vùng hẹp quanh thùng). Đã chạy thử trên job đó: kết quả hai lượt giống từng điểm ảnh (PSNR vô cực) với bản đã giao cho người dùng sau khi sửa; người dùng chưa xem lại. Cần `opencv-python` như các script làm mờ khác.
+- `SKILL.md` (chế độ video có sẵn): hướng dẫn dùng script mới, lời cho đoạn ảnh tĩnh chạy theo chuỗi ý và rút cho vừa 2,5 đến 3,4 giây mỗi ảnh, quy tắc "không chắc thì bỏ" (cọ tích hợp khác cọ tháo rời; thông cáo của hãng không đủ làm căn cứ cho đúng mẫu), tìm nguồn thương hiệu (bỏ trang bán lẻ, trang chính thức có thể bán bản PRO khác hộp), `tts.py --only` phân cách bằng dấu phẩy, `--retime` sau khi xóa cảnh, đổi video đã làm mờ trong `ghep.json`.
+- `profiles/unbox.md`: mục soát trước khi gọi QA thêm che chặt và bỏ câu quan sát không chắc. `scripts/lam_mo_vung_trang.py`: ghi thêm giới hạn đã biết (chỉ đổi chữ).
+- Chưa chạy thử `setup.sh`, `new_project.sh`, `inject.py`, `render.sh` vì không bị ảnh hưởng (chỉ thêm script cho chế độ video có sẵn và sửa tài liệu). Chưa kiểm tra bằng tai cách đọc "A-đáp", "ô bê giê e", "ét pê ép".
+
 ## [1.5.0] - 2026-11-17
 
 - Thêm `scripts/chu_may_chu.py`: tạo chữ ghi trên video hiện từng chữ như máy đánh chữ kèm dòng nguồn nhỏ (file `.ass`), và ghi vào video bằng bộ lọc `ass` của ffmpeg (mã hóa lại hình crf 16, giữ tiếng). Đã chạy thử trên job đó: `.ass` giống từng dòng và video giống từng điểm ảnh (PSNR vô cực) với bản đã giao cho người dùng; người dùng đã xem khung hình, chưa báo lỗi. Font mặc định Inter (có sẵn trên máy chạy thử, hỗ trợ tiếng Việt); chưa thử font Be Vietnam Pro. `SKILL.md` thêm bước 5b, `profiles/unbox.md` thêm mục "Chữ ghi trên video".
