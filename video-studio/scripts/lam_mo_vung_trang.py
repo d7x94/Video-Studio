@@ -9,7 +9,7 @@ phep dong, chi giu thanh phan lon nhat (va thanh phan >= 40% no), lay bao loi ro
 gop them khung hinh ke ben de khong be sot khi tay xoay nhanh. Vung do duoc lam mo manh
 (thu nho roi phong to cong Gauss) nen chu va so khong doc duoc.
 
-Gioi han da biet (xem SKILL.md, che do video co san):
+Gioi han da biet (xem references/che-do-video-co-san.md):
 - Chi chay trong [--tu, --den]. Phai tu chon --den bang mat: ngoai moc do phieu da quay di,
   nguong trang bat nham van go va bong tay.
 - Phieu boc nghieng, bi tay che mot phan hoac rach thanh manh nho thi nguong trang bo sot: dung lam_mo_tay.py (khung dat tay)
