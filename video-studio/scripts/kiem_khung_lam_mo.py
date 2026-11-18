@@ -127,7 +127,6 @@ def main():
         vt = tuple(int(v) for v in a.vung_trang.split(","))
 
     rows, bao_cao, canh_bao = [], [], []
-    ti_le = a.rong_o / w
     for i, (g, m) in enumerate(zip(frames(a.goc, w, h, a.tu, den, a.buoc), frames(a.mo, w, h, a.tu, den, a.buoc))):
         t = a.tu + i * a.buoc
         ch = changed_mask(g, m, a.nguong)

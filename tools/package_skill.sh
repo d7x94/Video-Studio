@@ -10,6 +10,18 @@ VER="$(tr -d '[:space:]' < "$ROOT/video-studio/VERSION")"
 [[ "$VER" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "VERSION khong dung dinh dang X.Y.Z: $VER"; exit 1; }
 grep -qF "Phiên bản skill: $VER " "$ROOT/video-studio/SKILL.md" || { echo "SKILL.md khong co dong 'Phiên bản skill: $VER'"; exit 1; }
 grep -qF "## [$VER]" "$ROOT/CHANGELOG.md" || { echo "CHANGELOG.md thieu muc [$VER]"; exit 1; }
+# claude.ai tu choi skill co description dai hon 1024 ky tu; bao som khi con duoi 64 ky tu du phong
+python3 -I - "$ROOT/video-studio/SKILL.md" <<'PY'
+import re, sys
+t = open(sys.argv[1], encoding="utf-8").read()
+m = re.search(r'^description:\s*"((?:[^"\\]|\\.)*)"\s*$', t, re.M)
+if not m:
+    sys.exit("SKILL.md: khong doc duoc dong description (phai la chuoi trong ngoac kep tren mot dong)")
+n = len(m.group(1).replace('\\"', '"'))
+if n > 1024:
+    sys.exit(f"SKILL.md: description dai {n} ky tu, vuot gioi han 1024 cua claude.ai")
+print(f"[{'CANH BAO' if n > 960 else 'OK'}] description {n}/1024 ky tu")
+PY
 bash "$ROOT/tools/build_lineart.sh" --check
 bash "$ROOT/tools/build_chibi.sh" --check
 python3 "$ROOT/video-studio/scripts/vai.py" kiem   # ho so vai phai hop le truoc khi dong goi

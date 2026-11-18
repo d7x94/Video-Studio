@@ -88,8 +88,16 @@ def ensure_models(sub: str):
             if not f["path"].startswith(vieneu_dir + "/") or f["path"].startswith(f"{vieneu_dir}/{sub}/")]
     for f in need:
         dest = MODEL_ROOT / f["path"]
+        mark = dest.with_name(dest.name + ".sha256")   # sha256 da kiem, de lan sau khoi bam lai file lon
         if dest.exists() and dest.stat().st_size == f["size"]:
-            continue
+            if mark.exists() and mark.read_text().strip() == f["sha256"]:
+                continue
+            if sha256(dest) == f["sha256"]:
+                mark.write_text(f["sha256"] + "\n")
+                continue
+            print(f"[CANH BAO] {f['path']}: sai sha256, tai lai", file=sys.stderr)
+            dest.unlink()
+        mark.unlink(missing_ok=True)
         dest.parent.mkdir(parents=True, exist_ok=True)
         tmp = dest.with_name(dest.name + ".part")
         rev = MANIFEST["sources"][f["repo"]]["revision"]
@@ -98,6 +106,7 @@ def ensure_models(sub: str):
         for name, url in urls:
             if curl(url, tmp) and tmp.stat().st_size == f["size"] and sha256(tmp) == f["sha256"]:
                 tmp.rename(dest)
+                mark.write_text(f["sha256"] + "\n")
                 print(f"[OK] {f['path']} ({name})", file=sys.stderr)
                 break
             tmp.unlink(missing_ok=True)

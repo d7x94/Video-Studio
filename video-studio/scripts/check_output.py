@@ -147,7 +147,7 @@ def main():
         lufs, peak = loudness(a.video)
         notes.append(f"Do on tich hop: {lufs} LUFS, true peak: {peak} dBTP")
         if a.chuan_am and (lufs is None or peak is None or lufs < -15 or lufs > -13 or peak > -1):
-            errors.append(f"Am luong chua chuan (can -14 LUFS +-1, dinh <= -1 dBTP): chay chuan_am.sh")
+            errors.append("Am luong chua chuan (can -14 LUFS +-1, dinh <= -1 dBTP): chay chuan_am.sh")
 
     if v:
         den, dung = quet_hinh(a.video, a.dung_hinh)

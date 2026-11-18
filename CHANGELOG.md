@@ -2,6 +2,20 @@
 
 Quy ước số phiên bản `MAJOR.MINOR.PATCH`, ghi ở `video-studio/VERSION` và dòng "Phiên bản skill" trong `video-studio/SKILL.md` (hai nơi phải khớp, CI kiểm tra khi đóng gói). Thêm kiểu hình hoặc tính năng thì tăng MINOR; sửa lỗi thì tăng PATCH; đổi lớn làm hỏng cách dùng cũ thì tăng MAJOR. Mỗi lần gộp PR thay đổi skill: tăng số, sửa hai nơi trên và thêm mục mới ở đầu file này.
 
+## [1.12.1] - 2026-11-18
+
+Sửa lỗi sau đợt rà soát repo; không đổi quy tắc kiểm chứng, bản quyền, khóa nhân vật.
+
+- `SKILL.md`: rút gọn `description` từ 1016 xuống 819 ký tự (giới hạn của claude.ai là 1024; thêm `mo hop san pham`). `tools/package_skill.sh` kiểm độ dài này: quá 1024 thì dừng, trên 960 thì cảnh báo.
+- `SKILL.md`: tách chi tiết cổng casting (bước 3b: hồ sơ vai, skin theo cảnh, tính cách, thử vai line-art, chibi, 3D, nghe thử giọng, trường `casting.json`) sang `references/casting.md`, chép nguyên văn. Bước 3b trong `SKILL.md` giữ tóm tắt các quy tắc bắt buộc (dùng đúng hồ sơ vai, dàn đã khóa, một nhân vật một giọng, dừng chờ người dùng, `vai.py kiem-casting`, khóa sau khi chốt) và lệnh đọc tài liệu. `SKILL.md` giảm từ 57,3 KB xuống khoảng 52 KB.
+- `scripts/render.sh`: render ra file tạm `.dang-render-<tên>` rồi mới đổi tên thành file đích. Trước đây lệnh bị cắt giữa chừng (vd video 3D quá 10 phút) có thể để lại file đích dở dang mà lần chạy sau coi là đã xong và bỏ qua.
+- `scripts/tts.py`: mô hình đã tải sẵn được kiểm sha256 một lần (ghi `<file>.sha256` cạnh file), sai thì tải lại. Trước đây chỉ kiểm kích thước.
+- `scripts/setup.sh`: `.voice_done` ghi bản vieneu, onnxruntime và tag mô hình; khớp thì bỏ qua bước thử giọng nên chạy lại setup nhanh (đo: 3 giây). Lần chạy đầu sau khi cập nhật vẫn thử giọng một lần.
+- `scripts/inject.py`: `--srt-only` mặc định ngắt dòng ở 48 ký tự (như khổ ngang) thay vì 42, nên `.srt` khớp phụ đề đốt chữ khổ ngang. `--tung-tu`: dòng phụ đề chỉ có dấu câu không còn làm script dừng vì `StopIteration`; dòng đó nối vào dòng trước.
+- Bỏ mã thừa: biến `ti_le` trong `kiem_khung_lam_mo.py`, f-string không có biến trong `phan_tich_dau_vao.py`, `check_output.py`, `tools/mocap/bvh2que.py`.
+- Thêm `tools/smoke_test.sh` và bước chạy nó trong workflow đóng gói (mỗi PR): `inject.py` khổ dọc, ngang, `--tung-tu`, `--srt-only`, dòng chỉ có dấu câu; `ma_khang_dinh.py`; `khoa_kich_ban.py`; `soat_canh.py`; `trang_thai.py`; `vai.py kiem`; cú pháp script shell. Không cần mô hình giọng, trình duyệt hay mạng; không thay bước chạy thử trọn một video mẫu.
+- Đã chạy thử trọn một video mẫu 2 cảnh 2D, khổ dọc (`--tung-tu`) và ngang: `setup.sh` (lần hai bỏ qua thử giọng), `tts.py` với VieNeu thật (8,0 giây), `new_project.sh`, `inject.py`, `hyperframes check` 0 lỗi, `render.sh` preview và final cả hai khổ (11 đến 16 giây mỗi lần, như trước), chạy lại bỏ qua đúng, ngắt render giữa chừng bằng SIGINT không để lại file đích hay file tạm, `check_output.py --srt --frames` ĐẠT cả hai khổ, ảnh khung hình đúng dấu. `tools/smoke_test.sh` đạt; phép thử dòng chỉ có dấu câu báo `StopIteration` trên bản 1.12.0. Chưa thử: kiểu hình line-art, chibi, ve-tay, ve-net, 3D (thay đổi chỉ chạm script dùng chung); bước casting chưa chạy lại với `references/casting.md` mới.
+
 ## [1.12.0] - 2026-11-18
 
 Biên kịch tự soát giọng văn máy trong lượt viết (ý tưởng từ blader/humanizer, MIT; xem README mục Ghi công). Không thêm agent, không thêm lượt gọi model.

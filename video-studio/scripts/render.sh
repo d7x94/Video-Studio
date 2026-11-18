@@ -30,6 +30,13 @@ case "$MODE" in
   *) echo "MODE phai la preview hoac final"; exit 1 ;;
 esac
 
+# Render ra file tam canh OUT, xong moi doi ten: lenh bi cat giua chung (vd qua 10 phut)
+# thi khong de lai OUT do dang ma lan chay sau tuong la da xong.
+PART="$(dirname "$OUT")/.dang-render-$(basename "$OUT")"
+rm -f "$PART"
+trap 'rm -f "$PART"' EXIT
 START=$(date +%s)
-hyperframes render -o "$OUT" -q "$QUALITY" --quiet
+hyperframes render -o "$PART" -q "$QUALITY" --quiet
+[ -s "$PART" ] || { echo "[LOI] Render khong tao ra file: $PART"; exit 1; }
+mv -f "$PART" "$OUT"
 echo "Render $MODE xong sau $(( $(date +%s) - START ))s: $OUT"

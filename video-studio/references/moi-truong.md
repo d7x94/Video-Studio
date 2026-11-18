@@ -45,7 +45,7 @@ Render càng nhiều chuyển động liên tục càng chậm (HyperFrames bỏ
 
 **Lệnh render dài hơn 10 phút bị cắt.** Một lệnh Bash chạy thường tối đa 10 phút. Video 3D dài hơn khoảng 40 giây vượt mức này ở cả bản nháp lẫn bản cuối: chạy `render.sh` ở chế độ nền.
 
-**`render.sh` báo "Bo qua render".** File đích đã có và mới hơn mọi file của composition, nên không render lại. Muốn ép render: `FORCE=1 bash render.sh ...`.
+**`render.sh` báo "Bo qua render".** File đích đã có và mới hơn mọi file của composition, nên không render lại. Muốn ép render: `FORCE=1 bash render.sh ...`. Bản đang render nằm ở file tạm `.dang-render-<tên>` cạnh file đích và chỉ đổi tên thành file đích khi render xong, nên lệnh bị cắt giữa chừng không để lại file đích dở dang.
 
 ## Phiên bản đã kiểm chung với nhau
 

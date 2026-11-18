@@ -161,7 +161,7 @@ def main():
     if not fz:
         L.append("| - | khong co | | |")
     L += ["", f"## Moc doi canh (scene > 0,3): {', '.join(str(c) for c in cuts) if cuts else 'khong co'}", "",
-          f"## Tep ra", "",
+          "## Tep ra", "",
           f"- Bang khung ({so_giay} giay): {', '.join(bang)}",
           f"- Khung do phan giai goc giua cac anh tinh: phan-tich/anh-tinh/ ({len(anh)} khung)",
           f"- Khung phong to: phan-tich/zoom/ ({len(zs)} khung)", "",

@@ -31,7 +31,8 @@ tools/
   build_lineart.sh     build lại lineart.js từ nguồn
   build_chibi.sh       build lại chibi.js từ nguồn
   mocap/               bvh2que.py và catalog.json: chuyển clip mocap CMU thành động tác cho chibi tay chân que
-  package_skill.sh     đóng gói zip để tải lên claude.ai
+  package_skill.sh     đóng gói zip để tải lên claude.ai (kiểm cả độ dài description, tối đa 1024 ký tự)
+  smoke_test.sh        thử nhanh các script không cần mô hình giọng, trình duyệt hay mạng (CI chạy mỗi PR)
   publish_voice_models.sh  đăng mô hình giọng đọc lên Release (Actions tự chạy)
   publish_characters.sh    đăng nhân vật 3D lên Release (Actions tự chạy)
 ```

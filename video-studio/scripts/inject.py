@@ -168,6 +168,13 @@ def word_captions(timeline, max_chars, moc):
             print(f"[CANH BAO] {sc['id']}: moc tung tu khong khop phu de ({k}/{len(ws)}), dung moc theo ky tu", file=sys.stderr)
             caps += [dict(c, words=None) for c in build_captions({"scenes": [sc], "_project": timeline.get("_project", ".")}, max_chars)]
             continue
+        gon = []   # dong chi co dau cau (khong co tieng nao): noi vao dong truoc, khong co dong truoc thi bo
+        for w in rows:
+            if any(t is not None for _, t in w):
+                gon.append(w)
+            elif gon:
+                gon[-1] += [[tok, gon[-1][-1][1]] for tok, _ in w]
+        rows = gon
         for i, words in enumerate(rows):
             first = next(t for _, t in words if t is not None)
             start = max(sc["start"], first - 0.1) if i == 0 else first - 0.05
@@ -247,7 +254,7 @@ def main():
     ap.add_argument("timeline")
     ap.add_argument("index", nargs="?")
     ap.add_argument("--no-burn", action="store_true", help="Khong dot phu de vao hinh")
-    ap.add_argument("--max-chars", type=int, help="Mac dinh: 56 cho doc (toi da 2 dong), 48 cho ngang")
+    ap.add_argument("--max-chars", type=int, help="Mac dinh: 56 cho doc (toi da 2 dong), 48 cho ngang va cho --srt-only")
     ap.add_argument("--srt-only", help="Chi ghi file .srt toi duong dan nay")
     ap.add_argument("--tung-tu", action="store_true",
                     help="Moc phu de theo tung tieng (moc_tu.py) va to mau tu dang doc")
@@ -279,7 +286,7 @@ def main():
         return caps
 
     if a.srt_only:
-        write_srt(captions(a.max_chars or 42), Path(a.srt_only))
+        write_srt(captions(a.max_chars or 48), Path(a.srt_only))   # nhu khung ngang (ban YouTube), khop phu de dot chu
         return
     if not a.index:
         ap.error("can duong dan index.html")

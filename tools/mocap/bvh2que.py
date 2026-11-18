@@ -292,7 +292,7 @@ def main():
              "// The database was created with funding from NSF EIA-0196217.",
              "// d: chuoi so cach nhau dau phay (de goi build giu tren mot dong); mocap.ts tach thanh mang khi dung lan dau.",
              "export interface MocapClip { fps: number; loop: boolean; n: number; d: string }",
-             f"export const MOCAP_STRIDE = 20;",
+             "export const MOCAP_STRIDE = 20;",
              "export const MOCAP: Record<string, MocapClip> = {"]
     for item in cat["clips"]:
         text, got = fetch(cat, item)
