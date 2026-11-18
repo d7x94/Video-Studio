@@ -2,6 +2,18 @@
 
 Quy ước số phiên bản `MAJOR.MINOR.PATCH`, ghi ở `video-studio/VERSION` và dòng "Phiên bản skill" trong `video-studio/SKILL.md` (hai nơi phải khớp, CI kiểm tra khi đóng gói). Thêm kiểu hình hoặc tính năng thì tăng MINOR; sửa lỗi thì tăng PATCH; đổi lớn làm hỏng cách dùng cũ thì tăng MAJOR. Mỗi lần gộp PR thay đổi skill: tăng số, sửa hai nơi trên và thêm mục mới ở đầu file này.
 
+## [1.14.0] - 2026-11-18
+
+Chế độ dịch video, phần phụ đề: chép lời gốc bằng Whisper (tự nhận dạng ngôn ngữ, cờ nghi ngờ), kiểm bản dịch, ghi phụ đề cứng tiếng Việt. Thuyết minh chưa có script. Không đổi quy tắc kiểm chứng, bản quyền, khóa nhân vật.
+
+- Thêm `scripts/chep_loi_goc.py VIDEO PROJECT [--ngon-ngu auto|en|zh...] [--ban medium|small] [--khong-vad]`: đọc tiếng bằng ffmpeg ra mảng 16 kHz (tránh lỗi PyAV khi đưa đường dẫn file vào faster-whisper), nhận dạng ngôn ngữ theo khúc 30 giây có ít nhất 3 giây tiếng nói (VAD) trên mọi ngôn ngữ, in `[CAN HOI]` khi không chắc chắn hoặc ngôn ngữ ngoài en, zh, vi; chép bằng `medium` bật VAD; mốc đoạn lấy theo từ đầu và từ cuối cộng 0,4 giây (mốc đoạn gốc của Whisper trùm cả khoảng nhạc: 4,6 đến 40,2 giây cho một câu 2 giây); cờ `nghi-bia`, `tin-thap`, `ngan`; liệt kê khoảng không có lời trên 2 giây. Ra `dich/chep-goc.json` và `chep-goc.md`.
+- Thêm `scripts/phu_de_dich.py khoi|kiem|srt|ghi`: `ban-dich.json` theo đoạn (gộp đoạn bằng `bo`); kiểm chặn thiếu dịch, chồng đoạn, vượt thời lượng, chữ số mất ở bản dịch, quá 2 dòng, chưa NFC; cảnh báo đọc nhanh hơn `--cps` (15), hiện dưới 1 giây, đoạn có cờ; tự kéo dài đoạn đọc nhanh vào khoảng trống phía sau tối đa `--keo-dai` (1,5 giây); ghi `output/phu-de-vi.srt`, phụ đề cứng `.ass` theo kích thước video (giữ độ phân giải, chép nguyên tiếng), `--song-ngu`, `--vi-tri tren`, `--che-day` (làm mờ dải đáy để che phụ đề cứng sẵn có); xuất bảng khung kiểm `dich/qa-phu-de.png`.
+- Thêm `profiles/dich.md`, `references/che-do-dich.md`; `SKILL.md`: bảng thể loại, mục Chế độ dịch video, tham khảo.
+- `scripts/setup.sh --dich`: cài thêm `faster-whisper==1.2.1` (ghim). Không cờ thì hành vi như cũ.
+- `tools/smoke_test.sh`: thử `phu_de_dich.py khoi`, `kiem` (chặn thiếu dịch, mất số), `srt` (bỏ đoạn đánh dấu `bo`).
+- Đã chạy thử: `setup.sh --dich` đầy đủ; trọn chế độ dịch trên vlog tiếng Anh 143 giây 1280x720 (`chep_loi_goc.py` tự nhận dạng `en` 0,972, 29 đoạn, khoảng 42 giây với `--ngon-ngu en` khi đã có mô hình; dịch, gộp đoạn, `kiem` 0 lỗi; `ghi` 34 giây, thêm `--che-day 0.2` 42 giây; xem bảng khung kiểm: phụ đề song ngữ Trung Anh sẵn có của video bị che, chữ dịch đọc rõ). Thử `kiem` với bản dịch cố ý sai: bắt đủ thiếu dịch, mất số `3.5`, chồng đoạn, chữ NFD, quá 2 dòng. Video mẫu thường 2 cảnh khổ dọc 2D: `tts.py`, `new_project.sh`, `inject.py`, `hyperframes check` đạt, `render.sh final` 17 giây cho 6,4 giây video, `check_output.py` ĐẠT. `smoke_test.sh` đạt.
+- Chưa kiểm: thuyết minh; tiếng Trung dài có nhạc nền; video nhiều người nói (Whisper không tách người nói); ngưỡng cờ và ngưỡng chắc chắn mới lấy theo 3 clip; `--cps` 15 chưa đo riêng cho phụ đề tiếng Việt; `--song-ngu` với lời gốc dài hơn một dòng có thể chạm dòng dịch.
+
 ## [1.13.0] - 2026-11-18
 
 Thêm mô hình nhận dạng giọng nói Whisper (small, medium) vào Release riêng và script tải; chưa nối vào quy trình nào (chưa có `asr_check`, chưa có chế độ dịch video). Việc đã làm: ghim, chép nguyên vẹn, kiểm sha256.

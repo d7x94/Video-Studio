@@ -1,0 +1,60 @@
+# Chế độ dịch video (phụ đề, thuyết minh)
+
+Tài liệu tham khảo của `SKILL.md`. Dùng khi người dùng gửi một video nói tiếng nước ngoài và nhờ dịch sang tiếng Việt: làm phụ đề, hoặc thuyết minh. Hồ sơ thể loại: `profiles/dich.md`. Không dựng hình mới.
+
+Bản này (1.14.0) làm trọn được **phụ đề**. Thuyết minh (lồng tiếng Việt theo mốc, giữ tiếng gốc nhỏ lại) chưa có script: nếu brief cần thuyết minh, báo người dùng và chỉ làm phụ đề, hoặc dùng `ghep_loi_video_co_san.py` của chế độ video có sẵn với lời Việt đã dịch (tiếng gốc khi đó bị thay hẳn, chưa giữ nhỏ lại được).
+
+## Đầu vào
+
+- File video. Workspace không tải được từ youtube.com (thử ngày 2026-11-18, kết nối bị chặn), nên người dùng tải về trước rồi gửi file.
+- Ngôn ngữ gốc: mặc định tự nhận dạng; người dùng biết trước thì ghi `--ngon-ngu`.
+- Nguồn video gốc: không ghi trong `credits.md` khi người dùng đã nói tự chịu trách nhiệm về quyền sử dụng; vẫn ghi công cụ (Whisper, VieNeu nếu thuyết minh).
+
+## Môi trường
+
+`bash SKILL/scripts/setup.sh --dich`: dựng như thường lệ, cài thêm `faster-whisper` (ghim phiên bản trong `setup.sh`). Mô hình Whisper tải lúc chạy bằng `scripts/lay_whisper.py` (GitHub Release của repo, dự phòng huggingface, kiểm sha256): bản `medium` khoảng 1,5 GB, tải một lần mỗi workspace.
+
+## Quy trình
+
+1. **Chép lời gốc**: `python3 SKILL/scripts/chep_loi_goc.py goc.mp4 PROJECT`. Mặc định Whisper `medium`, bật lọc khoảng lặng (VAD). Ra `PROJECT/dich/chep-goc.json` và `chep-goc.md`.
+   - Ngôn ngữ: cắt khúc 30 giây, chỉ dùng khúc có ít nhất 3 giây tiếng nói, nhận dạng trên mọi ngôn ngữ. Script in `[CAN HOI]` khi các khúc không cùng ngôn ngữ, xác suất trung bình dưới 0,8, cách ngôn ngữ thứ hai dưới 0,3, hoặc ngôn ngữ ngoài danh sách đã thử (en, zh, vi). Khi đó dừng hỏi người dùng rồi chạy lại với `--ngon-ngu`.
+   - Mốc đoạn lấy theo mốc từ đầu và từ cuối (cộng 0,4 giây), vì mốc đoạn gốc của Whisper có thể trùm cả khoảng nhạc sau câu.
+2. **Cổng duyệt bản chép gốc** (dừng chờ người dùng): gửi `chep-goc.md`. Nêu rõ các cờ, các khoảng không có lời, và những từ nghi chép sai (tên riêng, món ăn, từ hiếm). Người dùng sửa lời gốc, gán người nói nếu có nhiều người.
+   - `nghi-bia`: câu Whisper hay tự thêm ở đoạn không có lời ("Thanks for watching", lặp chữ, xác suất không có lời cao).
+   - `tin-thap`: nghe chưa chắc (avg_logprob dưới -0,7).
+   - Khoảng không có lời dài hơn 2 giây: VAD có thể đã bỏ câu nói nhỏ trên nền nhạc hay tiếng gõ phím; nhắc người dùng nghe lại.
+   - Đối chiếu hình khi có thể: chữ trên hình (thực đơn, biển, phụ đề sẵn có) giúp sửa từ chép sai.
+3. **Dịch**: `python3 SKILL/scripts/phu_de_dich.py khoi PROJECT` tạo `dich/ban-dich.json`, rồi điền trường `dich` từng đoạn (điều phối tự dịch, hoặc agent biên kịch, model sonnet).
+   - Dịch ý, giữ đúng số, tên riêng, phủ định, ai nói với ai. Xưng hô theo quan hệ người nói (vlog một người: "mình"; cha mẹ nói với con: "bố/mẹ" và "con").
+   - Đoạn bị Whisper cắt giữa câu thì gộp: sửa `end` của đoạn đầu, nối `goc`, ghi `"bo": true` và `"gop_vao"` cho đoạn sau. Không để đoạn chồng nhau.
+   - Tên riêng viết theo cách người Việt quen đọc ("Đại học Melbourne", không "uni melb").
+   - Hồ sơ sức khỏe, thủ tục: số liệu, khuyến cáo trong lời gốc vẫn kiểm chứng nguồn ngoài như quy trình thường. Hồ sơ khác: chỉ kiểm dịch trung thực, ghi "theo lời người nói" khi cần.
+4. **Kiểm bản dịch**: `python3 SKILL/scripts/phu_de_dich.py kiem PROJECT goc.mp4`. Lỗi chặn: thiếu bản dịch, đoạn chồng nhau, vượt thời lượng, chữ số trong lời gốc mất ở bản dịch, quá 2 dòng, chữ chưa NFC. Cảnh báo: đọc nhanh hơn `--cps` (mặc định 15 ký tự mỗi giây, không tính khoảng trắng, lấy theo `doc_chu.py`, chưa đo riêng cho phụ đề tiếng Việt), đoạn hiện dưới 1 giây, đoạn gốc có cờ.
+   - Đoạn đọc nhanh tự được kéo dài thời gian hiện vào khoảng trống phía sau, tối đa `--keo-dai` giây (mặc định 1,5), cách đoạn sau 0,1 giây. Vẫn nhanh thì rút gọn bản dịch hoặc gộp với đoạn kế.
+   - Sau khi dịch xong, một lượt kiểm dịch độc lập (agent khác, không phải người dịch) đọc song song `goc` và `dich`: sai nghĩa, sót ý, sai số, sai người nói.
+5. **Cổng duyệt bản dịch** (dừng chờ người dùng): gửi bảng gốc và dịch. Duyệt xong thì không đổi nội dung nữa.
+6. **Ghi phụ đề**: `python3 SKILL/scripts/phu_de_dich.py ghi PROJECT goc.mp4`. Ra `output/phu-de-vi.srt`, `output/<tên>-phu-de-vi.mp4` (giữ độ phân giải, chép nguyên tiếng gốc) và bảng khung kiểm `dich/qa-phu-de.png`.
+   - Xem bảng khung kiểm trước khi giao. Video gốc đã có phụ đề cứng (ví dụ song ngữ Trung Anh ở đáy) thì chữ dịch chồng lên: chạy lại với `--che-day 0.2` (làm mờ dải đáy cao 20% khung rồi ghi phụ đề dịch lên đó) hoặc `--vi-tri tren`.
+   - `--song-ngu`: dòng gốc nhỏ dưới dòng dịch (để học ngoại ngữ). Lời gốc dài quá một dòng có thể chạm dòng dịch: xem bảng khung kiểm.
+7. **Giao**: video có phụ đề, `phu-de-vi.srt`, `chep-goc.md`. Nêu chỗ đã sửa lời gốc, câu chưa chắc nghĩa, đoạn VAD bỏ mà chưa ai nghe lại.
+
+## Số đo (2026-11-18, workspace 2 lõi CPU, không GPU)
+
+| Clip | Ngôn ngữ nhận dạng | Ghi chú |
+|---|---|---|
+| Vlog 143 giây, một người nói, nhạc nền, gõ phím | `en` 0,97 (trung bình 4 khúc có lời) | Chép gần đúng hết; sai "Bend/Spend", "port/pork" (sửa nhờ thực đơn trên hình) |
+| Hội thoại 30 giây, hai người | `zh` 0,999 (medium) | Không tách người nói; small bịa câu ở đoạn im lặng |
+| Clip 16 giây ngoài trời | medium `jw` 0,65, small `id` 0,42 | Ngôn ngữ ngoài danh sách, bản chép tin cậy thấp: không dịch được |
+
+- `chep_loi_goc.py` trên vlog 143 giây (medium, VAD, đã có mô hình): khoảng 42 giây với `--ngon-ngu en`. Lần chạy đầu tự nhận dạng mất khoảng 68 giây, gồm cả tải mô hình medium từ GitHub Release.
+- Không bật VAD, medium bịa "Thanks for watching!" ở giây 140 trên đoạn chỉ có tiếng gõ phím; bật VAD thì hết, nhưng mất câu "Here's some ASMR typing." nói nhỏ trên nền gõ phím.
+- `phu_de_dich.py ghi` 143 giây 1280x720: khoảng 34 giây (thêm `--che-day`: khoảng 42 giây).
+
+## Giới hạn đã biết
+
+- Whisper không tách người nói. Video nhiều người: người dùng gán ở cổng duyệt bản chép.
+- Video lẫn hai ngôn ngữ: chỉ chọn được một ngôn ngữ chính cho cả video.
+- Chưa thử tiếng Quảng Đông, phương ngữ, tiếng Trung có nhạc nền to.
+- Ngưỡng cờ (0,6; 2,4; -0,7) và ngưỡng chắc chắn (0,8; 0,3) lấy theo 3 clip trên, chưa hiệu chỉnh trên nhiều video.
+- `faster-whisper.transcribe(đường_dẫn)` lỗi ở workspace (`av.open() got an unexpected keyword argument 'metadata_errors'`): script đọc tiếng bằng ffmpeg ra mảng số rồi mới đưa vào.
+- Phụ đề cứng dùng phông Inter có sẵn trong workspace (như `chu_may_chu.py`); máy khác thiếu phông thì libass thay phông khác.

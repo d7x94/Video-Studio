@@ -128,6 +128,30 @@ python3 "$S/trang_thai.py" xem "$P" --json | python3 -c "import json,sys; json.l
 python3 "$S/vai.py" kiem >/dev/null
 pass "soat_canh.py, trang_thai.py, vai.py kiem"
 
+# 5b. Che do dich: ban dich, kiem, srt (khong can Whisper hay video)
+D="$P/dich-thu"; mkdir -p "$D/dich"
+cat > "$D/dich/chep-goc.json" <<'EOF'
+{"phien_ban": 1, "ngon_ngu": {"chon": "en"}, "doan": [
+ {"id": "d001", "start": 0.5, "end": 3.0, "goc": "I studied for 12 hours today.", "co": []},
+ {"id": "d002", "start": 3.2, "end": 5.0, "goc": "Thanks for watching!", "co": ["nghi-bia"]}]}
+EOF
+python3 "$S/phu_de_dich.py" khoi "$D" >/dev/null
+expect_fail python3 "$S/phu_de_dich.py" kiem "$D"
+python3 -I - "$D" <<'PY'
+import json, sys
+from pathlib import Path
+p = Path(sys.argv[1]) / "dich/ban-dich.json"; bd = json.loads(p.read_text(encoding="utf-8"))
+bd["doan"][0]["dich"] = "Hôm nay mình học mười hai tiếng."
+bd["doan"][1]["bo"] = True
+p.write_text(json.dumps(bd, ensure_ascii=False), encoding="utf-8")
+PY
+expect_fail python3 "$S/phu_de_dich.py" kiem "$D"
+sed -i 's/mười hai/12/' "$D/dich/ban-dich.json"
+python3 "$S/phu_de_dich.py" srt "$D" >/dev/null || loi "phu_de_dich srt le ra dat"
+grep -q "^Hôm nay mình học 12 tiếng.$" "$D/output/phu-de-vi.srt" || loi "phu-de-vi.srt sai noi dung"
+[ "$(grep -c -- '-->' "$D/output/phu-de-vi.srt")" = 1 ] || loi "doan bo van con trong srt"
+pass "phu_de_dich.py khoi, kiem (chan thieu dich, mat so), srt (bo doan danh dau bo)"
+
 # 6. Script shell: cu phap
 for f in "$S"/*.sh "$ROOT"/tools/*.sh; do bash -n "$f"; done
 pass "cu phap script shell"
