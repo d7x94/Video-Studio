@@ -2,6 +2,16 @@
 
 Quy ước số phiên bản `MAJOR.MINOR.PATCH`, ghi ở `video-studio/VERSION` và dòng "Phiên bản skill" trong `video-studio/SKILL.md` (hai nơi phải khớp, CI kiểm tra khi đóng gói). Thêm kiểu hình hoặc tính năng thì tăng MINOR; sửa lỗi thì tăng PATCH; đổi lớn làm hỏng cách dùng cũ thì tăng MAJOR. Mỗi lần gộp PR thay đổi skill: tăng số, sửa hai nơi trên và thêm mục mới ở đầu file này.
 
+## [1.11.1] - 2026-11-18
+
+Dấu tiếng Việt về mặt kỹ thuật: chuẩn hóa NFC và soát chữ trước khi giao (ý tưởng kiểm NFC/NFD từ vietfont.vn; mã tự viết, không dùng tài nguyên của trang).
+
+- `scripts/inject.py`: chuẩn hóa Unicode NFC (dấu dựng sẵn) cho phụ đề đốt chữ, chữ từng từ (`--tung-tu`), `phu-de.srt` và toàn bộ `index.html` trước khi ghi, nên chữ agent dựng cảnh gõ tay ở dạng dấu tổ hợp rời (NFD) cũng được sửa.
+- `scripts/check_output.py`: soát `.srt` (nếu có `--srt`), `scenes.json` và `build/*/index.html` cạnh `timeline.json`. Dòng chưa NFC là LỖI kèm cách sửa; dòng có ký tự mã cũ TCVN3 (ABC) nằm giữa hai chữ cái là LỖI. Ký hiệu cạnh số (37°C, 5µg) không bị báo. Dừng sau 5 dòng lỗi mỗi file.
+- `agents/qa.md`: hai lỗi trên là "Chặn"; soát trên ảnh khung hình dấu chồng hai tầng, chữ hoa có dấu và chữ cỡ nhỏ (dấu bị cắt mép trên, đè dòng trên, lệch khỏi chữ).
+- Font không đổi: Be Vietnam Pro và Patrick Hand (SIL OFL 1.1) đã có đủ ký tự tiếng Việt và đã ghi trong credits.
+- Đã chạy thử trọn một video mẫu 2 cảnh khổ dọc 2D, chữ trên hình cố ý gõ ở dạng NFD: `setup.sh`, `tts.py`, `new_project.sh portrait`, `inject.py` (index.html và `phu-de.srt` ra NFC), `hyperframes check` đạt, `render.sh final` (12 giây cho video 5,8 giây), `check_output.py --srt --frames` ĐẠT, ảnh khung hình hiện đúng dấu. Thử riêng bộ soát: bắt được `index.html` và `scenes.json` dạng NFD, chữ TCVN3 mẫu; không báo nhầm "37°C", "5µg". Chưa thử: các kiểu hình line-art, chibi, ve-tay, ve-net, 3D và khổ ngang (thay đổi chỉ chạm `inject.py` và bộ soát dùng chung); quy tắc TCVN3 chưa chạy trên chữ mã cũ thật từ người dùng.
+
 ## [1.11.0] - 2026-11-18
 
 Bốn mục còn lại từ ghi chú học OpenCreator: kiểm hình đen và đứng yên, đếm tiếng lời đọc, file trạng thái dự án, câu lệnh tranh ve-tay có vai trò ảnh tham chiếu (xem README mục Ghi công; mã và tài liệu tự viết).

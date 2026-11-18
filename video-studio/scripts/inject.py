@@ -14,6 +14,7 @@ Viec script lam (de agent dung hinh khong phai tu tinh moc thoi gian):
     (bo qua neu --no-burn, vd ban YouTube da co file .srt rieng)
   - dat data-duration cua #root bang tong thoi luong
   - ghi phu-de.srt canh index.html (hoac vao duong dan --srt-only)
+  - chuan hoa Unicode NFC cho phu de, .srt va toan bo index.html (dau tieng Viet dung san)
 
 Phu de duoc chia theo cau va dau phay, toi da --max-chars ky tu mot dong.
 Dong hien duoi 1,2 giay duoc gop voi dong ke ben.
@@ -32,6 +33,7 @@ import argparse
 import html
 import json
 import re
+import unicodedata
 import shutil
 import sys
 from pathlib import Path
@@ -196,6 +198,10 @@ def set_word_js(src, on):
     return src[:m.start()] + WORD_JS + src[m.start():]
 
 
+def nfc(s):
+    return unicodedata.normalize("NFC", s)
+
+
 def srt_time(s):
     ms = int(round(s * 1000))
     h, ms = divmod(ms, 3600000)
@@ -265,7 +271,12 @@ def main():
             pass
 
     def captions(mc):
-        return word_captions(timeline, mc, moc) if moc else build_captions(timeline, mc)
+        caps = word_captions(timeline, mc, moc) if moc else build_captions(timeline, mc)
+        for c in caps:   # dau tieng Viet dang dung san (NFC): dau to hop roi (NFD) de lech hay roi khoi chu
+            c["text"] = nfc(c["text"])
+            if c.get("words"):
+                c["words"] = [[nfc(w), t] for w, t in c["words"]]
+        return caps
 
     if a.srt_only:
         write_srt(captions(a.max_chars or 42), Path(a.srt_only))
@@ -350,6 +361,7 @@ def main():
             "window.TINH_CACH = " + json.dumps({k: t for k, (_, t) in tcs.items()}, ensure_ascii=False) + ";\n",
             encoding="utf-8")
 
+    src = nfc(src)   # chu dung canh go tay trong index.html cung ve NFC
     index.write_text(src, encoding="utf-8")
     write_srt(caps, index.parent / "phu-de.srt")
     n_cap = sum(1 for c in cap_tags if "class=\"cap" in c)
