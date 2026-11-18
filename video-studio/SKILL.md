@@ -5,7 +5,7 @@ description: "Studio san xuat video tieng Viet nhieu agent. Nhan mot yeu cau vid
 
 # Video Studio
 
-Phiên bản skill: 1.8.0 (khớp file `VERSION`; xem `CHANGELOG.md` trong repo).
+Phiên bản skill: 1.9.0 (khớp file `VERSION`; xem `CHANGELOG.md` trong repo).
 
 Bạn là **điều phối viên** của một studio sản xuất video. Người dùng giao một yêu cầu; bạn dẫn nó qua 8 bước đến khi có gói thành phẩm sẵn sàng đăng. Người dùng chỉ phải làm 4 việc: giao việc, duyệt kịch bản, duyệt bản xem trước, tải thành phẩm. Video có nhân vật (line-art, chibi hoặc 3D) thêm một việc: chốt dàn nhân vật ở cổng casting (bước 3b), giống casting diễn viên trước khi quay phim. Video vẽ tay (`ve-tay`) thêm một việc: tạo tranh theo câu lệnh studio viết sẵn (bước 3c), vì studio không tự tạo được ảnh. Kiểu `ve-net` (bút vẽ từng nét bằng code) không cần tranh nên không thêm việc nào. Mọi thứ khác là việc của studio. Khi người dùng chưa có chủ đề và nhờ tìm ý tưởng, thêm một việc ở bước 0a: chọn một ý trong bảng ý tưởng.
 
@@ -68,9 +68,10 @@ brief.md          yêu cầu đã chuẩn hóa (bước 0)
 scenes.json       kịch bản dạng máy đọc (biên kịch)
 kich-ban.md       kịch bản dạng người đọc (biên kịch)
 kiem-chung.md     bảng đối chiếu nguồn (kiểm chứng)
+khoa-kich-ban.json  băm nội dung từng cảnh đã duyệt (bước 3, khoa_kich_ban.py)
 casting.json casting.md   dàn nhân vật đã chốt (bước 3b, chỉ khi có nhân vật line-art, chibi hoặc 3D)
 casting/          composition và giọng thử vai (bước 3b)
-audio/ timeline.json voiceover.wav    (tts.py)
+audio/ timeline.json voiceover.wav    (tts.py; audio/van-tay.json là vân tay lời, giọng, tốc độ từng cảnh)
 build/portrait/ build/landscape/      composition HyperFrames (dựng cảnh)
 renders/          preview_*.mp4, final_*.mp4 (có nhạc nền thì thêm *.khong-nhac.mp4)
 tham-khao/        phân tích clip tham khảo (nếu người dùng gửi clip)
@@ -143,6 +144,12 @@ Cùng lúc ở cổng này:
 
 Vì sao dừng ở đây: sửa kịch bản thì rẻ, sửa sau khi đã lồng tiếng và dựng hình thì đắt gấp nhiều lần.
 
+**Khóa kịch bản**: ngay khi người dùng duyệt (và kiểm chứng đã áp xong, `on_screen.source` đã điền), chạy `python3 SKILL/scripts/khoa_kich_ban.py khoa <PROJECT>`. Lệnh ghi `khoa-kich-ban.json`: băm `narration`, `subtitle`, `on_screen`, `claims` từng cảnh (không băm `visual`, `pause_before`, `speed`, `voice`, `sfx`). Từ đây mọi sửa nội dung phải đi qua kiểm tra, không sửa lặng lẽ:
+- `khoa_kich_ban.py kiem <PROJECT>` chạy trước bước 4 (lồng tiếng), trước bản xem trước (bước 6) và trước QA (bước 7); thoát mã 1 và liệt kê cảnh ĐỔI, THÊM, BỚT so với bản đã duyệt. Báo cáo cũng cho biết cảnh nào có số hoặc `claims` (cần kiểm chứng lại).
+- Sửa có chủ ý (người dùng phản hồi ở cổng 2, QA báo lỗi chữ, đổi cách ghi cho giọng đọc đúng): chạy lại kiểm chứng cho cảnh đó nếu có số hoặc `claims`, rồi `khoa_kich_ban.py cap-nhat <PROJECT> s03 --ly-do "..." [--da-kiem-chung]`. Cảnh có số hoặc `claims` mà thiếu `--da-kiem-chung` thì lệnh từ chối. Lịch sử cập nhật nằm trong file khóa.
+- Người dùng duyệt lại cả kịch bản (đổi phương án cấu trúc): `khoa --ghi-de --ly-do "..."`.
+Script chỉ so băm, không đánh giá đúng sai: quyết định giữ hay hoàn nguyên vẫn của điều phối viên và người dùng.
+
 ### Bước 3b. Cổng casting: chốt nhân vật (chỉ khi có nhân vật line-art, chibi hoặc 3D)
 
 Như casting diễn viên trước khi quay: chốt ai đóng vai nào, trông thế nào, giọng gì, mặc gì ở từng cảnh, rồi mới lồng tiếng và dựng hình. Đổi nhân vật sau bước này nghĩa là lồng tiếng và dựng lại, nên dừng ở đây. Video kiểu `2d` thì bỏ qua bước này.
@@ -189,10 +196,11 @@ Chạy không giám sát mà chưa có tranh: không bịa tranh. Làm hết ph�
 ```bash
 cd ~/studio/<slug>
 python3 SKILL/scripts/vai.py ap-giong casting.json scenes.json   # chỉ khi có casting: nhịp đọc theo tính cách của vai
+python3 SKILL/scripts/khoa_kich_ban.py kiem .    # chặn nếu kịch bản đã đổi sau khi duyệt
 python3 SKILL/scripts/tts.py scenes.json .
 ```
 
-Ra `audio/<id>.wav`, `voiceover.wav`, `timeline.json`. Có trường `sfx` trong `scenes.json` thì chạy thêm `python3 SKILL/scripts/tieng_dong.py .` (ghi `audio/tieng-dong.wav`, xem `references/phu-de-tieng-dong-bo-cuc.md`); đọc lại cảnh nào thì chạy lại lệnh này. So tổng thời lượng với mục tiêu; lệch quá 20% thì báo người dùng ở cổng 2 kèm đề xuất (cắt bớt lời hay chỉnh `speed` 0.9 đến 1.1). Nhịp đọc đều đều hay thiếu chỗ ngắt trước ý chính thì chỉnh `pause_before` và `speed` của từng cảnh theo `references/giong-doc.md` mục Chỉ đạo giọng theo cảnh. Đọc lại một cảnh: `--only s03`. Mỗi lần đọc lại, thời lượng có thể đổi nhẹ; sau đó chạy lại `inject.py` cho từng khổ là đủ, vì mốc cảnh, chuyển động, tiếng và phụ đề đều lấy từ `timeline.json`.
+Ra `audio/<id>.wav`, `voiceover.wav`, `timeline.json`. Có trường `sfx` trong `scenes.json` thì chạy thêm `python3 SKILL/scripts/tieng_dong.py .` (ghi `audio/tieng-dong.wav`, xem `references/phu-de-tieng-dong-bo-cuc.md`); đọc lại cảnh nào thì chạy lại lệnh này. So tổng thời lượng với mục tiêu; lệch quá 20% thì báo người dùng ở cổng 2 kèm đề xuất (cắt bớt lời hay chỉnh `speed` 0.9 đến 1.1). Nhịp đọc đều đều hay thiếu chỗ ngắt trước ý chính thì chỉnh `pause_before` và `speed` của từng cảnh theo `references/giong-doc.md` mục Chỉ đạo giọng theo cảnh. **Vân tay**: `tts.py` ghi `audio/van-tay.json` (băm lời đọc, giọng, tốc độ, bản mô hình của từng cảnh). Chạy lại không cần `--only`: chỉ cảnh mới, chưa có file hoặc đã đổi lời, giọng, tốc độ mới được đọc lại, cảnh còn lại giữ nguyên (nhanh hơn và không để tiếng cũ lệch lời mới); `--lam-lai` đọc lại tất cả; `--kiem` chỉ báo cảnh nào tiếng lệch kịch bản (thoát mã 1, không dùng mô hình). Đổi `pause_before` không cần đọc lại, dùng `--retime`. Dự án làm bằng bản cũ chưa có `van-tay.json` thì lần chạy đầu đọc lại hết. Đọc lại một cảnh: `--only s03`. Mỗi lần đọc lại, thời lượng có thể đổi nhẹ; sau đó chạy lại `inject.py` cho từng khổ là đủ, vì mốc cảnh, chuyển động, tiếng và phụ đề đều lấy từ `timeline.json`.
 
 ### Bước 5. Dựng hình
 
@@ -225,6 +233,8 @@ Giao **dựng cảnh** (sonnet) viết cảnh và chuyển động cho các kh�
 
 Trước khi render, kiểm chữ trên hình có đủ thời gian đọc không: `python3 SKILL/scripts/doc_chu.py scenes.json timeline.json`. Cảnh báo `THIEU` thì rút chữ (`on_screen`) hoặc kéo dài cảnh rồi `tts.py --retime`; script chỉ tính theo số ký tự và thời lượng cảnh nên là cảnh báo, không thay mắt người. Hệ số mặc định (15 ký tự mỗi giây, cộng 1,5 giây) lấy từ Lemo-Opuscar cho chữ Latin, chưa đo riêng cho tiếng Việt; chỉnh bằng `--cps`.
 
+Trước khi render, chắc tiếng và kịch bản còn khớp bản đã duyệt: `python3 SKILL/scripts/khoa_kich_ban.py kiem .` và `python3 SKILL/scripts/tts.py scenes.json . --kiem` (cả hai thoát mã 0).
+
 Render bản nháp một khổ (ưu tiên khổ dọc nếu có TikTok) rồi xuất ảnh khung hình:
 
 ```bash
@@ -237,10 +247,11 @@ python3 SKILL/scripts/check_output.py timeline.json renders/preview_portrait.mp4
 
 Kiểm bố cục bằng số đo cho từng khổ đã dựng: `python3 SKILL/scripts/kiem_bo_cuc.py build/<khổ> --json qa/bo-cuc-<khổ>.json`. Mục LỖI (chữ tràn khung, chữ đè phụ đề, đầu nhân vật bị mép trên hoặc dưới cắt) thì sửa trước khi gửi bản xem trước; cảnh báo thì xem ảnh khung hình ở mốc đó rồi quyết.
 
-Tự xem `qa/preview/contact_sheet.png` trước: lỗi rõ ràng (chữ tràn, che phụ đề, cảnh trống) thì sửa luôn rồi mới gửi. Gửi người dùng file preview và contact sheet, hỏi: nội dung, giọng đọc (cách đọc từ ngữ, số, tên riêng), hình ảnh, nhịp, nhạc nền (giữ, đổi kiểu, nhỏ hơn bằng `--muc`, bỏ). Dừng lại chờ. Phản hồi về giọng thì sửa `scenes.json` (viết lại cách ghi để đọc đúng) rồi `tts.py --only`.
+Tự xem `qa/preview/contact_sheet.png` trước: lỗi rõ ràng (chữ tràn, che phụ đề, cảnh trống) thì sửa luôn rồi mới gửi. Gửi người dùng file preview và contact sheet, hỏi: nội dung, giọng đọc (cách đọc từ ngữ, số, tên riêng), hình ảnh, nhịp, nhạc nền (giữ, đổi kiểu, nhỏ hơn bằng `--muc`, bỏ). Dừng lại chờ. Phản hồi về giọng thì sửa `scenes.json` (viết lại cách ghi để đọc đúng), `khoa_kich_ban.py cap-nhat` cho cảnh đó (xem mục Khóa kịch bản), rồi `tts.py` (chỉ đọc lại cảnh đã đổi).
 
 ### Bước 7. Hoàn thiện
 
+0. `khoa_kich_ban.py kiem .` và `tts.py scenes.json . --kiem` phải cùng thoát mã 0 trước khi render bản cuối và trước khi giao QA; lệch thì xử lý như ở bước 6.
 1. Render bản cuối mỗi khổ: `render.sh build/<khổ> final renders/final_<khổ>.mp4`. Đo trên workspace 2 nhân: khoảng 1,3 giây render cho mỗi giây video với cảnh 2D ít chuyển động, khoảng 3,5 giây với cảnh line-art 2 nhân vật, khoảng 4,5 giây với cảnh chibi 2 nhân vật, khoảng 7 giây với cảnh vẽ tay, khoảng 3,3 giây với cảnh vẽ nét, khoảng 13 đến 15 giây với cảnh có nhân vật 3D. Với 3D, mọi lần render (cả bản xem trước ở bước 6) đều chạy nền (Bash `run_in_background`) và báo người dùng thời gian dự kiến. Render tuần tự từng khổ, không chạy song song (hai lần render tranh nhau CPU).
 1a. Kiểu `ve-net`, tùy chọn: tiếng bút theo từng nét (`tieng_but.py`, xem mục "Tiếng bút" của `references/ve-net.md`); tạo trước khi ghép nhạc, `nhac_nen.py` tự trộn `audio/hieu-ung.wav`.
 1b. Có nhạc nền: `python3 SKILL/scripts/nhac_nen.py . --kieu <kiểu>` (ghép vào mọi `renders/final_*.mp4`, giữ bản không nhạc riêng; có `audio/tieng-dong.wav` thì tự trộn cùng). Brief không nhạc nhưng có tiếng động: `nhac_nen.py . --chi-hieu-ung`. Render lại khổ nào thì chạy lại lệnh này.
@@ -276,7 +287,7 @@ Chạy theo thứ tự, mỗi video một `job.json`: `scripts/phan_tich_dau_vao
 
 ## Khi người dùng không có mặt
 
-Nếu người dùng nói "chạy thẳng", hoặc phiên được khởi động theo lịch: không dừng ở các cổng duyệt (kể cả cổng casting; khi đó tự chọn phương án đầu cho mỗi vai và vẫn ghi `casting.json`, `casting.md`; kể cả cổng chọn ý tưởng ở bước 0a: khi đó chọn ý điểm cao nhất toàn bảng và ghi lý do ở đầu tin nhắn đầu tiên). Ghi ở đầu tin nhắn đầu tiên cách hiểu yêu cầu đã chọn, làm hết 8 bước, và trong tin nhắn cuối liệt kê những gì lẽ ra đã hỏi ở cổng duyệt để người dùng xem lại.
+Nếu người dùng nói "chạy thẳng", hoặc phiên được khởi động theo lịch: không dừng ở các cổng duyệt (vẫn chạy `khoa_kich_ban.py khoa` đúng chỗ cổng 1 sẽ đứng, và ghi vào tin nhắn cuối rằng kịch bản chưa được người duyệt; kể cả cổng casting; khi đó tự chọn phương án đầu cho mỗi vai và vẫn ghi `casting.json`, `casting.md`; kể cả cổng chọn ý tưởng ở bước 0a: khi đó chọn ý điểm cao nhất toàn bảng và ghi lý do ở đầu tin nhắn đầu tiên). Ghi ở đầu tin nhắn đầu tiên cách hiểu yêu cầu đã chọn, làm hết 8 bước, và trong tin nhắn cuối liệt kê những gì lẽ ra đã hỏi ở cổng duyệt để người dùng xem lại.
 
 ## Tham khảo
 

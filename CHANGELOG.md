@@ -2,6 +2,15 @@
 
 Quy ước số phiên bản `MAJOR.MINOR.PATCH`, ghi ở `video-studio/VERSION` và dòng "Phiên bản skill" trong `video-studio/SKILL.md` (hai nơi phải khớp, CI kiểm tra khi đóng gói). Thêm kiểu hình hoặc tính năng thì tăng MINOR; sửa lỗi thì tăng PATCH; đổi lớn làm hỏng cách dùng cũ thì tăng MAJOR. Mỗi lần gộp PR thay đổi skill: tăng số, sửa hai nơi trên và thêm mục mới ở đầu file này.
 
+## [1.9.0] - 2026-11-18
+
+Vân tay tiếng đọc và khóa kịch bản sau cổng duyệt 1 (ý tưởng từ quy trình phim người que của OpenCreator, xem README mục Ghi công; mã tự viết).
+
+- `scripts/tts.py`: ghi `audio/van-tay.json` (sha256 của lời đọc, giọng, tốc độ, tag bản mô hình, số phiên bản vân tay của từng cảnh). Chạy không có `--only` và không có `--retime` thì chỉ đọc lại cảnh chưa có file, chưa có vân tay hoặc vân tay đã đổi; trước đây luôn đọc lại cả video. Thêm `--lam-lai` (đọc lại tất cả, như hành vi cũ) và `--kiem` (không nạp mô hình, không ghi gì, thoát mã 1 nếu có cảnh thiếu file hoặc lệch vân tay). Với `--only` và `--retime`, cảnh không đọc lại mà vân tay đã lệch được báo `[LECH]`. Mô hình chỉ nạp khi có cảnh cần đọc. Không tính vào vân tay: `pause_before` (chỉ đổi mốc, dùng `--retime`) và độ chính xác int8 hay fp32 (tùy CPU). Dự án làm bằng bản cũ chưa có `van-tay.json` thì lần chạy đầu đọc lại hết.
+- Thêm `scripts/khoa_kich_ban.py` (`khoa`, `kiem`, `cap-nhat`, `xem`): ghi `khoa-kich-ban.json` gồm băm `narration`, `subtitle`, `on_screen` (cả dòng nguồn), `claims` từng cảnh lúc người dùng duyệt; `kiem` thoát mã 1 và liệt kê cảnh ĐỔI, THÊM, BỚT; `cap-nhat` nhận cảnh đã đổi vào bản khóa kèm `--ly-do` bắt buộc và lịch sử, và từ chối cảnh có số hoặc `claims` nếu thiếu `--da-kiem-chung`. Không băm `visual`, `pause_before`, `speed`, `voice`, `sfx`. Script chỉ so băm, không đánh giá đúng sai.
+- `SKILL.md`: bước 3 (khóa kịch bản), bước 4 (chạy `kiem` trước lồng tiếng, mô tả vân tay), bước 6 và 7 (`khoa_kich_ban.py kiem` và `tts.py --kiem` trước render), phần chạy không giám sát (vẫn khóa, báo kịch bản chưa người duyệt). `agents/qa.md` đọc `lich_su` của file khóa.
+- Đã chạy thử: `setup.sh` đầy đủ; `tts.py` với VieNeu thật, giọng Mai Anh, 3 cảnh: lần đầu đọc 3 cảnh (3,8 giây), lần hai không đọc cảnh nào (0,3 giây), `--kiem` khớp (mã 0); đổi lời một cảnh thì `--kiem` thoát mã 1 và chạy lại chỉ đọc đúng cảnh đó, `--kiem` khớp lại; `timeline.json` và `voiceover.wav` đúng như trước. Thử thêm với `synth` giả cho các nhánh `--only` (báo `[LECH]`), `--retime`, `--lam-lai`, đổi `pause_before` (chỉ đổi mốc), xóa `van-tay.json` (đọc lại hết). `khoa_kich_ban.py`: đủ các nhánh khoa, kiem, cap-nhat (kể cả từ chối thiếu `--da-kiem-chung`), thêm và bớt cảnh, khóa trùng, xem. `new_project.sh` khổ dọc 2D, `inject.py`, `hyperframes check` (0 lỗi), `render.sh preview` chạy được trên template chưa có cảnh. Chưa chạy: dựng cảnh thật, `render.sh final`, `check_output.py` ĐẠT trên video có nội dung, nghe thử bằng tai (các phần này không đổi trong bản này).
+
 ## [1.8.0] - 2026-11-18
 
 Phụ đề từng từ, tiếng động tự tổng hợp, kiểm bố cục bằng số đo và quy tắc nhịp hình (ý tưởng từ một skill làm phim ngắn hoạt hình bên ngoài; mã và tài liệu tự viết, xem README mục Ghi công).

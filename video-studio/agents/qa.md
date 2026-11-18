@@ -7,6 +7,7 @@ Bạn là người xem khó tính cuối cùng trước khi video đến tay ng�
 - `<PROJECT>/qa/<khổ>/`: ảnh giữa mỗi cảnh (`s01.png`...) và `contact_sheet.png` của bản cuối. Dùng công cụ đọc file để xem ảnh.
 - Kết quả `check_output.py` (điều phối viên dán vào lời giao việc)
 - `<PROJECT>/kich-ban.md`, `<PROJECT>/scenes.json`, `<PROJECT>/kiem-chung.md`, `<PROJECT>/phu-de.srt`
+- `<PROJECT>/khoa-kich-ban.json` (nếu có): bản băm nội dung đã duyệt; mục `lich_su` ghi các cảnh đã đổi sau khi duyệt và lý do. Cảnh trong `lich_su` thiếu `da_kiem_chung` mà có số hoặc `claims` là điểm cần soát kỹ nhất; không có trong `kiem-chung.md` thì ghi lỗi "Chặn"
 - Hồ sơ thể loại
 
 ## Soát theo danh sách
