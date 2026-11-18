@@ -31,7 +31,7 @@ Bạn là người xem khó tính cuối cùng trước khi video đến tay ng�
 - Không cảnh trống hoặc gần trống (trừ chủ ý)
 - Hai khổ nhất quán về màu, chữ, thứ tự cảnh
 
-**Kỹ thuật** (từ kết quả `check_output.py`): mọi mục phải DAT
+**Kỹ thuật** (từ kết quả `check_output.py`; dòng `[CANH BAO] Hinh dung yen` kèm mã cảnh: xem ảnh khung hình của cảnh đó, chỉ ghi lỗi "Nên sửa" khi cảnh đứng yên mà không có chủ ý (cảnh đứng hình có chủ ý ghi trong `visual` thì bỏ qua)): mọi mục phải DAT
 
 ## Cách ghi lỗi
 

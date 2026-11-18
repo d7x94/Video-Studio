@@ -2,6 +2,8 @@
 
 Mỗi cảnh là một bức tranh minh họa. Tranh hiện dần theo vệt cọ ngoằn ngoèo, có bàn tay cầm bút chạy theo đầu vệt, kiểu "whiteboard animation". Mỗi cảnh vẽ hai lượt: lượt phác chì (nét mực trên giấy, mảng màu rất nhạt), rồi lượt tô màu. Chuyển động, bàn tay và giấy do studio tự vẽ bằng code. **Tranh do người dùng tạo** bằng công cụ tạo ảnh AI (ChatGPT, Gemini...) theo câu lệnh studio viết, vì studio không tạo được ảnh dạng này.
 
+Cập nhật 2026-11-18 (vai trò ảnh tham chiếu, khối màu, trường `y_chinh`, `vat_bat_buoc`, `lien_mach`): chỉ sửa tài liệu, chưa thử với công cụ tạo ảnh thật; xem CHANGELOG 1.11.0.
+
 Kiểm chứng ngày 2026-11-13: chạy trọn quy trình với 3 tranh thử (lồng tiếng, `inject.py`, `hyperframes check` 0 lỗi, render hai khổ, `check_output.py` ĐẠT).
 
 ## Khi nào dùng
@@ -17,7 +19,7 @@ Video 60 giây hai khổ, mỗi khổ 1 bản nháp và 1 bản cuối: khoảng
 
 ## Quy trình riêng của kiểu này
 
-1. **Bước 2, biên kịch**: trường `visual` của mỗi cảnh mô tả **một** bức tranh (bối cảnh, người, hành động, góc nhìn, màu chủ đạo); thêm `focus` (0 đến 1) là vị trí ngang của chủ thể chính, dùng khi cắt tranh ngang cho khổ dọc. Chữ trên hình (`on_screen.title`) chỉ là nhãn ngắn (mốc thời gian, địa danh). Không có chữ trong tranh.
+1. **Bước 2, biên kịch**: trường `visual` của mỗi cảnh mô tả **một** bức tranh (bối cảnh, người, hành động, góc nhìn, màu chủ đạo); thêm `focus` (0 đến 1) là vị trí ngang của chủ thể chính, dùng khi cắt tranh ngang cho khổ dọc; tùy chọn `y_chinh` (một câu: tranh phải truyền đạt gì), `vat_bat_buoc` (danh sách vật không được thiếu) và `lien_mach` (vì sao cảnh nối với cảnh trước, để trống nếu không nối), dùng ở bước 3c. Chữ trên hình (`on_screen.title`) chỉ là nhãn ngắn (mốc thời gian, địa danh). Không có chữ trong tranh.
 2. **Bước 3c, tranh** (sau khi duyệt kịch bản): viết `cau-lenh-tranh.md` theo mẫu dưới, gửi người dùng, dừng chờ. Người dùng tạo ảnh, gửi lại; lưu vào `<PROJECT>/tranh/<id>.jpg` (ngang 16:9, bắt buộc) và `<id>-doc.jpg` (dọc 9:16, không bắt buộc).
 3. **Soát tranh** (điều phối viên, trước khi dựng): xem từng ảnh. Lỗi nhỏ ở một vùng nhỏ (ký hiệu lạc thời đại trên lá cờ, chữ giả trên tờ giấy) có thể tự xóa bằng cách tô lấp từ màu xung quanh (Python, numpy và scipy có sẵn), xem kỹ vùng đã sửa và báo người dùng đã sửa gì; lỗi lớn thì nhờ tạo lại. Trả lại người dùng để tạo lại nếu: có chữ hay chữ ký trong tranh; chi tiết chuyên môn sai so với `kiem-chung.md` (trang phục, thao tác y tế, đồ bảo hộ, quầy, phương tiện); nhân vật lặp lại trông khác hẳn giữa các cảnh; người thật có thể nhận ra; logo, nhân vật có bản quyền. Gom các ảnh cần làm lại vào một lần hỏi, kèm câu lệnh đã sửa.
 4. **Bước 5**: `new_project.sh <PROJECT> <khổ> vetay` cho từng khổ, rồi `python3 SKILL/scripts/ve_tay_anh.py <PROJECT>` (cắt, phóng tranh cho đúng khung và tạo bản phác chì vào `build/<khổ>/img/`). Chưa có đủ tranh thì script báo cảnh thiếu.
@@ -28,8 +30,14 @@ Viết bằng tiếng Anh (công cụ tạo ảnh hiểu tốt hơn), kèm một
 
 1. **Khối phong cách**: chép nguyên văn khối của phong cách đã chọn (mục dưới), giống hệt ở mọi cảnh để các tranh cùng một tay vẽ.
 2. **Khối nhân vật** (nếu có người lặp lại qua nhiều cảnh): mô tả cố định một lần trong `cau-lenh-tranh.md` (tuổi, dáng, trang phục, màu, đạo cụ), chép nguyên văn vào mọi cảnh có người đó. Dù vậy các tranh vẫn lệch chút ít; dặn người dùng tạo các cảnh trong cùng một cuộc chat với công cụ tạo ảnh.
-3. **Cảnh**: dịch `visual` sang tiếng Anh, cụ thể (ai, làm gì, ở đâu, góc nhìn, ánh sáng).
-4. **Khối kỹ thuật** luôn có: `Wide 16:9 landscape image. Keep the main subject inside the central third of the width so a vertical crop still works. No text, no letters, no numbers, no captions, no signature, no watermark, no frame or border.`
+3. **Cảnh**: dịch `visual` sang tiếng Anh, cụ thể (ai, làm gì, ở đâu, góc nhìn, ánh sáng). Nếu cảnh có `y_chinh` (ý chính tranh phải truyền đạt trong một khoảnh khắc đọc được ngay) và `vat_bat_buoc` (vật không được thiếu), thêm hai dòng `The picture must communicate: <y_chinh>.` và `Required objects: <vat_bat_buoc>.`; khi phải bớt chi tiết thì bớt trang trí, không bớt vật bắt buộc.
+4. **Khối màu**, luôn có, ngay sau cảnh: `Colour words in the scene description describe meaning, not extra colours: draw them with the style's own palette only.` (chống việc câu như "ánh vàng nhạt" làm tranh xuất hiện màu ngoài bảng màu của phong cách).
+5. **Khối kỹ thuật** luôn có: `Wide 16:9 landscape image. Keep the main subject inside the central third of the width so a vertical crop still works. No text, no letters, no numbers, no captions, no signature, no watermark, no frame or border.`
+
+**Ảnh tham chiếu** (khi công cụ tạo ảnh cho đính kèm ảnh): hai vai trò, nói rõ trong câu lệnh để công cụ không chép nhầm:
+- Nhân vật lặp lại: sau khi có tranh đầu tiên của người đó ưng ý, đính kèm làm ảnh 1 và thêm dòng `Attached image 1 is the character identity reference: keep the same face, hair, build and outfit; do not copy its pose, framing or background.`
+- Cảnh liền mạch: cảnh có `lien_mach` (một câu nói vì sao cảnh này nối với cảnh trước, vd cùng căn phòng, cùng vật đang cầm; để trống nếu không nối) thì đính kèm tranh cảnh trước và thêm dòng `Attached image N is the previous scene: keep the same location, the recurring objects and their relative scale; the composition, camera and action must follow this scene's description, not copy the previous picture.` Cảnh không có `lien_mach` thì không đính kèm tranh cảnh trước.
+Không đính kèm tranh làm tham chiếu phong cách: phong cách đã nằm trong khối phong cách bằng chữ. Công cụ không cho đính kèm ảnh thì bỏ các dòng này, dùng khối nhân vật bằng chữ như trên.
 
 Mẫu gửi người dùng, mỗi cảnh một khối:
 
@@ -41,7 +49,7 @@ Mẫu gửi người dùng, mỗi cảnh một khối:
 
 Tranh có thể nhỏ hơn khung video (đã gặp 1168x784 với tranh Grok gửi qua chat, chưa rõ do công cụ hay do nén khi gửi): nhắc người dùng chọn độ phân giải cao nhất và thử gửi dạng tệp; `ve_tay_anh.py` vẫn phóng được, tranh màu nước chịu mờ nhẹ tốt.
 
-Kèm hướng dẫn: dán từng câu lệnh vào công cụ tạo ảnh, chọn khổ ngang 16:9 nếu công cụ có tùy chọn, tải ảnh về đúng tên file, gửi lại cả bộ. Muốn khổ dọc đẹp hơn thì tạo thêm bản dọc (thay câu cuối bằng `Tall 9:16 portrait image.`) và lưu `<id>-doc.jpg`.
+Kèm hướng dẫn: dán từng câu lệnh vào công cụ tạo ảnh, chọn khổ ngang 16:9 nếu công cụ có tùy chọn, tải ảnh về đúng tên file, gửi lại cả bộ. Muốn khổ dọc đẹp hơn thì tạo thêm bản dọc (thay câu cuối bằng `Tall 9:16 portrait image. Keep the main subject in the upper three quarters of the frame and the lowest quarter calm and uncluttered, because captions sit there.`) và lưu `<id>-doc.jpg`.
 
 Quy tắc nội dung:
 - Người thật (nhân vật lịch sử, người nổi tiếng): không có ảnh đương thời thì vẽ từ xa, từ phía sau hoặc nghiêng, không cận mặt kiểu chân dung tả thực. Người đang sống: không dựng hình khi chưa có sự đồng ý của họ (quy tắc chung của repo).
