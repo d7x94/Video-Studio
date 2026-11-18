@@ -2,6 +2,7 @@
 # Dung moi truong studio trong workspace. Chay lai an toan (bo qua buoc da xong).
 # Dung:  bash setup.sh            (cai dat day du)
 #        bash setup.sh --check    (chi kiem tra, khong cai)
+#        bash setup.sh --dich     (cai dat day du va them faster-whisper cho che do dich video)
 set -euo pipefail
 
 SKILL_DIR="$(cd "$(dirname "$0")/.." && pwd)"
@@ -17,6 +18,7 @@ VIENEU_VER="3.8.4"
 ONNX_VER="1.29.0"
 THREE_VER="0.184.0"
 OPENCV_VER="5.0.0.93"   # che do video co san (lam mo, kiem khung); kiem chung 2026-11-17
+FWHISPER_VER="1.2.1"    # che do dich (setup.sh --dich): chep loi goc bang Whisper; kiem chung 2026-11-18
 
 ok()   { echo "[OK]   $*"; }
 warn() { echo "[CANH BAO] $*"; }
@@ -81,6 +83,15 @@ if [ "$(cv_ver)" != "$OPENCV_VER" ]; then
     || fail "pip install opencv-python-headless that bai"
 fi
 ok "opencv $(cv_ver)"
+
+# 4c. faster-whisper cho che do dich (chi khi --dich); mo hinh tai luc chay bang scripts/lay_whisper.py
+if [ "${1:-}" = "--dich" ]; then
+  if [ "$(pyver faster-whisper)" != "$FWHISPER_VER" ]; then
+    pip install --break-system-packages -q "faster-whisper==$FWHISPER_VER" >/dev/null 2>&1 \
+      || fail "pip install faster-whisper that bai"
+  fi
+  ok "faster-whisper $(pyver faster-whisper) (che do dich)"
+fi
 
 # 5. File moi truong cho cac script khac
 cat > "$ENV_FILE" <<EOF
