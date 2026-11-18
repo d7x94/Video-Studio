@@ -4,13 +4,21 @@
 Dung:
   python3 tts.py --warmup                         # tai mo hinh, doc thu mot cau
   python3 tts.py --list-voices                    # liet ke giong co san
-  python3 tts.py PROJECT/scenes.json PROJECT      # long tieng tung canh
+  python3 tts.py PROJECT/scenes.json PROJECT      # long tieng; chi doc lai canh moi hoac da doi
+  python3 tts.py PROJECT/scenes.json PROJECT --lam-lai  # doc lai tat ca
+  python3 tts.py PROJECT/scenes.json PROJECT --kiem     # chi kiem tieng co lech loi khong (thoat 1 neu lech)
   python3 tts.py PROJECT/scenes.json PROJECT --retime   # chi tinh lai moc (doi pause_before)
 
 Dau ra trong PROJECT:
   audio/<scene_id>.wav   tieng doc tung canh (48 kHz)
   voiceover.wav          ghep ca bai (de nghe duyet)
   timeline.json          moc thoi gian tung canh, dung cho dung hinh va phu de
+  audio/van-tay.json     van tay (sha256) cua loi, giong, toc do, mo hinh luc doc tung canh
+
+Van tay: moi canh ghi sha256 cua (loi doc, giong, toc do, ban mo hinh) luc doc. Chay lai khong co
+--only thi chi doc lai canh chua co file, chua co van tay hoac van tay da doi; canh khong doi
+thi giu nguyen (khong dung mo hinh). Khong tinh vao van tay: pause_before (chi doi moc, dung --retime),
+do chinh xac int8/fp32 (tuy CPU), sfx. Du an cu chua co van-tay.json thi lan chay dau doc lai het.
 
 Mo hinh: danh muc assets/voice-models.json (ten file, kich thuoc, sha256).
 Tai tu GitHub Release cua repo truoc, khong duoc thi tu HuggingFace dung revision
@@ -42,6 +50,13 @@ SCENE_GAP = 0.35   # giay nghi giua hai canh
 TAIL = 1.0         # giay giu hinh cuoi
 PAUSE_MAX = 1.5    # tran cho "pause_before" cua mot canh
 SPEED_MIN, SPEED_MAX = 0.85, 1.15   # ngoai khoang nay giong bi meo
+VAN_TAY_VER = 1    # tang khi cach doc doi (vd doi cach chuan hoa loi) de buoc doc lai moi file
+
+
+def van_tay(text: str, voice: str, speed: float) -> str:
+    raw = json.dumps({"v": VAN_TAY_VER, "text": text, "voice": voice, "speed": round(speed, 4),
+                      "model": MANIFEST["release_tag"]}, ensure_ascii=False, sort_keys=True)
+    return hashlib.sha256(raw.encode("utf-8")).hexdigest()
 
 
 def cpu_has_vnni() -> bool:
@@ -142,17 +157,29 @@ def main():
     ap.add_argument("--only", help="Chi long tieng lai cac canh nay, vd: s02,s05")
     ap.add_argument("--retime", action="store_true",
                     help="Khong doc lai canh da co file; chi tinh lai timeline va ban ghep (sau khi doi pause_before)")
+    ap.add_argument("--lam-lai", action="store_true",
+                    help="Doc lai tat ca canh, bo qua van tay")
+    ap.add_argument("--kiem", action="store_true",
+                    help="Khong doc, khong ghi gi: chi bao canh nao thieu file hoac lech van tay (thoat 1 neu co)")
     ap.add_argument("--warmup", action="store_true")
     ap.add_argument("--list-voices", action="store_true")
     a = ap.parse_args()
 
-    tts = load_tts()
+    tts = None
+
+    def get_tts():
+        nonlocal tts
+        if tts is None:
+            tts = load_tts()
+        return tts
 
     if a.list_voices:
+        tts = get_tts()
         for label, vid in tts.list_preset_voices():
             print(f"{vid}\t{label}")
         return
     if a.warmup:
+        tts = get_tts()
         MODEL_ROOT.mkdir(parents=True, exist_ok=True)
         synth(tts, "Xin chào.", DEFAULT_VOICE, MODEL_ROOT / "warmup.wav", 1.0)
         return
@@ -168,7 +195,15 @@ def main():
     only = set(a.only.split(",")) if a.only else (set() if a.retime else None)
 
     audio_dir = project / "audio"
-    audio_dir.mkdir(parents=True, exist_ok=True)
+    if not a.kiem:
+        audio_dir.mkdir(parents=True, exist_ok=True)
+    vt_path = audio_dir / "van-tay.json"
+    try:
+        vt = json.loads(vt_path.read_text(encoding="utf-8")) if vt_path.exists() else {}
+    except (OSError, ValueError):
+        vt = {}
+    vt_moi = {}        # van tay con hieu luc sau lan chay nay
+    doc_lai, giu, lech = [], [], []
 
     # Chi dao giong theo canh: "pause_before" (giay nghi truoc canh, thay khoang nghi mac dinh;
     # dung truoc cau dao y hay ket luan) va "speed" rieng cua canh (--speed ghi de tat ca).
@@ -186,14 +221,46 @@ def main():
         t += gap
         wav = audio_dir / f"{sid}.wav"
         sc_voice = a.voice or sc.get("voice") or voice   # canh co the co giong rieng (ke chuyen)
-        if only is None or sid in only or not wav.exists():
-            synth(tts, text, sc_voice, wav, sc_speed)
+        fp = van_tay(text, sc_voice, sc_speed)
+        co_wav = wav.exists()
+        if only is None:        # khong --only, khong --retime: doc canh moi hoac da doi
+            can = a.lam_lai or not co_wav or vt.get(sid) != fp
+        else:                   # --only: chi canh duoc chon; --retime: chi canh chua co file
+            can = sid in only or not co_wav
+        if a.kiem:
+            if not co_wav:
+                lech.append(f"{sid}: chua co audio/{sid}.wav")
+            elif vt.get(sid) != fp:
+                lech.append(f"{sid}: " + ("chua co van tay" if sid not in vt else "loi, giong hoac toc do da doi"))
+            continue
+        if can:
+            synth(get_tts(), text, sc_voice, wav, sc_speed)
+            vt_moi[sid] = fp
+            doc_lai.append(sid)
             print(f"{sid}: {wav_duration(wav):.2f}s", flush=True)
+        else:
+            giu.append(sid)
+            if sid in vt:
+                vt_moi[sid] = vt[sid]
+                if vt[sid] != fp:
+                    lech.append(sid)
         dur = wav_duration(wav)
         scenes_out.append({"id": sid, "start": round(t, 3), "duration": round(dur, 3),
                            "audio": f"audio/{sid}.wav", "narration": text, "voice": sc_voice,
                            "speed": sc_speed, "pause_before": gap})
         t += dur
+    if a.kiem:
+        if lech:
+            print("[LECH] tieng khong khop kich ban:\n  " + "\n  ".join(lech))
+            print("Chay tts.py khong --only de doc lai canh lech (canh khong doi duoc giu nguyen).")
+            sys.exit(1)
+        print(f"Tieng khop kich ban ({len(data['scenes'])} canh).")
+        return
+    vt_path.write_text(json.dumps(vt_moi, ensure_ascii=False, indent=1, sort_keys=True), encoding="utf-8")
+    print(f"Doc lai {len(doc_lai)} canh, giu nguyen {len(giu)} canh.")
+    if lech:
+        print(f"[LECH] {', '.join(lech)}: loi, giong hoac toc do da doi nhung chua doc lai "
+              "(--only/--retime). Chay tts.py khong --only de doc lai.")
     total = round(t + TAIL, 3)
 
     # Hinh: canh dau hien tu giay 0 (phu ca khoang LEAD_IN), moi canh keo den luc canh sau
