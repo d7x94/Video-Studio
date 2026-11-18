@@ -26,6 +26,12 @@ jobs:
         run: |
           for f in video-studio/scripts/*.sh tools/*.sh; do bash -n "$f"; done
           python3 -m py_compile video-studio/scripts/*.py
+      - name: Thu nhanh cac script (khong can mo hinh, trinh duyet)
+        run: |
+          # venv: smoke_test.sh chay python3 -I (bo qua goi --user), nen goi phai nam trong venv
+          python3 -m venv "$RUNNER_TEMP/venv"
+          "$RUNNER_TEMP/venv/bin/pip" install -q numpy soundfile
+          PATH="$RUNNER_TEMP/venv/bin:$PATH" bash tools/smoke_test.sh
       - name: Thu dong goi va kiem noi dung zip
         run: |
           bash tools/package_skill.sh dist/video-studio.zip

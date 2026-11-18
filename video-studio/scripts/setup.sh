@@ -94,14 +94,18 @@ EOF
 ok "Ghi $ENV_FILE"
 
 # 6. Tai san mo hinh giong doc va thu mot cau
-if [ "$VOICE_NET" = 1 ]; then
+# .voice_done ghi ban vieneu, onnxruntime va tag mo hinh da thu: khop thi bo qua (chay lai setup nhanh)
+VOICE_PINS="vieneu@$VIENEU_VER onnxruntime@$ONNX_VER models@$MODELS_TAG"
+if [ "$(cat "$TOOLS/.voice_done" 2>/dev/null)" = "$VOICE_PINS" ]; then
+  ok "Giong doc VieNeu san sang (da thu truoc do)"
+elif [ "$VOICE_NET" = 1 ]; then
   python3 "$SKILL_DIR/scripts/tts.py" --warmup || fail "Khoi dong VieNeu that bai"
-  touch "$TOOLS/.voice_done"
+  echo "$VOICE_PINS" > "$TOOLS/.voice_done"
   ok "Giong doc VieNeu san sang"
 fi
 
 touch "$TOOLS/.ready"
-if [ -f "$TOOLS/.voice_done" ]; then
+if [ "$(cat "$TOOLS/.voice_done" 2>/dev/null)" = "$VOICE_PINS" ]; then
   echo "XONG. Cac script khac tu doc $ENV_FILE"
 else
   warn "Chua tai duoc giong doc (khong toi duoc GitHub Release lan huggingface.co). Dung hinh van lam duoc; long tieng thi chua."
