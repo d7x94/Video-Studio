@@ -2,6 +2,14 @@
 
 Quy ước số phiên bản `MAJOR.MINOR.PATCH`, ghi ở `video-studio/VERSION` và dòng "Phiên bản skill" trong `video-studio/SKILL.md` (hai nơi phải khớp, CI kiểm tra khi đóng gói). Thêm kiểu hình hoặc tính năng thì tăng MINOR; sửa lỗi thì tăng PATCH; đổi lớn làm hỏng cách dùng cũ thì tăng MAJOR. Mỗi lần gộp PR thay đổi skill: tăng số, sửa hai nơi trên và thêm mục mới ở đầu file này.
 
+## [1.12.0] - 2026-11-18
+
+Biên kịch tự soát giọng văn máy trong lượt viết (ý tưởng từ blader/humanizer, MIT; xem README mục Ghi công). Không thêm agent, không thêm lượt gọi model.
+
+- `agents/bien-kich.md`: thêm mục "Soát giọng văn máy" gồm 12 lối viết tiếng Việt. Năm mẫu mạnh (đối lập giả "không phải X mà là Y", câu chốt lặp ý, câu nghe sâu sắc, rào đón kiểu "Hãy cùng tìm hiểu", cãi với người không có mặt) sửa ngay khi gặp; bảy mẫu yếu (bộ ba gượng ép, mở câu lặp, từ sáo, thổi phồng, giọng quảng cáo, viện dẫn chung chung, giải thích lại) chỉ sửa khi dồn nhiều trong một hai cảnh. Sửa xong phải so lại với `claims`, không làm mất hay đổi thông tin; "nhiều người nghĩ" và "chuyên gia khuyên" phải thành khẳng định có nguồn hoặc bỏ. Không sửa trích dẫn, tên riêng, thoại theo tính cách, câu cố định của hồ sơ. Báo cáo cuối của biên kịch thêm một dòng số chỗ đã sửa.
+- Thêm `references/LICENSE-humanizer.txt`.
+- Chỉ đổi chỉ dẫn agent, không đổi script hay template nên không chạy thử trọn một video mẫu. Đã chạy `tools/package_skill.sh` và `unzip -l`. Chưa thử: chưa viết kịch bản thật với chỉ dẫn mới, nên chưa biết biên kịch có sửa quá tay hay bỏ sót không; nên xem mục này ở cổng duyệt kịch bản của vài video đầu.
+
 ## [1.11.1] - 2026-11-18
 
 Dấu tiếng Việt về mặt kỹ thuật: chuẩn hóa NFC và soát chữ trước khi giao (ý tưởng kiểm NFC/NFD từ vietfont.vn; mã tự viết, không dùng tài nguyên của trang).

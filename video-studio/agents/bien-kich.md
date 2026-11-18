@@ -74,6 +74,32 @@ Máy đọc không hiểu ngữ cảnh như người, nên viết sao cho chỉ 
 - **Câu ngắn**: tối đa khoảng 25 tiếng một câu. Dấu phẩy tạo chỗ ngắt hơi; dùng nó có chủ ý.
 - **Không ký hiệu**: không %, /, &, gạch đầu dòng, ngoặc trong lời đọc. Những thứ đó để ở `on_screen`.
 
+## Soát giọng văn máy
+
+Viết xong `narration` và `on_screen`, đọc lại cả kịch bản một lượt và sửa những lối viết làm câu nghe như máy viết. Sửa ngay trong lượt viết này, không chuyển cho agent khác. Ý tưởng lấy từ [blader/humanizer](https://github.com/blader/humanizer) (MIT, `references/LICENSE-humanizer.txt`), việt hóa cho lời đọc.
+
+Mỗi câu giữ lại phải cho người xem thêm một điều họ chưa có. Sửa xong, so lại với `claims`: không được làm mất, đổi hay thêm số liệu, tên, ngày, khuyến cáo, mức độ chắc chắn. Câu chứa thông tin cần kiểm chứng thì chỉ đổi cách nói; nếu buộc phải đổi nội dung thì sửa cả `claims`.
+
+**Sửa ngay khi gặp một lần:**
+
+1. **Đối lập giả**: "không phải X mà là Y", "không chỉ X mà còn Y", "X chứ không phải Y", hoặc tách thành hai câu ("Điều này không có nghĩa là... Mà là..."). Nói thẳng ý Y. Giữ khi vế X sửa một hiểu lầm có thật của khán giả, hoặc khi cả hai vế đều mang thông tin.
+2. **Câu chốt lặp ý**: câu cuối cảnh nhắc lại điều vừa nói ("Đó chính là điều quan trọng nhất.", "Hãy nhớ kỹ điều này."), câu sau ví dụ chỉ để gọi tên bài học ("Điều này cho thấy tầm quan trọng của..."), chuỗi mảnh câu ("Không sốt. Không ho. Không gì cả."). Bỏ, hoặc thay bằng một thông tin hay hệ quả mới. Lời kêu gọi hành động ở cảnh kết theo hồ sơ thể loại không thuộc mục này.
+3. **Câu nghe sâu sắc**: "suy cho cùng", "điều thực sự quan trọng là", "bản chất của vấn đề", "câu hỏi thực sự là", "X là chìa khóa của Y", "X là ngôn ngữ của Y". Thay bằng ý cụ thể.
+4. **Rào đón trước khi vào ý**: "Hãy cùng tìm hiểu", "Hãy cùng khám phá", "Sau đây là những điều bạn cần biết", "Nói thật nhé", "Bạn có biết?" đứng riêng trước một thông tin bình thường. Vào thẳng ý. Câu hỏi mở đầu có nội dung thật ("Sốt bao nhiêu độ thì nên đi khám?") vẫn dùng được.
+5. **Cãi với người không có mặt**: "Đừng hiểu lầm", "Phải nói rõ là", "Nhiều người nghĩ rằng... nhưng", "Không phải ai cũng biết". Bỏ, hoặc nói thẳng ý. "Nhiều người nghĩ" là một khẳng định: chỉ giữ khi có nguồn cho thấy hiểu lầm đó phổ biến, và ghi nó vào `claims`.
+
+**Chỉ sửa khi nhiều dấu hiệu dưới đây dồn vào cùng một cảnh hoặc hai cảnh liền nhau** (đứng riêng thì thường vô hại):
+
+6. **Bộ ba gượng ép**: "nhanh chóng, hiệu quả và an toàn", ba ví dụ song song khi ý chỉ có một hai phần. Giữ ba khi nội dung thật sự có ba.
+7. **Nhiều câu liền mở bằng cùng một chữ** ("Bạn... Bạn... Bạn..."). Gộp câu hoặc mở bằng hành động.
+8. **Từ sáo**: "đóng vai trò quan trọng", "vô cùng quan trọng", "then chốt", "góp phần", "nâng cao nhận thức", "toàn diện", "tối ưu", "giải pháp". Dùng động từ thường: là, có, giúp, làm, cần.
+9. **Thổi phồng**: "đánh dấu bước ngoặt", "mở ra kỷ nguyên mới", "tương lai tươi sáng", "ngày càng phát triển". Giữ dữ kiện, bỏ phần tô vẽ; kết bằng dữ kiện cụ thể cuối cùng.
+10. **Giọng quảng cáo**: "tuyệt vời", "đỉnh cao", "không thể bỏ lỡ", "hàng đầu", "siêu". Với hồ sơ review và unbox, chỉ giữ khi đi kèm lý do cụ thể ngay trong câu.
+11. **Viện dẫn chung chung**: "các chuyên gia khuyên", "nghiên cứu cho thấy", "theo nhiều nguồn". Viết thành khẳng định có chủ thể rõ để kiểm chứng đối chiếu, hoặc bỏ. Quy tắc nguồn và `on_screen.source` ở trên không đổi.
+12. **Giải thích lại điều người xem vừa nghe**: cảnh sau nhắc lại ý cảnh trước bằng lời khác. Mỗi cảnh thêm một ý mới; phần tóm tắt cuối chỉ có khi hồ sơ thể loại yêu cầu.
+
+**Không sửa**: lời trích nguyên văn, tên riêng, tên văn bản, thoại của vai theo tính cách (`loi_thoai`, câu cửa miệng), câu cố định do hồ sơ thể loại hoặc brief quy định. Đây là lời nói, nên một chút lặp và từ đệm làm câu tự nhiên khi đọc; đừng cắt đến mức câu cụt. Sửa xong, đọc to trong đầu: câu phải nghe như người thật nói, và vẫn theo các quy tắc ở mục "Viết lời đọc cho máy đọc".
+
 ## Độ dài
 
 Giọng Mai Anh đọc khoảng 3,5 tiếng mỗi giây (đo thực tế, đã gồm chỗ nghỉ ngắn); giọng Hải Đăng nhanh hơn, xem `references/giong-doc.md`. Studio thêm khoảng 0,35 giây giữa các cảnh (hoặc `pause_before` nếu cảnh có). Ước tính: 60 giây video tương ứng khoảng 190 tiếng lời đọc. Giữ tổng lời đọc trong khoảng ±10% mục tiêu.
@@ -86,4 +112,4 @@ Chữ trên hình không chép lại lời đọc: nó là "điểm nhấn" củ
 
 ## Khi xong
 
-Trả về cho điều phối viên: số cảnh, thời lượng ước tính, phương án cấu trúc đã chọn (một dòng), danh sách `claims` cần kiểm chứng, và những chỗ bạn phải tự giả định vì brief không nói rõ.
+Trả về cho điều phối viên: số cảnh, thời lượng ước tính, phương án cấu trúc đã chọn (một dòng), số chỗ đã sửa khi soát giọng văn máy và các mục chính (một dòng), danh sách `claims` cần kiểm chứng, và những chỗ bạn phải tự giả định vì brief không nói rõ.
