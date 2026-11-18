@@ -10,6 +10,8 @@ Kiem tra:
   - tieng khong bi cam: muc am trung binh > -45 dB
   - do on tich hop (LUFS) va true peak: luon in ra; voi --chuan-am thi ngoai -15..-13 LUFS hoac dinh > -1 dBTP la loi
   - file .srt (neu co): so thu tu lien tuc, moc thoi gian tang dan, khong vuot thoi luong video
+  - chu tieng Viet: .srt, scenes.json va build/*/index.html phai o dang NFC (dau dung san); con dau to hop
+    roi (NFD) hay ky tu ma cu TCVN3 (vd "¸", "Æ" giua chu) la loi vi dau de lech hoac roi khoi chu khi render
   - hinh den: doan den gan hoan toan (blackdetect, do sang < 2%) dai tu 0,5 giay la loi (thuong la canh khong len hinh)
   - hinh dung yen: doan hinh gan nhu khong doi (freezedetect, -60 dB) dai tu --dung-hinh giay (mac dinh 4) la CANH BAO,
     khong phai loi: dung hinh co chu y truoc y chinh la hop le, canh chi co chu tinh cung vay; script chi chi ra canh nao
@@ -22,6 +24,7 @@ import json
 import re
 import subprocess
 import sys
+import unicodedata
 from pathlib import Path
 
 
@@ -65,6 +68,35 @@ def quet_hinh(path, dung_min):
     ket = [float(x) for x in re.findall(r"freeze_end:\s*([\d.]+)", r.stderr)]
     dung = [(b, ket[i] if i < len(ket) else None) for i, b in enumerate(bat_dau)]   # None: dung den het video
     return den, dung
+
+
+# Ky tu hay gap khi chu tieng Viet go bang ma cu TCVN3 (ABC) roi doc nhu Unicode
+MA_CU = re.compile(r"[^\W\d_][¸¹µ¶·¨ª«¬\xad¯´½¾ÆÇË]+[^\W\d_]")   # chi giua hai chu cai: tranh 37°C, 5µg
+
+
+def kiem_chu_viet(path, errors, notes):
+    """Bao loi neu file con chu khong o dang NFC hoac nghi la ma cu. Tra ve so dong loi."""
+    try:
+        txt = Path(path).read_text(encoding="utf-8")
+        if Path(path).suffix == ".json":   # chuoi \uXXXX trong JSON: giai ra truoc khi soat
+            txt = json.dumps(json.loads(txt), ensure_ascii=False, indent=1)
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as e:
+        errors.append(f"Khong doc duoc {path} dang UTF-8: {e}")
+        return 1
+    bad = 0
+    for n, line in enumerate(txt.splitlines(), 1):
+        if unicodedata.normalize("NFC", line) != line:
+            errors.append(f"{path}:{n} chu chua chuan NFC (dau to hop roi): {line.strip()[:60]!r}; "
+                          + ("sua scenes.json ve NFC roi long tieng lai canh do" if Path(path).suffix == ".json"
+                           else "chay lai inject.py (tu chuan hoa NFC)"))
+            bad += 1
+        elif MA_CU.search(line):
+            errors.append(f"{path}:{n} nghi chu go bang ma cu TCVN3: {line.strip()[:60]!r}")
+            bad += 1
+        if bad >= 5:
+            errors.append(f"{path}: dung sau 5 dong loi chu, con the con nua")
+            break
+    return bad
 
 
 def parse_srt_time(s):
@@ -142,6 +174,12 @@ def main():
         if prev_end > dur + 0.05:
             errors.append(f"SRT ket thuc ({prev_end:.2f}s) sau khi video het")
         notes.append(f"SRT: {len(blocks)} dong")
+
+    proj = Path(a.timeline).resolve().parent
+    files = [Path(a.srt)] if a.srt else []
+    files += [f for f in [proj / "scenes.json", *sorted(proj.glob("build/*/index.html"))] if f.exists()]
+    loi_chu = sum(kiem_chu_viet(f, errors, notes) for f in files)
+    notes.append(f"Chu tieng Viet (NFC, ma cu): {len(files)} file, {loi_chu} dong loi")
 
     if a.frames:
         fd = Path(a.frames)
