@@ -15,7 +15,7 @@ Nguoi dich (dieu phoi hoac agent) dien "dich"; duoc gop hoac tach doan, sua star
 Kiem (loi chan):
   - doan thieu "dich", start >= end, doan chong nhau, vuot thoi luong video
   - chu so trong loi goc (vd 10, 2024, 3.5) khong co trong ban dich: dich so phai giu nguyen hoac ghi ro (chi so chu so
-    A-rap; so viet bang chu Han hay chu cai thi nguoi kiem dich doc lai)
+    A-rap; 3.5 va 3,5 coi la mot so, 1,000 va 1.000 coi la mot nghin; so viet bang chu Han hay chu cai thi nguoi kiem dich doc lai)
   - phu de qua 2 dong sau khi ngat dong
   - chu chua o dang NFC (dau to hop roi lam lech dau khi ghi)
 Doan doc nhanh hon --cps duoc keo dai thoi gian hien vao khoang trong phia sau, toi da --keo-dai giay (mac dinh 1,5),
@@ -45,8 +45,34 @@ def ghi_json(p: Path, d):
     p.write_text(json.dumps(d, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
 
 
+def cach_doc_so(tok):
+    """Cac cach hieu mot so: dau cham va dau phay co the la phan thap phan hoac ngan cach hang nghin tuy ngon ngu
+    (3.5 va 3,5 la cung mot so; 1,000 va 1.000 la mot nghin). Tra ve tap dang chuan (dau cham thap phan)."""
+    seps = re.findall(r"[.,]", tok)
+    if not seps:
+        return {tok}
+    if "." in seps and "," in seps:   # dau cuoi la thap phan, dau con lai la ngan cach nghin
+        cuoi = max(tok.rfind("."), tok.rfind(","))
+        return {re.sub(r"[.,]", "", tok[:cuoi]) + "." + tok[cuoi + 1:]}
+    if len(seps) > 1:   # lap lai cung mot dau: ngan cach nghin (1.000.000)
+        return {re.sub(r"[.,]", "", tok)}
+    a, b = re.split(r"[.,]", tok)
+    cach = {a + "." + b}
+    if len(b) == 3:   # 1,000 hay 1.000 co the la mot nghin
+        cach.add(a + b)
+    return cach
+
+
 def so(text):
-    return set(re.sub(r"(?<=\d)[,.](?=\d{3}\b)", "", m) for m in re.findall(r"\d+(?:[.,]\d+)*", text or ""))
+    """Cac so trong text: danh sach (so goc, tap cach hieu)."""
+    return [(m, cach_doc_so(m)) for m in re.findall(r"\d+(?:[.,]\d+)*", text or "")]
+
+
+def so_thieu(goc, dich):
+    co = set()
+    for _, c in so(dich):
+        co |= c
+    return sorted({m for m, c in so(goc) if not (c & co)})
 
 
 def so_ky_tu(text):
@@ -126,7 +152,7 @@ def kiem(proj, cps, toi_da=None, dur=None, keo=1.5):
         prev_end = max(prev_end, d["end"])
         if dur and d["end"] > dur + 0.05:
             loi.append(f"{i}: vuot thoi luong video ({d['end']} > {dur:.2f})")
-        thieu = so(goc) - so(dich)
+        thieu = so_thieu(goc, dich)
         if thieu:
             loi.append(f"{i}: so {sorted(thieu)} trong loi goc khong co trong ban dich")
         if len(ngat_dong(dich, toi_da)) > 2:
@@ -168,8 +194,15 @@ def ghi_srt(doan, proj, song_ngu, toi_da):
     return p, len(rows)
 
 
+def an_toan_ass(text):
+    """libass doc {..} la lenh dinh dang va \\N la xuong dong: bo di de chu nguoi dich khong bi mat hay xuong dong thua."""
+    return text.replace("{", "(").replace("}", ")").replace("\\", "/")
+
+
 def ghi_ass(doan, proj, w, h, font, song_ngu, tren=False):
     co, toi_da = bo_cuc(w, h)
+    co_goc = round(co * 0.7)
+    toi_da_goc = max(16, int(w * 0.88 / (co_goc * 0.52)))
     canh = 8 if tren else 2
     le = round(h * (0.12 if h > w else 0.06))
     vien = max(2, round(co * 0.08))
@@ -179,17 +212,19 @@ def ghi_ass(doan, proj, w, h, font, song_ngu, tren=False):
            "MarginV,Encoding\n"
            f"Style: Dich,{font},{co},&H00FFFFFF,&H00FFFFFF,&H00000000,&H80000000,1,0,0,0,100,100,0,0,1,{vien},1,{canh},"
            f"{round(w * 0.06)},{round(w * 0.06)},{le},1\n"
-           f"Style: Goc,{font},{round(co * 0.7)},&H00D0D0D0,&H00D0D0D0,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,"
+           f"Style: Goc,{font},{co_goc},&H00D0D0D0,&H00D0D0D0,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,"
            f"{max(1, vien - 1)},1,{canh},{round(w * 0.06)},{round(w * 0.06)},{le},1\n\n"
            "[Events]\nFormat: Layer,Start,End,Style,Name,MarginL,MarginR,MarginV,Effect,Text\n")
     ev = []
     xuong = "\\N"
     for d in doan:
-        dong = xuong.join(ngat_dong(d["dich"].strip(), toi_da))
+        dong = xuong.join(ngat_dong(an_toan_ass(d["dich"].strip()), toi_da))
         t0, t1 = ass_t(d["start"]), ass_t(d["end"])
-        if song_ngu:   # dong goc nho phia duoi, ban dich day len tren
-            ev.append(f"Dialogue: 0,{t0},{t1},Dich,,0,0,{le + round(co * 0.9)},,{dong}")
-            ev.append(f"Dialogue: 0,{t0},{t1},Goc,,0,0,{le},,{d['goc'].strip()}")
+        if song_ngu:   # dong goc nho nam sat mep khung, ban dich day vao phia trong; goc ngat dong nhu ban dich
+            dong_goc = ngat_dong(an_toan_ass(d["goc"].strip()), toi_da_goc)
+            day = le + round(len(dong_goc) * co_goc * 1.15 + co * 0.1)
+            ev.append(f"Dialogue: 0,{t0},{t1},Dich,,0,0,{day},,{dong}")
+            ev.append(f"Dialogue: 0,{t0},{t1},Goc,,0,0,{le},,{xuong.join(dong_goc)}")
         else:
             ev.append(f"Dialogue: 0,{t0},{t1},Dich,,0,0,0,,{dong}")
     p = proj / "dich" / "phu-de-vi.ass"

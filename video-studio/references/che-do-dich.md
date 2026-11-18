@@ -12,7 +12,7 @@ Bản này (1.14.0) làm trọn được **phụ đề**. Thuyết minh (lồng 
 
 ## Môi trường
 
-`bash SKILL/scripts/setup.sh --dich`: dựng như thường lệ, cài thêm `faster-whisper` (ghim phiên bản trong `setup.sh`). Mô hình Whisper tải lúc chạy bằng `scripts/lay_whisper.py` (GitHub Release của repo, dự phòng huggingface, kiểm sha256): bản `medium` khoảng 1,5 GB, tải một lần mỗi workspace.
+`bash SKILL/scripts/setup.sh --dich`: dựng như thường lệ, cài thêm `faster-whisper`, `ctranslate2` và `av` (ghim phiên bản trong `setup.sh`; `av` mới hơn 17.0.0 làm `faster_whisper` lỗi `metadata_errors`). Mô hình Whisper tải lúc chạy bằng `scripts/lay_whisper.py` (GitHub Release của repo, dự phòng huggingface, kiểm sha256): bản `medium` khoảng 1,5 GB, tải một lần mỗi workspace.
 
 ## Quy trình
 
@@ -29,13 +29,13 @@ Bản này (1.14.0) làm trọn được **phụ đề**. Thuyết minh (lồng 
    - Đoạn bị Whisper cắt giữa câu thì gộp: sửa `end` của đoạn đầu, nối `goc`, ghi `"bo": true` và `"gop_vao"` cho đoạn sau. Không để đoạn chồng nhau.
    - Tên riêng viết theo cách người Việt quen đọc ("Đại học Melbourne", không "uni melb").
    - Hồ sơ sức khỏe, thủ tục: số liệu, khuyến cáo trong lời gốc vẫn kiểm chứng nguồn ngoài như quy trình thường. Hồ sơ khác: chỉ kiểm dịch trung thực, ghi "theo lời người nói" khi cần.
-4. **Kiểm bản dịch**: `python3 SKILL/scripts/phu_de_dich.py kiem PROJECT goc.mp4`. Lỗi chặn: thiếu bản dịch, đoạn chồng nhau, vượt thời lượng, chữ số trong lời gốc mất ở bản dịch, quá 2 dòng, chữ chưa NFC. Cảnh báo: đọc nhanh hơn `--cps` (mặc định 15 ký tự mỗi giây, không tính khoảng trắng, lấy theo `doc_chu.py`, chưa đo riêng cho phụ đề tiếng Việt), đoạn hiện dưới 1 giây, đoạn gốc có cờ.
+4. **Kiểm bản dịch**: `python3 SKILL/scripts/phu_de_dich.py kiem PROJECT goc.mp4`. Lỗi chặn: thiếu bản dịch, đoạn chồng nhau, vượt thời lượng, chữ số trong lời gốc mất ở bản dịch (3.5 và 3,5 coi là một số; 1,000 và 1.000 coi là một nghìn), quá 2 dòng, chữ chưa NFC. Cảnh báo: đọc nhanh hơn `--cps` (mặc định 15 ký tự mỗi giây, không tính khoảng trắng, lấy theo `doc_chu.py`, chưa đo riêng cho phụ đề tiếng Việt), đoạn hiện dưới 1 giây, đoạn gốc có cờ.
    - Đoạn đọc nhanh tự được kéo dài thời gian hiện vào khoảng trống phía sau, tối đa `--keo-dai` giây (mặc định 1,5), cách đoạn sau 0,1 giây. Vẫn nhanh thì rút gọn bản dịch hoặc gộp với đoạn kế.
    - Sau khi dịch xong, một lượt kiểm dịch độc lập (agent khác, không phải người dịch) đọc song song `goc` và `dich`: sai nghĩa, sót ý, sai số, sai người nói.
 5. **Cổng duyệt bản dịch** (dừng chờ người dùng): gửi bảng gốc và dịch. Duyệt xong thì không đổi nội dung nữa.
 6. **Ghi phụ đề**: `python3 SKILL/scripts/phu_de_dich.py ghi PROJECT goc.mp4`. Ra `output/phu-de-vi.srt`, `output/<tên>-phu-de-vi.mp4` (giữ độ phân giải, chép nguyên tiếng gốc) và bảng khung kiểm `dich/qa-phu-de.png`.
    - Xem bảng khung kiểm trước khi giao. Video gốc đã có phụ đề cứng (ví dụ song ngữ Trung Anh ở đáy) thì chữ dịch chồng lên: chạy lại với `--che-day 0.2` (làm mờ dải đáy cao 20% khung rồi ghi phụ đề dịch lên đó) hoặc `--vi-tri tren`.
-   - `--song-ngu`: dòng gốc nhỏ dưới dòng dịch (để học ngoại ngữ). Lời gốc dài quá một dòng có thể chạm dòng dịch: xem bảng khung kiểm.
+   - `--song-ngu`: dòng gốc nhỏ dưới dòng dịch (để học ngoại ngữ). Dòng gốc dài được ngắt dòng riêng (cỡ chữ 0,7 lần bản dịch) và dòng dịch tự đẩy lên theo số dòng gốc; vẫn xem bảng khung kiểm.
 7. **Giao**: video có phụ đề, `phu-de-vi.srt`, `chep-goc.md`. Nêu chỗ đã sửa lời gốc, câu chưa chắc nghĩa, đoạn VAD bỏ mà chưa ai nghe lại.
 
 ## Số đo (2026-11-18, workspace 2 lõi CPU, không GPU)

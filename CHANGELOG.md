@@ -2,6 +2,16 @@
 
 Quy ước số phiên bản `MAJOR.MINOR.PATCH`, ghi ở `video-studio/VERSION` và dòng "Phiên bản skill" trong `video-studio/SKILL.md` (hai nơi phải khớp, CI kiểm tra khi đóng gói). Thêm kiểu hình hoặc tính năng thì tăng MINOR; sửa lỗi thì tăng PATCH; đổi lớn làm hỏng cách dùng cũ thì tăng MAJOR. Mỗi lần gộp PR thay đổi skill: tăng số, sửa hai nơi trên và thêm mục mới ở đầu file này.
 
+## [1.14.1] - 2026-11-18
+
+Sửa lỗi sau đợt rà soát chế độ dịch (1.14.0); không đổi quy tắc kiểm chứng, bản quyền, khóa nhân vật.
+
+- `scripts/phu_de_dich.py`: `kiem` không còn chặn bản dịch viết số thập phân kiểu Việt (lời gốc "3.5", bản dịch "3,5"; "1,000" và "1.000" coi là một nghìn); vẫn bắt mất số (thử "3.5" so với "35", "10" biến mất). `--song-ngu`: dòng gốc dài trước đây tràn ra ngoài khung (`WrapStyle: 2` không tự ngắt; khổ 720x1280 mất hai đầu câu), nay ngắt dòng theo cỡ chữ 0,7 lần và dòng dịch đẩy lên theo số dòng gốc; sửa cả vị trí dòng dịch khi `--vi-tri tren`. Chữ `{...}` trong bản dịch (libass coi là lệnh định dạng, mất chữ) đổi thành `(...)`; dấu gạch ngược đổi thành `/` (trước đây `\N` gây xuống dòng thừa).
+- `scripts/setup.sh --dich`: ghim thêm `ctranslate2==4.9.0` (bản đã đo ở 1.13.0) và `av==17.0.0`. Thử trong venv sạch ngày 2026-11-18: `faster-whisper` 1.2.1 với `av` 19.0.2 (bản pip chọn mặc định) tái hiện lỗi `open() got an unexpected keyword argument 'metadata_errors'` ở `decode_audio`; `av` 15.1.0, 16.1.0 và 17.0.0 chạy được; chọn 17.0.0 (mới nhất chạy được). Lỗi pip không còn bị giấu (in 15 dòng cuối). `--check` báo thêm trạng thái faster-whisper.
+- `scripts/chep_loi_goc.py`: bỏ `import re` thừa; `--ngon-ngu` ngoài en, zh, vi in `[CANH BAO]` và ghi vào `chep-goc.md` (không dừng hỏi vì người dùng đã chọn).
+- `tools/smoke_test.sh`: thêm phép thử số thập phân kiểu Việt, thoát ký tự libass và ngắt dòng gốc song ngữ (đã xác nhận phép thử thất bại trên mã 1.14.0).
+- Đã chạy thử: `kiem` và `ghi` (khổ ngang 1280x720 và dọc 720x1280, `--song-ngu`, `--vi-tri tren`) trên video mẫu, xem ảnh khung hình; `smoke_test.sh` đạt; ruff F, E9 sạch trên hai script đã sửa. Chưa chạy lại trọn video mẫu (`setup.sh`, `tts.py`, `render.sh`...) vì thay đổi chỉ chạm script chế độ dịch và `setup.sh --dich`; chưa chạy `chep_loi_goc.py` với mô hình Whisper thật sau khi ghim `av` (đã thử `decode_audio` và VAD với `av` 17.0.0, chưa tải mô hình).
+
 ## [1.14.0] - 2026-11-18
 
 Chế độ dịch video, phần phụ đề: chép lời gốc bằng Whisper (tự nhận dạng ngôn ngữ, cờ nghi ngờ), kiểm bản dịch, ghi phụ đề cứng tiếng Việt. Thuyết minh chưa có script. Không đổi quy tắc kiểm chứng, bản quyền, khóa nhân vật.

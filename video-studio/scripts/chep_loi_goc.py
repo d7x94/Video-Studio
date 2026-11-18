@@ -32,7 +32,6 @@ Tieng doc bang ffmpeg ra mang so 16 kHz roi dua vao faster-whisper (tranh loi Py
 import argparse
 import json
 import os
-import re
 import subprocess
 import sys
 from pathlib import Path
@@ -138,6 +137,8 @@ def ghi_md(path: Path, kq):
              f"- Ngôn ngữ: **{nn.get('chon')}**" + (f" ({nn['xac_suat']})" if nn.get("xac_suat") is not None else "")
              + (" (người dùng chọn)" if nn.get("nguoi_chon") else "")
              + ("" if not nn.get("can_hoi") else f". **CẦN HỎI**: {nn.get('ly_do')}"), ""]
+    if nn.get("canh_bao"):
+        lines += [f"- **CẢNH BÁO**: {nn['canh_bao']}", ""]
     lines += ["| Mã | Giây | Lời gốc | Cờ |", "|---|---|---|---|"]
     for d in kq["doan"]:
         lines.append(f"| {d['id']} | {d['start']:.1f}-{d['end']:.1f} | {d['goc'].replace('|', '/')} | {', '.join(d['co'])} |")
@@ -179,6 +180,8 @@ def main():
         nn = nhan_dang(model, audio, noi)
     else:
         nn = {"chon": a.ngon_ngu, "nguoi_chon": True, "chac_chan": True, "can_hoi": False, "ly_do": ""}
+        if a.ngon_ngu not in HO_TRO:
+            nn["canh_bao"] = f"{a.ngon_ngu} ngoai danh sach da thu {HO_TRO}: ban chep co the kem tin cay"
     lang = nn["chon"]
     if lang is None:
         doan = []
@@ -205,6 +208,8 @@ def main():
     n_co = sum(1 for d in doan if d["co"])
     print(f"[OK] {out / 'chep-goc.json'}: ngon ngu {lang}, {len(doan)} doan, {n_co} doan co co, "
           f"{len(kq['khoang_trong'])} khoang khong loi")
+    if nn.get("canh_bao"):
+        print(f"[CANH BAO] {nn['canh_bao']}")
     if nn.get("can_hoi"):
         print(f"[CAN HOI] Ngon ngu chua chac chan: {nn['ly_do']}. Hoi nguoi dung, roi chay lai voi --ngon-ngu.")
 
