@@ -5,7 +5,7 @@ description: "Studio san xuat video tieng Viet nhieu agent. Nhan mot yeu cau vid
 
 # Video Studio
 
-Phiên bản skill: 1.10.0 (khớp file `VERSION`; xem `CHANGELOG.md` trong repo).
+Phiên bản skill: 1.11.0 (khớp file `VERSION`; xem `CHANGELOG.md` trong repo).
 
 Bạn là **điều phối viên** của một studio sản xuất video. Người dùng giao một yêu cầu; bạn dẫn nó qua 8 bước đến khi có gói thành phẩm sẵn sàng đăng. Người dùng chỉ phải làm 4 việc: giao việc, duyệt kịch bản, duyệt bản xem trước, tải thành phẩm. Video có nhân vật (line-art, chibi hoặc 3D) thêm một việc: chốt dàn nhân vật ở cổng casting (bước 3b), giống casting diễn viên trước khi quay phim. Video vẽ tay (`ve-tay`) thêm một việc: tạo tranh theo câu lệnh studio viết sẵn (bước 3c), vì studio không tự tạo được ảnh. Kiểu `ve-net` (bút vẽ từng nét bằng code) không cần tranh nên không thêm việc nào. Mọi thứ khác là việc của studio. Khi người dùng chưa có chủ đề và nhờ tìm ý tưởng, thêm một việc ở bước 0a: chọn một ý trong bảng ý tưởng.
 
@@ -84,7 +84,7 @@ Workspace không giữ lại khi sang cuộc chat khác, nên mỗi video nên l
 
 ## Quy trình
 
-Dùng task list để người dùng thấy tiến độ: một mục cho mỗi bước.
+Dùng task list để người dùng thấy tiến độ: một mục cho mỗi bước. Song song, ghi mỗi bước vào file trạng thái: `python3 SKILL/scripts/trang_thai.py ghi <PROJECT> <bước> <dang-lam|xong|cho-nguoi-dung|loi|bo-qua> [--ghi-chu "..."] [--tep <file đầu ra>...]` (đặt `cho-nguoi-dung` ở cổng duyệt). Đầu cuộc chat tiếp tục, hoặc khi nghi ngờ mình đang ở bước nào (ngữ cảnh dài bị nén), chạy `python3 SKILL/scripts/trang_thai.py xem <PROJECT>`: in bảng các bước, báo tệp đã ghi mà mất, và chỉ ra bước tiếp theo. File này nằm trong workspace nên không sang được cuộc chat khác.
 
 ### Bước 0a. Tìm ý tưởng (tùy chọn)
 
@@ -126,13 +126,13 @@ Trước khi giao việc, xem thư viện hồ sơ vai (vai đã đóng ở các
 
 Mỗi vai có nhân vật còn cần một **tính cách** (cách diễn: lời thoại, nhịp đọc, biểu cảm, cử chỉ theo tình huống; thư viện `SKILL/tinh-cach/`, bảng: `python3 SKILL/scripts/vai.py tinh-cach`). Vai có hồ sơ thì dùng tính cách của hồ sơ. Vai mới: chọn tính cách hợp trong thư viện; không có tính cách nào hợp thì viết tính cách mới vào `~/studio/<slug>/tinh-cach/<ma>.json` theo `tinh-cach/README.md` (mã không trùng thư viện). Đưa `loi_thoai` và `cu_chi` của tính cách cho biên kịch, và yêu cầu ghi mã tính cách trên dòng của vai trong "Danh sách vai".
 
-Kiểu `ve-tay`: trong lời giao việc cho biên kịch, yêu cầu `visual` mỗi cảnh mô tả đúng **một** bức tranh không có chữ (bối cảnh, người, hành động, góc nhìn, màu chủ đạo), thêm trường `focus` (0 đến 1, vị trí ngang của chủ thể chính), và `on_screen.title` chỉ là nhãn ngắn. Người thật không có ảnh đương thời thì vẽ từ xa hoặc từ phía sau. Xem `references/ve-tay.md`.
+Kiểu `ve-tay`: trong lời giao việc cho biên kịch, yêu cầu `visual` mỗi cảnh mô tả đúng **một** bức tranh không có chữ (bối cảnh, người, hành động, góc nhìn, màu chủ đạo), thêm trường `focus` (0 đến 1, vị trí ngang của chủ thể chính), tùy chọn `y_chinh`, `vat_bat_buoc`, `lien_mach` (xem `references/ve-tay.md`), và `on_screen.title` chỉ là nhãn ngắn. Người thật không có ảnh đương thời thì vẽ từ xa hoặc từ phía sau. Xem `references/ve-tay.md`.
 
 Kiểu `ve-net`: trong lời giao việc cho biên kịch, yêu cầu `visual` mỗi cảnh mô tả bố cục một tờ giấy bằng hình và nét đơn giản (hình nào, ở đâu, vẽ theo thứ tự nào, trùng thứ tự lời đọc), 2 đến 8 nét mỗi cảnh, và `on_screen.title` là chữ chính sẽ được viết ra bằng bút (tối đa khoảng 8 từ). Cảnh giải thích ý trừu tượng thì theo mục "Biến ý trừu tượng thành hình" của tài liệu đó. Không cần `focus`. Xem `references/ve-net.md`.
 
 4. Nếu hồ sơ yêu cầu dòng nguồn trên hình: chép dòng ở mục "Nguồn hiển thị trên video" của `kiem-chung.md` vào `on_screen.source` của cảnh mà hồ sơ chỉ định (thường là cảnh cuối) trong `scenes.json`, và ghi vào cột Chữ trên hình của `kich-ban.md`. Đây là đường duy nhất để dòng nguồn đến tay agent dựng cảnh; không có nguồn đã đối chiếu thì để trống.
 5. **Phụ đề tách khỏi lời đọc**: `narration` viết theo cách đọc cho TTS ("i-ô-ét hai mươi bảy chấm hai chấm một", "iPhone mười một"), nhưng phụ đề phải viết dạng chuẩn. Với mọi cảnh có số, phiên bản, ngày, tên riêng được viết phiên âm trong `narration`, thêm trường `subtitle` cùng câu viết dạng chuẩn ("iOS 27.2.1", "iPhone 11", "9/11", "9 lỗ hổng"), giữ nguyên ý và thứ tự từ. Nói rõ yêu cầu này trong lời giao việc cho biên kịch. `inject.py` tự lấy `subtitle` từ `scenes.json` của dự án cho phụ đề in trên hình và file `.srt` (không có thì dùng `narration`), nên đọc lại bằng `tts.py --only` cũng không mất.
-6. Soát lặp cảnh: `python3 SKILL/scripts/soat_canh.py <PROJECT>/scenes.json --kieu <kiểu hình>`. Mục `[NEN SUA]` (mô tả hình trống hoặc quá ngắn, hai cảnh liền nhau gần giống nhau, quá nửa số cảnh chỉ có chữ) thì sửa trường `visual` trước cổng duyệt 1, tự sửa hoặc giao lại biên kịch; mục `[GOI Y]` thì cân nhắc. Script chỉ đọc chữ trong `scenes.json`, là cảnh báo chứ không phải phán quyết.
+6. Soát lặp cảnh: `python3 SKILL/scripts/soat_canh.py <PROJECT>/scenes.json --kieu <kiểu hình> --muc-tieu <giây trong brief>`. Mục `[NEN SUA]` (mô tả hình trống hoặc quá ngắn, hai cảnh liền nhau gần giống nhau, quá nửa số cảnh chỉ có chữ, tổng thời lượng lời đọc ước tính lệch quá 10% mục tiêu) thì sửa trường `visual` trước cổng duyệt 1, tự sửa hoặc giao lại biên kịch; mục `[GOI Y]` thì cân nhắc. Script chỉ đọc chữ trong `scenes.json`, là cảnh báo chứ không phải phán quyết. Nhịp lời đọc: script đếm tiếng của `narration` và ước thời lượng theo tốc độ đã đo của giọng (Mai Anh 3,5; Hải Đăng 4,2 tiếng mỗi giây; giọng khác dùng 3,5 và ghi chú); cảnh dưới 2 giây hoặc trên 10 giây là `[GOI Y]`. Số này chỉ là ước tính, thời lượng thật là của `tts.py`.
 
 ### Bước 3. Cổng duyệt 1: kịch bản
 
@@ -257,7 +257,7 @@ Tự xem `qa/preview/contact_sheet.png` trước: lỗi rõ ràng (chữ tràn, 
 1b. Có nhạc nền: `python3 SKILL/scripts/nhac_nen.py . --kieu <kiểu>` (ghép vào mọi `renders/final_*.mp4`, giữ bản không nhạc riêng; có `audio/tieng-dong.wav` thì tự trộn cùng). Brief không nhạc nhưng có tiếng động: `nhac_nen.py . --chi-hieu-ung`. Render lại khổ nào thì chạy lại lệnh này.
 1c. Chuẩn hóa âm lượng mỗi bản cuối (sau nhạc nền): `bash SKILL/scripts/chuan_am.sh renders/final_<khổ>.mp4` (về -14 LUFS, đỉnh không quá -1 dBTP, hình giữ nguyên, ghi đè tại chỗ). Thoát mã 1 và cảnh báo khi không đạt, thường do nhạc nền quá to: giảm bằng `nhac_nen.py --muc` rồi chạy lại.
 2. Chép `build/landscape/phu-de.srt` (hoặc portrait nếu chỉ có khổ dọc) ra `phu-de.srt` của dự án.
-3. `check_output.py` cho từng bản cuối, có `--frames qa/<khổ>`, `--srt phu-de.srt` và `--chuan-am`; `kiem_bo_cuc.py build/<khổ> --json qa/bo-cuc-<khổ>.json` cho từng khổ (0 LỖI) để QA đọc kèm.
+3. `check_output.py` cho từng bản cuối, có `--frames qa/<khổ>`, `--srt phu-de.srt` và `--chuan-am` (đoạn hình đen từ 0,5 giây là lỗi; đoạn hình đứng yên từ 4 giây là `[CANH BAO]` kèm mã cảnh, chỉnh bằng `--dung-hinh`, bỏ qua nếu là khoảnh khắc đứng hình có chủ ý); `kiem_bo_cuc.py build/<khổ> --json qa/bo-cuc-<khổ>.json` cho từng khổ (0 LỖI) để QA đọc kèm.
 4. Giao **QA** (sonnet) song song với **metadata** (haiku).
 5. Lỗi mức "Chặn" trong `qa/qa.md`: sửa (tự sửa hoặc giao lại dựng cảnh), render lại, QA lại. Tối đa 3 vòng; quá 3 vòng thì dừng, gửi người dùng bản tốt nhất kèm danh sách lỗi còn lại, để họ quyết.
 6. Lỗi mức "Nên sửa": sửa ngay những lỗi không đổi ý đồ hình (chữ ngắt dòng sai, trạng thái giao diện mâu thuẫn, chữ quá nhỏ). Những lỗi mà sửa sẽ đổi thứ người dùng đã duyệt ở cổng 2 (biểu tượng, bố cục, màu, câu chữ) thì hỏi người dùng trước, gom vào một câu hỏi, rồi mới render lại; tránh render bản cuối hai lần.

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Kiem tra ky thuat mot video da render, xuat anh khung hinh cho QA.
 
-Dung:  python3 check_output.py PROJECT/timeline.json VIDEO.mp4 [--frames DIR] [--srt FILE] [--chuan-am]
+Dung:  python3 check_output.py PROJECT/timeline.json VIDEO.mp4 [--frames DIR] [--srt FILE] [--chuan-am] [--dung-hinh GIAY]
 
 Kiem tra:
   - co luong hinh H.264 va luong tieng
@@ -10,6 +10,10 @@ Kiem tra:
   - tieng khong bi cam: muc am trung binh > -45 dB
   - do on tich hop (LUFS) va true peak: luon in ra; voi --chuan-am thi ngoai -15..-13 LUFS hoac dinh > -1 dBTP la loi
   - file .srt (neu co): so thu tu lien tuc, moc thoi gian tang dan, khong vuot thoi luong video
+  - hinh den: doan den gan hoan toan (blackdetect, do sang < 2%) dai tu 0,5 giay la loi (thuong la canh khong len hinh)
+  - hinh dung yen: doan hinh gan nhu khong doi (freezedetect, -60 dB) dai tu --dung-hinh giay (mac dinh 4) la CANH BAO,
+    khong phai loi: dung hinh co chu y truoc y chinh la hop le, canh chi co chu tinh cung vay; script chi chi ra canh nao
+Doan hinh den hay dung yen duoc gan vao ma canh theo moc visual_start va visual_duration trong timeline.json.
 Voi --frames: xuat 1 anh giua moi canh (de agent QA nhin) va 1 anh contact sheet.
 Tra ma thoat 1 neu co loi.
 """
@@ -44,6 +48,25 @@ def loudness(path):
     return (float(i.group(1)) if i else None, float(p.group(1)) if p else None)
 
 
+def scene_of(tl, t0, t1):
+    """Ma cac canh co khung hinh giao voi doan [t0, t1]."""
+    ids = [sc["id"] for sc in tl["scenes"]
+           if min(t1, sc["visual_start"] + sc["visual_duration"]) - max(t0, sc["visual_start"]) > 0.05]
+    return ", ".join(ids) if ids else "ngoai cac canh"
+
+
+def quet_hinh(path, dung_min):
+    """Tra ve (doan den [(bat dau, ket thuc)], doan dung yen [(bat dau, ket thuc)]) bang mot lan giai ma."""
+    r = subprocess.run(["ffmpeg", "-hide_banner", "-nostats", "-i", str(path), "-an", "-vf",
+                        f"blackdetect=d=0.5:pic_th=0.98:pix_th=0.02,freezedetect=n=-60dB:d={dung_min}",
+                        "-f", "null", "-"], capture_output=True, text=True)
+    den = [(float(a), float(b)) for a, b in re.findall(r"black_start:([\d.]+) black_end:([\d.]+)", r.stderr)]
+    bat_dau = [float(x) for x in re.findall(r"freeze_start:\s*([\d.]+)", r.stderr)]
+    ket = [float(x) for x in re.findall(r"freeze_end:\s*([\d.]+)", r.stderr)]
+    dung = [(b, ket[i] if i < len(ket) else None) for i, b in enumerate(bat_dau)]   # None: dung den het video
+    return den, dung
+
+
 def parse_srt_time(s):
     h, m, rest = s.split(":")
     sec, ms = rest.split(",")
@@ -56,12 +79,14 @@ def main():
     ap.add_argument("video")
     ap.add_argument("--frames")
     ap.add_argument("--srt")
+    ap.add_argument("--dung-hinh", type=float, default=4.0,
+                    help="giay: doan hinh dung yen dai tu day tro len thi canh bao (mac dinh 4)")
     ap.add_argument("--chuan-am", action="store_true", help="bat buoc -14 LUFS (+-1) va dinh <= -1 dBTP (sau chuan_am.sh)")
     a = ap.parse_args()
 
     tl = json.loads(Path(a.timeline).read_text(encoding="utf-8"))
     info = probe(a.video)
-    errors, notes = [], []
+    errors, notes, warns = [], [], []
 
     v = [s for s in info["streams"] if s["codec_type"] == "video"]
     au = [s for s in info["streams"] if s["codec_type"] == "audio"]
@@ -91,6 +116,16 @@ def main():
         notes.append(f"Do on tich hop: {lufs} LUFS, true peak: {peak} dBTP")
         if a.chuan_am and (lufs is None or peak is None or lufs < -15 or lufs > -13 or peak > -1):
             errors.append(f"Am luong chua chuan (can -14 LUFS +-1, dinh <= -1 dBTP): chay chuan_am.sh")
+
+    if v:
+        den, dung = quet_hinh(a.video, a.dung_hinh)
+        for b0, b1 in den:
+            errors.append(f"Hinh den {b0:.1f}s den {b1:.1f}s ({b1 - b0:.1f}s), canh {scene_of(tl, b0, b1)}: canh khong len hinh?")
+        for f0, f1 in dung:
+            f1 = dur if f1 is None else f1
+            if f1 - f0 >= a.dung_hinh and not any(b0 <= f0 + 0.1 and b1 >= f1 - 0.1 for b0, b1 in den):
+                warns.append(f"Hinh dung yen {f0:.1f}s den {f1:.1f}s ({f1 - f0:.1f}s), canh {scene_of(tl, f0, f1)}")
+        notes.append(f"Hinh den: {len(den)} doan; hinh dung yen tu {a.dung_hinh:g}s: {len(dung)} doan")
 
     if a.srt:
         txt = Path(a.srt).read_text(encoding="utf-8").strip()
@@ -136,6 +171,8 @@ def main():
 
     for n in notes:
         print("[INFO]", n)
+    for w in warns:
+        print("[CANH BAO]", w, "(dung hinh co chu y thi bo qua)")
     for e in errors:
         print("[LOI] ", e)
     print("KET QUA:", "DAT" if not errors else f"{len(errors)} LOI")
