@@ -506,7 +506,7 @@ export function createChibi(layer: Element, spec: Spec, opt: ChibiOptions, uid: 
   const stoop = (spec.stoop ?? 0) * 0.9;
   const holds = spec.prop ?? 'none';
   const que = opt.limbs === 'que';
-  const root = g(layer);
+  const root = g(layer, { 'data-nhan-vat': spec.id });   // danh dau cho kiem_bo_cuc.py, khong doi hinh
   const flip = g(root);
   const build = (r: number, id: string) => {
     setUnder(r);
@@ -522,7 +522,7 @@ export function createChibi(layer: Element, spec: Spec, opt: ChibiOptions, uid: 
     const armBack = que ? { root: g(upper), elbow: g(upper), side: -1 as const } : drawArm(upper, spec, look, -1);
     drawTorso(upper, spec, look, id);
     fill(upper, 'M-13 -142 L13 -142 L13 -122 L-13 -122 Z', shade(look.skin, 0.88), W * 0.8);
-    const headWrap = g(upper);
+    const headWrap = g(upper, { 'data-dau': '' });
     const { face, tail } = drawHead(headWrap, spec, look, hair);
     drawProp(upper, spec, 'body');
     const qFront: QueArm | null = que ? drawQueArm(upper, spec, 1) : null;

@@ -22,6 +22,7 @@ Bạn là người xem khó tính cuối cùng trước khi video đến tay ng�
 - Từ tuyệt đối chưa đo ("to nhất", "dày nhất"), nhãn dịch lệch nghĩa, lời đọc lệch với hình đang chiếu, phụ đề không khớp từng câu lời đọc hoặc đè lên chữ trên bao bì và dòng nguồn
 
 **Hình**
+- Đọc `qa/bo-cuc-<khổ>.json` (kết quả `kiem_bo_cuc.py`, nếu có): mục mức LOI còn lại là lỗi "Chặn"; với mỗi cảnh báo, xem ảnh khung hình gần mốc giây đó và kết luận (nhân vật đang đi vào, đi ra thì bỏ qua)
 - Chữ không tràn khung, không bị cắt, không chồng lên nhau
 - Chữ cảnh không đè vùng phụ đề; khổ dọc không đặt nội dung quan trọng sát đáy hoặc mép phải
 - Tương phản đủ đọc trên điện thoại ngoài trời

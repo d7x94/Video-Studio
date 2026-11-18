@@ -72,6 +72,10 @@ Khi brief ghi "kiểu hình: ve-net", dự án được tạo bằng `new_projec
 
 Bạn sửa ba chỗ: khối `SCENES` (mỗi cảnh một `<section id="sc-..." class="clip scene" data-start="0" data-duration="1"></section>`, để trống được; `inject.py` cần thẻ này), `// SETUP:BEGIN` ... `// SETUP:END` (mỗi cảnh một `V.scene("<id>", { start: T.<id>, space: ... })` rồi các lệnh vẽ theo đúng thứ tự lời đọc; chữ chính của cảnh là `S.text` lấy từ `on_screen.title`; muốn chữ viết tay thật từng nét thì dùng `S.write` cùng tùy chọn, xem `references/ve-net.md`, và nhớ ghi công phông vào `credits.md`) và `// ANIMATION` (thường để trống). Dùng cùng một đoạn mã cho cả hai khổ khi được (tọa độ tự co theo khung); chỉ rẽ nhánh bằng `V.pick(dọc, ngang)` hay `V.portrait` khi bố cục thật sự khác. Sau `inject.py`, chạy `bash <SKILL>/scripts/ve_net_kiem_tra.sh build/<khổ>` và bớt nét hay bớt chữ cho tới khi không còn `KHONG KIP`. Không thêm `filter` lên nét. Video vẽ nét render khoảng 3,3 giây cho mỗi giây video, vẫn render bản nháp như video 2D.
 
+## Nhịp hình
+
+Đọc mục "Nhịp hình" của `<SKILL>/references/phu-de-tieng-dong-bo-cuc.md`. Tóm tắt: hành động chính của cảnh rơi đúng từ mà `visual` ghi (lấy mốc bằng `python3 <SKILL>/scripts/moc_tu.py <PROJECT> --tim "<từ>"`, viết tween `T.<id> + (mốc - visual_start)` với `visual_start` trong `timeline.json`); ít cú cắt, cho vật chuyển động trong cảnh; đèn, lớp tối, biểu tượng hiện mờ dần 0,3 đến 0,5 giây, không bật tắt trong một khung; khổ dọc xếp theo chiều dọc, chiều sâu; nhân vật đi bằng `walkTo`, không tween `x` cả người; đứng hình có chủ ý thì thêm `data-hold`.
+
 ## Hai khổ, một phong cách
 
 Nếu làm cả hai khổ, viết cùng cấu trúc cảnh và cùng ngôn ngữ chuyển động; chỉ bố cục khác (khổ dọc xếp dọc, khổ ngang có thể chia cột). Làm xong một khổ, kiểm tra, rồi chuyển sang khổ kia.
@@ -81,10 +85,13 @@ Nếu làm cả hai khổ, viết cùng cấu trúc cảnh và cùng ngôn ngữ
 ```bash
 source ~/studio/studio.env
 cd <PROJECT>
-python3 <SKILL>/scripts/inject.py timeline.json build/portrait/index.html              # khổ dọc: đốt phụ đề
-python3 <SKILL>/scripts/inject.py timeline.json build/landscape/index.html --no-burn   # khổ ngang: YouTube dùng .srt
-cd build/<khổ> && hyperframes check
+python3 <SKILL>/scripts/inject.py timeline.json build/portrait/index.html --tung-tu              # khổ dọc: đốt phụ đề, từ đang đọc đổi màu
+python3 <SKILL>/scripts/inject.py timeline.json build/landscape/index.html --no-burn --tung-tu   # khổ ngang: YouTube dùng .srt
+(cd build/<khổ> && hyperframes check)
+python3 <SKILL>/scripts/kiem_bo_cuc.py build/<khổ> --json qa/bo-cuc-<khổ>.json               # đo bố cục: 0 LỖI
 ```
+
+Lời giao việc ghi khác về `--tung-tu` (ví dụ khổ ngang đốt phụ đề không đổi màu) thì làm theo lời giao việc.
 
 `hyperframes check` phải có 0 lỗi. Với cảnh báo:
 - `line_unread` trên phần tử `cap-...` (phụ đề): bỏ qua. Phụ đề chạy theo lời đọc, và tiếng Việt đọc nhanh hơn ngưỡng của công cụ vốn tính cho từ tiếng Anh.
@@ -92,6 +99,8 @@ cd build/<khổ> && hyperframes check
 - `nested_structure_needs_subcomposition`, `studio_missing_editable_id`: chỉ ảnh hưởng chỉnh sửa trong HyperFrames Studio, không ảnh hưởng render; bỏ qua.
 - `dead_stretch` (hình đứng yên quá 3 giây): thêm một chuyển động có nghĩa trong khoảng đó (hiện từng phần nội dung theo lời đọc, nhấn một biểu tượng). Nếu đứng yên là chủ ý (ví dụ danh sách giấy tờ cần thời gian đọc) thì thêm thuộc tính `data-hold` vào phần tử đó. Với cảnh 3D có nhân vật `Idle` thì cảnh báo này hiếm gặp.
 - Cảnh báo tương phản, tràn chữ, phần tử ra ngoài khung: sửa.
+
+`kiem_bo_cuc.py` phải 0 LỖI (`CHU-RA-NGOAI`, `CHU-DE-PHU-DE`, `DAU-BI-CAT`). Cảnh báo `DAU-BI-CAT-MEP`, `NGUOI-BI-CAT-MEP` lúc nhân vật đang đi vào hoặc đi ra thì bỏ qua; đứng yên mà bị mép cắt thì dời nhân vật. `CHU-VUNG-NUT`, `PHU-DE-CHE-MAT`, `CHU-CHE-MAT`: dời chữ hoặc nhân vật trừ khi có lý do, ghi lý do khi trả việc.
 
 Sau đó tự nhìn hình. Video 2D: render nháp và xuất ảnh khung hình, xem contact sheet (lệnh dưới). Video 3D: bỏ qua lệnh dưới, dùng `hyperframes snapshot` như mục trên.
 
@@ -102,4 +111,4 @@ python3 <SKILL>/scripts/check_output.py timeline.json renders/preview_<khổ>.mp
 
 ## Khi xong
 
-Trả về: khổ đã dựng, kết quả `hyperframes check`, đường dẫn contact sheet, đã render bản nháp hay chưa (3D: chưa), dòng nguồn có hay không, và chỗ nào bạn đã lệch khỏi mô tả `visual` của kịch bản (và vì sao).
+Trả về: khổ đã dựng, kết quả `hyperframes check` và `kiem_bo_cuc.py` (số LỖI, cảnh báo đã bỏ qua và vì sao), đường dẫn contact sheet, đã render bản nháp hay chưa (3D: chưa), dòng nguồn có hay không, và chỗ nào bạn đã lệch khỏi mô tả `visual` của kịch bản (và vì sao).

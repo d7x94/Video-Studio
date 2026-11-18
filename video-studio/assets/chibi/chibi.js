@@ -939,7 +939,7 @@ function createChibi(layer, spec, opt, uid, sticker = 7) {
   const stoop = (spec.stoop ?? 0) * 0.9;
   const holds = spec.prop ?? "none";
   const que = opt.limbs === "que";
-  const root = g(layer);
+  const root = g(layer, { "data-nhan-vat": spec.id });
   const flip = g(root);
   const build = (r, id) => {
     setUnder(r);
@@ -955,7 +955,7 @@ function createChibi(layer, spec, opt, uid, sticker = 7) {
     const armBack = que ? { root: g(upper), elbow: g(upper), side: -1 } : drawArm(upper, spec, look, -1);
     drawTorso(upper, spec, look, id);
     fill(upper, "M-13 -142 L13 -142 L13 -122 L-13 -122 Z", shade(look.skin, 0.88), W * 0.8);
-    const headWrap = g(upper);
+    const headWrap = g(upper, { "data-dau": "" });
     const { face: face2, tail } = drawHead(headWrap, spec, look, hair);
     drawProp(upper, spec, "body");
     const qFront = que ? drawQueArm(upper, spec, 1) : null;

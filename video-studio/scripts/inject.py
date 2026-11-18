@@ -20,6 +20,10 @@ Dong hien duoi 1,2 giay duoc gop voi dong ke ben.
 Thoi gian moi dong chia theo ty le so ky tu trong do dai tieng doc cua canh;
 du chinh xac cho cau doc deu, co the lech vai tram ms o cau dai.
 
+Voi --tung-tu: moc cua moi dong phu de lay tu moc tung tieng (moc_tu.py, tu tinh lai khi timeline doi)
+thay vi chia theo so ky tu, va tu dang doc doi sang mau nhan (bien CSS --cap-hi, mac dinh #ffd166)
+dung luc tieng do bat dau. Khong co --tung-tu thi giu nguyen cach cu.
+
 Phu de lay truong "subtitle" cua canh trong PROJECT/scenes.json neu co (chu viet
 dang chuan: "iOS 27.2.1", "iPhone 11"), khong thi lay "narration" (viet theo cach
 doc cho TTS). "Wi-Fi" trong phu de dot chu duoc giu khong ngat dong.
@@ -138,6 +142,60 @@ def build_captions(timeline, max_chars):
     return caps
 
 
+def word_captions(timeline, max_chars, moc):
+    """Nhu build_captions nhung moc dong va moc tung tu lay tu moc_tu (tung tieng)."""
+    by_id = {x["id"]: x for x in moc["scenes"]}
+    caps = []
+    for sc in timeline["scenes"]:
+        text = sc.get("subtitle") or sc["narration"]
+        chunks = merge_short(split_text(text, max_chars), sc["duration"], max_chars)
+        ws = list(by_id.get(sc["id"], {}).get("sub") or [])
+        a_end = sc["start"] + sc["duration"]
+        k, rows = 0, []
+        for c in chunks:
+            words = []
+            for tok in c.rstrip(".").split():
+                if re.search(r"\w", tok) and k < len(ws):
+                    t = ws[k]["s"]
+                    k += 1
+                else:
+                    t = words[-1][1] if words else None
+                words.append([tok, t])
+            rows.append(words)
+        if not ws or k != len(ws):
+            print(f"[CANH BAO] {sc['id']}: moc tung tu khong khop phu de ({k}/{len(ws)}), dung moc theo ky tu", file=sys.stderr)
+            caps += [dict(c, words=None) for c in build_captions({"scenes": [sc], "_project": timeline.get("_project", ".")}, max_chars)]
+            continue
+        for i, words in enumerate(rows):
+            first = next(t for _, t in words if t is not None)
+            start = max(sc["start"], first - 0.1) if i == 0 else first - 0.05
+            words = [[w, t if t is not None else first] for w, t in words]
+            caps.append({"start": round(start, 3), "end": None, "text": " ".join(w for w, _ in words), "words": words})
+        for j in range(len(caps) - len(rows), len(caps)):
+            caps[j]["end"] = round(caps[j + 1]["start"] if j + 1 < len(caps) else a_end, 3)
+        caps[-1]["end"] = round(max(a_end, caps[-1]["start"] + 0.3), 3)
+    return caps
+
+
+WORD_CSS = ('      <style>.cap b.w{font-weight:inherit;white-space:nowrap;transition:none}'
+            '.cap b.w[data-on="1"]{color:var(--cap-hi,#ffd166)}</style>')
+WORD_JS = ('// TUNG-TU:BEGIN (inject.py --tung-tu sinh; tu dang doc doi mau dung luc tieng bat dau)\n'
+           '      document.querySelectorAll(".cap b.w").forEach((el) => tl.set(el, { attr: { "data-on": "1" } }, +el.dataset.t));\n'
+           '      // TUNG-TU:END\n      ')
+TL_REG = re.compile(r'window\.__timelines\["main"\]\s*=\s*tl;')
+
+
+def set_word_js(src, on):
+    """Dat (hoac go) khoi to mau tung tu ngay truoc dong dang ky timeline, sau moi tween."""
+    src = re.sub(r"// TUNG-TU:BEGIN.*?// TUNG-TU:END\n\s*", "", src, flags=re.S)
+    if not on:
+        return src
+    m = TL_REG.search(src)
+    if not m:
+        raise SystemExit('Thieu dong window.__timelines["main"] = tl; trong composition')
+    return src[:m.start()] + WORD_JS + src[m.start():]
+
+
 def srt_time(s):
     ms = int(round(s * 1000))
     h, ms = divmod(ms, 3600000)
@@ -185,6 +243,8 @@ def main():
     ap.add_argument("--no-burn", action="store_true", help="Khong dot phu de vao hinh")
     ap.add_argument("--max-chars", type=int, help="Mac dinh: 56 cho doc (toi da 2 dong), 48 cho ngang")
     ap.add_argument("--srt-only", help="Chi ghi file .srt toi duong dan nay")
+    ap.add_argument("--tung-tu", action="store_true",
+                    help="Moc phu de theo tung tieng (moc_tu.py) va to mau tu dang doc")
     a = ap.parse_args()
 
     tl_path = Path(a.timeline)
@@ -192,8 +252,23 @@ def main():
     project = tl_path.parent
     timeline["_project"] = str(project)  # de build_captions tim scenes.json (truong subtitle)
 
+    moc = None
+    if a.tung_tu:
+        sys.path.insert(0, str(Path(__file__).resolve().parent))
+        import moc_tu
+        moc = moc_tu.load_or_build(project)
+        try:   # word_captions can truong subtitle (build_captions tu nap khi chay)
+            _sub = {x["id"]: x["subtitle"] for x in json.loads((project / "scenes.json").read_text(encoding="utf-8"))["scenes"] if x.get("subtitle")}
+            for _sc in timeline["scenes"]:
+                if _sc["id"] in _sub: _sc["subtitle"] = _sub[_sc["id"]]
+        except Exception:
+            pass
+
+    def captions(mc):
+        return word_captions(timeline, mc, moc) if moc else build_captions(timeline, mc)
+
     if a.srt_only:
-        write_srt(build_captions(timeline, a.max_chars or 42), Path(a.srt_only))
+        write_srt(captions(a.max_chars or 42), Path(a.srt_only))
         return
     if not a.index:
         ap.error("can duong dan index.html")
@@ -224,7 +299,8 @@ def main():
     if not pat.search(src):
         raise SystemExit("Thieu cap danh dau // TIMES:BEGIN/END trong composition")
     src = pat.sub(lambda m: f"{m.group(1)}\n      const T = {times};\n      {m.group(2)}", src)
-    caps = build_captions(timeline, a.max_chars or (56 if portrait else 48))
+    src = set_word_js(src, bool(moc) and not a.no_burn)
+    caps = captions(a.max_chars or (56 if portrait else 48))
 
     # Chep audio vao du an composition de duong dan tuong doi dung khi render
     (index.parent / "audio").mkdir(exist_ok=True)
@@ -237,10 +313,16 @@ def main():
     src = replace_block(src, "AUDIO", "\n".join(audio_tags))
 
     wifi = '<i style="font-style:normal;white-space:nowrap">Wi-Fi</i>'
+    def cap_body(c):
+        if not c.get("words"):
+            return html.escape(c["text"]).replace("Wi-Fi", wifi)
+        return " ".join(f'<b class="w" data-t="{t}" data-on="0">{html.escape(w)}</b>' for w, t in c["words"])
     cap_tags = [] if a.no_burn else [
         f'      <div id="cap-{i:03d}" class="cap clip" data-start="{c["start"]}" '
-        f'data-duration="{round(c["end"] - c["start"], 3)}"><span>{html.escape(c["text"]).replace("Wi-Fi", wifi)}</span></div>'
+        f'data-duration="{round(c["end"] - c["start"], 3)}"><span>{cap_body(c)}</span></div>'
         for i, c in enumerate(caps, 1)]
+    if moc and cap_tags:
+        cap_tags.insert(0, WORD_CSS)
     src = replace_block(src, "CAPTIONS", "\n".join(cap_tags))
 
     total = timeline["total"]
@@ -270,7 +352,8 @@ def main():
 
     index.write_text(src, encoding="utf-8")
     write_srt(caps, index.parent / "phu-de.srt")
-    print(f"{index}: {len(audio_tags)} doan tieng, {len(cap_tags)} dong phu de dot, tong {total}s")
+    n_cap = sum(1 for c in cap_tags if "class=\"cap" in c)
+    print(f"{index}: {len(audio_tags)} doan tieng, {n_cap} dong phu de dot{' (tung tu)' if moc else ''}, tong {total}s")
 
 
 if __name__ == "__main__":
