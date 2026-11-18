@@ -28,7 +28,6 @@ jobs:
           python3 -m py_compile video-studio/scripts/*.py
       - name: Thu nhanh cac script (khong can mo hinh, trinh duyet)
         run: |
-          sudo apt-get update -q && sudo apt-get install -y -q ffmpeg
           # venv: smoke_test.sh chay python3 -I (bo qua goi --user), nen goi phai nam trong venv
           python3 -m venv "$RUNNER_TEMP/venv"
           "$RUNNER_TEMP/venv/bin/pip" install -q numpy soundfile

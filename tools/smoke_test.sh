@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Thu nhanh cac script khong can mo hinh giong doc, trinh duyet hay mang (chay trong CI va tren may).
 # Dung:  bash tools/smoke_test.sh
-# Can: python3 (numpy, soundfile), ffmpeg. Khong thay the buoc chay thu tron mot video mau (xem CLAUDE.md).
+# Can: python3 (numpy, soundfile), node (vai.py doc dan nhan vat); khong can ffmpeg. Khong thay the buoc chay thu tron mot video mau (xem CLAUDE.md).
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 S="$ROOT/video-studio/scripts"
