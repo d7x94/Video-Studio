@@ -152,6 +152,25 @@ grep -q "^Hôm nay mình học 12 tiếng.$" "$D/output/phu-de-vi.srt" || loi "p
 [ "$(grep -c -- '-->' "$D/output/phu-de-vi.srt")" = 1 ] || loi "doan bo van con trong srt"
 pass "phu_de_dich.py khoi, kiem (chan thieu dich, mat so), srt (bo doan danh dau bo)"
 
+# 5b. phu_de_dich: so thap phan viet kieu Viet, ky tu dac biet cua libass, dong goc song ngu dai
+python3 -I - "$S/phu_de_dich.py" "$P" <<'PY'
+import importlib.util, sys
+from pathlib import Path
+spec = importlib.util.spec_from_file_location("pdd", sys.argv[1]); m = importlib.util.module_from_spec(spec); spec.loader.exec_module(m)
+assert m.so_thieu("Up 3.5 percent from 1,000 to 2.500", "Tăng 3,5% từ 1.000 lên 2,500") == [], "so kieu Viet bi chan"
+assert m.so_thieu("Up 3.5 percent", "Tăng 35%") == ["3.5"], "mat so khong bi bat"
+assert m.so_thieu("In 2024 it was 10", "Năm 2024") == ["10"], "mat so nguyen khong bi bat"
+proj = Path(sys.argv[2]) / "ass"; (proj / "dich").mkdir(parents=True, exist_ok=True)
+goc = "So what we are really trying to say is that the whole thing is much more complicated than anyone admitted at the time."
+doan = [{"start": 0.0, "end": 3.0, "dich": "Chọn {mục 2} rồi bấm \\N tiếp", "goc": goc}]
+txt = m.ghi_ass(doan, proj, 720, 1280, "Inter", True).read_text(encoding="utf-8")
+ev = [l for l in txt.splitlines() if l.startswith("Dialogue")]
+assert len(ev) == 2 and "{" not in ev[0].split(",,", 1)[1] and "(mục 2)" in ev[0], "ky tu dac biet khong duoc thoat"
+assert "/N" in ev[0], "dau gach nguoc cua nguoi dich khong duoc doi"
+assert ev[1].count("\\N") >= 2, "dong goc dai khong duoc ngat dong"
+PY
+pass "phu_de_dich.py so thap phan kieu Viet, thoat ky tu libass, ngat dong goc song ngu"
+
 # 6. Script shell: cu phap
 for f in "$S"/*.sh "$ROOT"/tools/*.sh; do bash -n "$f"; done
 pass "cu phap script shell"

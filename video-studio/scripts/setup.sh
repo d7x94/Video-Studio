@@ -19,6 +19,8 @@ ONNX_VER="1.29.0"
 THREE_VER="0.184.0"
 OPENCV_VER="5.0.0.93"   # che do video co san (lam mo, kiem khung); kiem chung 2026-11-17
 FWHISPER_VER="1.2.1"    # che do dich (setup.sh --dich): chep loi goc bang Whisper; kiem chung 2026-11-18
+CT2_VER="4.9.0"         # ctranslate2: ban da do toc do Whisper (CHANGELOG 1.13.0)
+AV_VER="17.0.0"         # PyAV: ban moi nhat (19.0.2) lam faster_whisper.decode_audio loi metadata_errors; 15.1.0, 16.1.0, 17.0.0 chay duoc (thu 2026-11-18)
 
 ok()   { echo "[OK]   $*"; }
 warn() { echo "[CANH BAO] $*"; }
@@ -53,6 +55,9 @@ fi
 
 if [ "${1:-}" = "--check" ]; then
   [ -f "$TOOLS/.voice_done" ] && ok "Giong doc VieNeu da tai" || warn "Chua co giong doc VieNeu"
+  FW="$(python3 -c "import importlib.metadata as m; print(m.version('faster-whisper'))" 2>/dev/null || true)"
+  if [ "$FW" = "$FWHISPER_VER" ]; then ok "faster-whisper $FW (che do dich)"
+  else warn "Chua co faster-whisper $FWHISPER_VER (chi can cho che do dich, chay: bash $0 --dich)"; fi
   [ -f "$TOOLS/.ready" ] && [ -f "$TOOLS/.voice_done" ] && ok "Moi truong da san sang" || warn "Moi truong chua dung xong, chay: bash $0"
   exit 0
 fi
@@ -86,11 +91,13 @@ ok "opencv $(cv_ver)"
 
 # 4c. faster-whisper cho che do dich (chi khi --dich); mo hinh tai luc chay bang scripts/lay_whisper.py
 if [ "${1:-}" = "--dich" ]; then
-  if [ "$(pyver faster-whisper)" != "$FWHISPER_VER" ]; then
-    pip install --break-system-packages -q "faster-whisper==$FWHISPER_VER" >/dev/null 2>&1 \
-      || fail "pip install faster-whisper that bai"
+  if [ "$(pyver faster-whisper)" != "$FWHISPER_VER" ] || [ "$(pyver ctranslate2)" != "$CT2_VER" ] || [ "$(pyver av)" != "$AV_VER" ]; then
+    PIPLOG="$(mktemp)"
+    pip install --break-system-packages -q "faster-whisper==$FWHISPER_VER" "ctranslate2==$CT2_VER" "av==$AV_VER" >"$PIPLOG" 2>&1 \
+      || { tail -n 15 "$PIPLOG"; rm -f "$PIPLOG"; fail "pip install faster-whisper that bai"; }
+    rm -f "$PIPLOG"
   fi
-  ok "faster-whisper $(pyver faster-whisper) (che do dich)"
+  ok "faster-whisper $(pyver faster-whisper), ctranslate2 $(pyver ctranslate2), av $(pyver av) (che do dich)"
 fi
 
 # 5. File moi truong cho cac script khac
