@@ -2,6 +2,20 @@
 
 Quy ước số phiên bản `MAJOR.MINOR.PATCH`, ghi ở `video-studio/VERSION` và dòng "Phiên bản skill" trong `video-studio/SKILL.md` (hai nơi phải khớp, CI kiểm tra khi đóng gói). Thêm kiểu hình hoặc tính năng thì tăng MINOR; sửa lỗi thì tăng PATCH; đổi lớn làm hỏng cách dùng cũ thì tăng MAJOR. Mỗi lần gộp PR thay đổi skill: tăng số, sửa hai nơi trên và thêm mục mới ở đầu file này.
 
+## [1.15.0] - 2026-11-19
+
+Chế độ lồng tiếng cho video có sẵn: phụ đề từng từ, áp lời sửa từ srt, kiểm lời bớt báo nhầm. Rút ra từ một job khui hàng khổ dọc 720x1280 (video quay 89,7 giây, 27 cảnh lời). Không đổi quy tắc kiểm chứng, bản quyền, khóa nhân vật.
+
+- Thêm `scripts/phu_de_tung_tu.py PROJECT [--ghi VIDEO_VAO VIDEO_RA]`: phụ đề từng từ (từ đang đọc đổi màu) ghi cứng vào hình cho chế độ video có sẵn, từ `moc-tu.json`, `timeline.json`, `timeline_ghep.json` (mốc cảnh đổi sang mốc video đã ghép). Chọn font bằng `fc-list` (Be Vietnam Pro TTF/OTF, rồi Inter, rồi mặc định kèm cảnh báo); gói `@fontsource` mà `setup.sh` cài chỉ có woff/woff2 (đã kiểm: 54 woff và 54 woff2, không có ttf) nên libass không đọc được. Tự kiểm định dạng ASS (đủ 7 trường mỗi dòng `Dialogue`): bản viết tay đầu tiên ghi thừa trường nên chữ "0,0,," lọt lên hình.
+- `scripts/dung_lai_video_co_san.sh --tung-tu` và `job.json` `"tung_tu": true` (cho `job.py dung`): thêm `output/<tên>-phu-de-tung-tu.mp4`, giữ `output/<tên>.mp4` không phụ đề cứng.
+- Thêm `scripts/ap_sua_srt.py PROJECT SUA.srt [--ap]`: áp các khối `phu-de.srt` người dùng đã sửa vào `scenes.json` (xem trước, rồi `--ap`; giữ ban sao `scenes.truoc-sua.json`, `khang-dinh.truoc-sua.json`) và đồng bộ `khang-dinh.json`: câu đổi chữ phải duyệt lại (`quan-sat` về `xac_nhan: chua`, `nhan` và `nguon-ngoai` về `chua-phan-loai`). Cảnh có `subtitle` khác `narration` chỉ sửa `subtitle` và in `[CAN XEM]`. Khối srt lệch mốc cảnh quá 0,15 giây bị bỏ qua.
+- `scripts/kiem_loi_doc.py`: báo `[CANH BAO]` khi `timeline_ghep.json` cũ hơn `job.json`, `scenes.json` hay một `audio/<id>.wav` (trước đây chạy trước `job.py dung` thì báo "lời chồng" giả vì đọc mốc cũ).
+- `scripts/job.py kiem`: in `[THONG TIN]` ước tính tổng thời lượng sau khi giữ khung hình và các cảnh bị kéo dài nhiều nhất (cùng công thức `ghep_loi_video_co_san.py`; cần đã có `audio/*.wav`). Ước tính 107,2 giây khớp video ghép thật 107,2 giây.
+- `scripts/kiem_khung_lam_mo.py --trang-min N` (mặc định 1200, không đổi hành vi cũ): hạ ngưỡng điểm trắng để soi mảnh phiếu nhỏ vừa bóc. Đo trên đoạn 2,0 đến 3,2 giây của job trên: mặc định báo 6/12 mốc, `--trang-min 300` báo 12/12 mốc (nhiều báo nhầm), nên tài liệu ghi chỉ dùng để soi đoạn đã nghi.
+- `references/che-do-video-co-san.md`: thêm bước 5c phụ đề từng từ, mục áp lời sửa bằng srt, cảnh báo `timeline_ghep.json` cũ, ước tính thời lượng, nhắc xem lại mọi mốc có cảnh báo làm mờ ở độ phân giải đủ đọc.
+- `tools/smoke_test.sh`: thử `phu_de_tung_tu.py` (đổi mốc sang mốc ghép, bắt dòng thừa trường), `ap_sua_srt.py` (xem trước không ghi, `--ap`, đồng bộ sổ khẳng định, srt lệch mốc), cảnh báo `timeline_ghep.json` cũ.
+- Đã chạy thử: `smoke_test.sh` đạt; trọn chuỗi `job.py kiem`, `job.py dung` với `tung_tu` trên bản sao dự án thật (video 89,7 giây, 27 cảnh, giọng Hải Đăng đã đọc sẵn): ghép 107,2 giây, `phu_de_tung_tu.py` 260 sự kiện, xem khung hình có phụ đề; chuỗi sự kiện ASS trùng bản viết tay đã giao cho người dùng. `ap_sua_srt.py` thử trên bản sao dự án với 4 khối sửa. Chưa chạy: `setup.sh`, `tts.py` mới từ đầu, `new_project.sh`, `inject.py`, `hyperframes check`, `render.sh` (thay đổi không chạm các bước này); chưa thử trên video khổ ngang hay video có tiếng gốc.
+
 ## [1.14.1] - 2026-11-18
 
 Sửa lỗi sau đợt rà soát chế độ dịch (1.14.0); không đổi quy tắc kiểm chứng, bản quyền, khóa nhân vật.

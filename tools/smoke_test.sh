@@ -171,6 +171,67 @@ assert ev[1].count("\\N") >= 2, "dong goc dai khong duoc ngat dong"
 PY
 pass "phu_de_dich.py so thap phan kieu Viet, thoat ky tu libass, ngat dong goc song ngu"
 
+# 5c. phu_de_tung_tu.py (khong can ffmpeg khi khong --ghi), ap_sua_srt.py, canh bao timeline_ghep.json cu cua kiem_loi_doc.py
+V="$P/vct"; mkdir -p "$V"
+cat > "$V/scenes.json" <<'EOF'
+{"voice": "Hải Đăng", "scenes": [
+ {"id": "s01", "narration": "Hôm nay hàng về rồi, khui ngay thôi.", "visual": "x", "on_screen": {}},
+ {"id": "s02", "narration": "Mặt trước ghi chữ Bel-kin, cáp hát đê em ai.", "subtitle": "Mặt trước ghi chữ Belkin, cáp HDMI.", "visual": "x", "on_screen": {}}]}
+EOF
+cat > "$V/timeline.json" <<'EOF'
+{"total": 6.0, "scenes": [{"id": "s01", "start": 0.4, "duration": 2.0}, {"id": "s02", "start": 3.0, "duration": 3.0}]}
+EOF
+cat > "$V/timeline_ghep.json" <<'EOF'
+{"start": {"s01": 0.4, "s02": 10.0}, "tong_giay": 14.0}
+EOF
+cat > "$V/moc-tu.json" <<'EOF'
+{"scenes": [
+ {"id": "s01", "sub": [{"w": "Hôm", "s": 0.45, "e": 0.6}, {"w": "nay", "s": 0.6, "e": 0.9}, {"w": "hàng", "s": 0.9, "e": 1.2}]},
+ {"id": "s02", "sub": [{"w": "Mặt", "s": 3.05, "e": 3.3}, {"w": "trước", "s": 3.3, "e": 3.8}]}]}
+EOF
+python3 "$S/phu_de_tung_tu.py" "$V" --font Inter >/dev/null || loi "phu_de_tung_tu.py le ra dat"
+D5="$(grep -c '^Dialogue' "$V/phu-de-tung-tu.ass")"; [ "$D5" = 5 ] || loi "phu_de_tung_tu: $D5 su kien, can 5"
+grep -qF '0:00:10.00,0:00:10.30,Cap,,,{\c&H0066D1FF&}Mặt{\c&H00FFFFFF&} trước' "$V/phu-de-tung-tu.ass" || loi "phu_de_tung_tu: moc canh s02 khong dich sang moc ghep"
+grep -q "^Dialogue" "$V/phu-de-tung-tu.ass" && ! grep -q "^Dialogue: 0,[^,]*,[^,]*,Cap,,0,0,0,," "$V/phu-de-tung-tu.ass" || loi "phu_de_tung_tu: dong Dialogue thua truong"
+python3 -I - "$S/phu_de_tung_tu.py" <<'PY'
+import importlib.util, sys
+spec = importlib.util.spec_from_file_location("pdt", sys.argv[1]); m = importlib.util.module_from_spec(spec); spec.loader.exec_module(m)
+assert m.kiem_dinh_dang("Dialogue: 0,0:00:01.00,0:00:02.00,Cap,,,Xin chào") == [], "dong dung bi bao loi"
+assert m.kiem_dinh_dang("Dialogue: 0,0:00:01.00,0:00:02.00,Cap,,0,0,0,,Xin chào"), "dong thua truong khong bi bat"
+PY
+cat > "$V/sua.srt" <<'EOF'
+1
+00:00:00,400 --> 00:00:02,000
+Hôm nay hàng về, khui ngay!
+2
+00:00:10,000 --> 00:00:13,000
+Mặt trước ghi chữ Belkin, cáp HDMI, dài 2 mét.
+EOF
+cat > "$V/khang-dinh.json" <<'EOF'
+{"khang_dinh": [
+ {"canh": "s01", "cau": "Hôm nay hàng về rồi, khui ngay thôi.", "loai": "khong-khang-dinh"},
+ {"canh": "s02", "cau": "Mặt trước ghi chữ Belkin, cáp HDMI.", "loai": "nhan", "moc_giay": 43.1, "nhan_doc": "belkin"}]}
+EOF
+python3 "$S/ap_sua_srt.py" "$V" "$V/sua.srt" >/dev/null || loi "ap_sua_srt xem truoc le ra dat"
+grep -q "hàng về rồi" "$V/scenes.json" || loi "ap_sua_srt xem truoc khong duoc ghi"
+python3 "$S/ap_sua_srt.py" "$V" "$V/sua.srt" --ap >/dev/null || loi "ap_sua_srt --ap le ra dat"
+python3 -I - "$V" <<'PY'
+import json, sys
+from pathlib import Path
+p = Path(sys.argv[1]); sc = json.loads((p / "scenes.json").read_text(encoding="utf-8"))["scenes"]
+assert sc[0]["narration"] == "Hôm nay hàng về, khui ngay!" and "subtitle" not in sc[0]
+assert sc[1]["subtitle"].endswith("dài 2 mét.") and sc[1]["narration"].startswith("Mặt trước ghi chữ Bel-kin"), "narration cach doc phai giu nguyen"
+kd = json.loads((p / "khang-dinh.json").read_text(encoding="utf-8"))["khang_dinh"]
+assert kd[0]["loai"] == "khong-khang-dinh" and kd[1]["loai"] == "chua-phan-loai", "canh nhan doi chu phai ve chua-phan-loai"
+assert (p / "scenes.truoc-sua.json").exists()
+PY
+expect_fail python3 "$S/so_khang_dinh.py" kiem "$V"
+printf '1\n00:00:09,000 --> 00:00:10,000\nSai moc\n' > "$V/lech.srt"
+python3 "$S/ap_sua_srt.py" "$V" "$V/lech.srt" 2>&1 | grep -q "lech moc canh" || loi "ap_sua_srt khong bao srt lech moc"
+touch -d "2000-01-01" "$V/timeline_ghep.json"
+python3 "$S/kiem_loi_doc.py" "$V" 2>&1 | grep -q "timeline_ghep.json cu hon" || loi "kiem_loi_doc khong bao timeline_ghep.json cu"
+pass "phu_de_tung_tu.py (moc ghep, kiem dinh dang), ap_sua_srt.py (xem truoc, ap, dong bo so khang dinh, srt lech), kiem_loi_doc timeline cu"
+
 # 6. Script shell: cu phap
 for f in "$S"/*.sh "$ROOT"/tools/*.sh; do bash -n "$f"; done
 pass "cu phap script shell"

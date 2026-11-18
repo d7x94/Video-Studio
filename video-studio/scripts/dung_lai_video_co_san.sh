@@ -5,20 +5,23 @@
 #   --kieu   kieu nhac nen cua nhac_nen.py; "khong" (mac dinh) = khong them nhac
 #   --muc    muc nhac nen dB truoc khi giam theo loi (mac dinh -13; video loi thua nen nhe hon mac dinh -10 cua nhac_nen.py)
 #   --ten    ten file ra o PROJECT/output/<ten>.mp4 (mac dinh video)
+#   --tung-tu  them output/<ten>-phu-de-tung-tu.mp4: phu de tung tu (tu dang doc doi mau) ghi cung vao hinh
+#              (moc_tu.py roi phu_de_tung_tu.py --ghi); giu nguyen output/<ten>.mp4 khong phu de cung
 # Am luong chua dat muc tieu chi canh bao (van chep ra output/); loi that cua chuan_am.sh (dong [LOI]) van dung chuoi.
 # Tao renders/final_portrait.mp4 (hoac ten khac) tu hinh trong ghep.json. Bao loi neu loi doc chong nhau (script ghep in canh bao).
 set -euo pipefail
 die() { echo "[LOI] dung_lai_video_co_san.sh: $*" >&2; exit 1; }
 
-PROJECT="${1:-}"; [ -d "$PROJECT" ] || die "dung: bash dung_lai_video_co_san.sh PROJECT [--cau-hinh ghep.json] [--kieu K] [--muc dB] [--ten ten]"
+PROJECT="${1:-}"; [ -d "$PROJECT" ] || die "dung: bash dung_lai_video_co_san.sh PROJECT [--cau-hinh ghep.json] [--kieu K] [--muc dB] [--ten ten] [--tung-tu]"
 shift
-CFG="ghep.json"; KIEU="khong"; MUC="-13"; TEN="video"
+CFG="ghep.json"; KIEU="khong"; MUC="-13"; TEN="video"; TUNG_TU=0
 while [ $# -gt 0 ]; do
   case "$1" in
     --cau-hinh) CFG="$2"; shift 2 ;;
     --kieu) KIEU="$2"; shift 2 ;;
     --muc) MUC="$2"; shift 2 ;;
     --ten) TEN="$2"; shift 2 ;;
+    --tung-tu) TUNG_TU=1; shift ;;
     *) die "tham so la: $1" ;;
   esac
 done
@@ -56,6 +59,10 @@ if [ "$AM_RC" != 0 ]; then
 fi
 rm -f "$AM_LOG"
 cp "$OUT" "output/$TEN.mp4"
+if [ "$TUNG_TU" = 1 ]; then
+  python3 "$HERE/moc_tu.py" . >/dev/null
+  python3 "$HERE/phu_de_tung_tu.py" . --ghi "$OUT" "output/$TEN-phu-de-tung-tu.mp4"
+fi
 cp phu-de.srt output/phu-de.srt
 python3 - <<'PY'
 import json
