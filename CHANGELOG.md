@@ -2,6 +2,17 @@
 
 Quy ước số phiên bản `MAJOR.MINOR.PATCH`, ghi ở `video-studio/VERSION` và dòng "Phiên bản skill" trong `video-studio/SKILL.md` (hai nơi phải khớp, CI kiểm tra khi đóng gói). Thêm kiểu hình hoặc tính năng thì tăng MINOR; sửa lỗi thì tăng PATCH; đổi lớn làm hỏng cách dùng cũ thì tăng MAJOR. Mỗi lần gộp PR thay đổi skill: tăng số, sửa hai nơi trên và thêm mục mới ở đầu file này.
 
+## [1.13.0] - 2026-11-18
+
+Thêm mô hình nhận dạng giọng nói Whisper (small, medium) vào Release riêng và script tải; chưa nối vào quy trình nào (chưa có `asr_check`, chưa có chế độ dịch video). Việc đã làm: ghim, chép nguyên vẹn, kiểm sha256.
+
+- Thêm `video-studio/assets/whisper-models.json`: danh mục 8 file (`config.json`, `model.bin`, `tokenizer.json`, `vocabulary.txt` của hai bản), kích thước, sha256, revision huggingface ghim bằng mã commit (small `536b0662`, medium `08e178d4`; `model.bin` của cả hai khớp sha256 trong API huggingface), tag release `whisper-faster-small-medium-536b066-08e178d`.
+- Thêm `scripts/lay_whisper.py small|medium [--kiem]`: tải từ GitHub Release trước, huggingface dùng đúng revision ghim là dự phòng, mỗi file phải khớp kích thước và sha256; in đường dẫn thư mục mô hình ở dòng cuối. Mô hình để ở `$STUDIO_HOME/.tools/whisper/<bản>`, không vào git hay zip. `setup.sh` không tải Whisper (mỗi bản 484 MB và 1,5 GB), chỉ tải khi cần.
+- Thêm `tools/publish_whisper_models.sh` và workflow `whisper-models.yml`: đăng bản chép lên Release riêng khi danh mục đổi trên `main`, cùng mẫu với `voice-models.yml`. Không xóa hay tạo lại release này.
+- Thêm `references/LICENSE-whisper.txt` (MIT của openai/whisper) và mục Ghi công trong README.
+- Số đo (2026-11-18, workspace 2 lõi CPU không GPU, faster-whisper 1.2.1, ctranslate2 4.9.0, `int8`, `language=vi`, `beam_size=5`): 10 câu lời đọc giọng Hải Đăng, 41,1 giây tiếng. WER so với `narration` (bỏ dấu câu, hạ chữ thường): small 0,281, medium 0,232 (bản `base` 0,432, không đưa vào). Cả ba nhận đủ 9/9 số cần có. Tốc độ giải mã (giây giải mã trên giây tiếng): small 0,55, medium 1,48. Kết quả đầy đủ ở tài liệu dự án `claude/do-thu-whisper-tieng-viet.md`.
+- Chưa kiểm: chỉ 10 câu, một giọng, tiếng tổng hợp sạch; chưa đo với giọng thật, tiếng nói tiếng Anh hay tiếng Trung, tiếng có nhạc nền. `faster-whisper.transcribe(đường_dẫn_wav)` lỗi ở workspace đo (`av.open() got an unexpected keyword argument 'metadata_errors'`, gói PyAV không khớp); cách tránh đã dùng là tự nạp wav, đổi về 16 kHz rồi đưa mảng số vào. Chưa ghim phiên bản faster-whisper trong `setup.sh`.
+
 ## [1.12.1] - 2026-11-18
 
 Sửa lỗi sau đợt rà soát repo; không đổi quy tắc kiểm chứng, bản quyền, khóa nhân vật.
