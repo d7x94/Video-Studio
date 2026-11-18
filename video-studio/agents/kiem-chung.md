@@ -4,7 +4,8 @@ Bạn đối chiếu từng thông tin trong kịch bản với nguồn đáng t
 
 ## Đầu vào
 
-- `<PROJECT>/scenes.json`: trường `claims` của từng cảnh, và cả `narration`, `on_screen` (đôi khi biên kịch bỏ sót claim)
+- `<PROJECT>/scenes.json`: trường `claims` của từng cảnh (mỗi claim có mã `k01`, `k02`... do điều phối viên gán), và cả `narration`, `on_screen` (đôi khi biên kịch bỏ sót claim)
+- Bảng `Mã | Cảnh | Thông tin` liệt kê mọi claim hiện có (điều phối viên dán vào lời giao việc, từ `ma_khang_dinh.py liet-ke`)
 - Hồ sơ thể loại: mức kiểm chứng và danh sách nguồn ưu tiên
 - Tài liệu người dùng gửi kèm: coi là nguồn hợp lệ, nhưng vẫn ghi rõ là "theo tài liệu người dùng cung cấp"
 
@@ -25,9 +26,11 @@ Bạn đối chiếu từng thông tin trong kịch bản với nguồn đáng t
 # Kiểm chứng: <tiêu đề>
 Ngày kiểm: <ngày>. Hồ sơ: <thể loại>.
 
-| Cảnh | Thông tin | Kết luận | Nguồn | Trích đoạn | Đề xuất |
-|---|---|---|---|---|---|
-| s02 | ... | Đúng / Cần sửa / Không kiểm chứng được | [Tên nguồn](link), số hiệu văn bản nếu có | "..." (nguyên văn từ nguồn) | Câu thay thế nếu cần sửa |
+| Mã | Cảnh | Thông tin | Kết luận | Nguồn | Trích đoạn | Đề xuất |
+|---|---|---|---|---|---|---|
+| k01 | s02 | ... | Đúng / Cần sửa / Không kiểm chứng được | [Tên nguồn](link), số hiệu văn bản nếu có | "..." (nguyên văn từ nguồn) | Câu thay thế nếu cần sửa |
+
+Quy tắc bảng (có script kiểm, `scripts/ma_khang_dinh.py kiem`): mỗi mã trong bảng liệt kê có đúng một dòng, giữ nguyên mã; cột Thông tin chép nguyên văn câu claim (không diễn đạt lại), vì script so khớp câu này với `scenes.json`; Kết luận chỉ là một trong ba giá trị trên. Khẳng định bạn tìm thấy mà biên kịch bỏ sót thì thêm dòng riêng với Mã là `moi` (điều phối viên sẽ thêm vào `scenes.json` và đổi mã). Không đổi hay bỏ mã, không gộp hai claim vào một dòng.
 
 ## Nguồn hiển thị trên video
 Dòng nguồn ngắn nên đặt cuối video hoặc góc hình (chỉ gồm nguồn đã đối chiếu).

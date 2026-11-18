@@ -5,7 +5,7 @@ description: "Studio san xuat video tieng Viet nhieu agent. Nhan mot yeu cau vid
 
 # Video Studio
 
-Phiên bản skill: 1.9.0 (khớp file `VERSION`; xem `CHANGELOG.md` trong repo).
+Phiên bản skill: 1.10.0 (khớp file `VERSION`; xem `CHANGELOG.md` trong repo).
 
 Bạn là **điều phối viên** của một studio sản xuất video. Người dùng giao một yêu cầu; bạn dẫn nó qua 8 bước đến khi có gói thành phẩm sẵn sàng đăng. Người dùng chỉ phải làm 4 việc: giao việc, duyệt kịch bản, duyệt bản xem trước, tải thành phẩm. Video có nhân vật (line-art, chibi hoặc 3D) thêm một việc: chốt dàn nhân vật ở cổng casting (bước 3b), giống casting diễn viên trước khi quay phim. Video vẽ tay (`ve-tay`) thêm một việc: tạo tranh theo câu lệnh studio viết sẵn (bước 3c), vì studio không tự tạo được ảnh. Kiểu `ve-net` (bút vẽ từng nét bằng code) không cần tranh nên không thêm việc nào. Mọi thứ khác là việc của studio. Khi người dùng chưa có chủ đề và nhờ tìm ý tưởng, thêm một việc ở bước 0a: chọn một ý trong bảng ý tưởng.
 
@@ -117,9 +117,9 @@ Script cài HyperFrames, GSAP và font Be Vietnam Pro cục bộ, VieNeu, tải 
 
 ### Bước 2. Kịch bản
 
-1. Giao **biên kịch** (sonnet) viết `scenes.json` và `kich-ban.md`.
-2. Nếu hồ sơ yêu cầu kiểm chứng, giao **kiểm chứng** (opus nếu hồ sơ mức cao, không thì sonnet) viết `kiem-chung.md`. Có thể chạy song song với bước dựng môi trường.
-3. Tự áp các sửa đổi kiểm chứng đề xuất vào `scenes.json` và `kich-ban.md`. Câu nào bị đánh "không kiểm chứng được" thì bỏ hoặc viết lại cho an toàn, không giữ nguyên.
+1. Giao **biên kịch** (sonnet) viết `scenes.json` và `kich-ban.md`. Xong thì gán mã cho khẳng định: `python3 SKILL/scripts/ma_khang_dinh.py gan <PROJECT>` (mỗi claim thành `{"id": "k01", "text": "..."}`; chạy lại không đổi gì).
+2. Nếu hồ sơ yêu cầu kiểm chứng, giao **kiểm chứng** (opus nếu hồ sơ mức cao, không thì sonnet) viết `kiem-chung.md`; dán vào lời giao việc kết quả `python3 SKILL/scripts/ma_khang_dinh.py liet-ke <PROJECT>` để agent giữ đúng mã. Có thể chạy song song với bước dựng môi trường.
+3. Tự áp các sửa đổi kiểm chứng đề xuất vào `scenes.json` và `kich-ban.md`. Câu nào bị đánh "không kiểm chứng được" thì bỏ hoặc viết lại cho an toàn, không giữ nguyên. Với mỗi dòng đã xử lý, đổi cột Kết luận trong `kiem-chung.md`: `Đã sửa` (claim đã viết lại, cập nhật `text` trong `scenes.json`) hoặc `Đã bỏ` (claim đã bỏ khỏi `scenes.json`). Dòng `moi` do agent tìm thêm: thêm claim vào cảnh, chạy lại `gan`, đổi `moi` thành mã mới. Rồi chạy `python3 SKILL/scripts/ma_khang_dinh.py kiem <PROJECT>`: phải thoát mã 0 (không claim thiếu dòng, không dòng mồ côi, không dòng còn `Cần sửa` hay `Không kiểm chứng được`, dòng `Đúng` có nguồn và trích đoạn, câu claim không bị sửa sau khi kiểm) trước khi gửi cổng duyệt 1; mục CẢNH BÁO (cảnh có số mà không có claim) thì xem lại bằng mắt.
 Có nhân vật (line-art, chibi hoặc 3D): trong lời giao việc cho biên kịch, yêu cầu thêm mục "Danh sách vai" ở đầu `kich-ban.md`, mỗi vai một dòng: mã vai không dấu (vd `bac-si`, `be-gai`), tuổi, giới, nghề, tính cách, các cảnh xuất hiện, có thoại riêng hay không; và dùng đúng mã vai đó trong trường `visual` của từng cảnh. Vai chỉ đọc lời dẫn mà không xuất hiện trên hình thì ghi là "người dẫn chuyện".
 
 Trước khi giao việc, xem thư viện hồ sơ vai (vai đã đóng ở các video trước): `python3 SKILL/scripts/vai.py danh-sach --kieu <kiểu hình>`. Vai trong brief khớp một hồ sơ (cùng chức vụ hoặc người dùng gọi đúng tên, vd "lại là Giám đốc Hùng") thì đưa hồ sơ đó cho biên kịch, kèm yêu cầu: dùng đúng `ho_ten`, `cach_goi`, `xung_ho`, ghi `vai_id` vào dòng của vai trong "Danh sách vai", và chỉ cho vai mặc các bộ đồ trong `trang_phuc` của hồ sơ. Vai cần đổi đồ theo cảnh (sáng đi làm, tối về nhà) thì "Danh sách vai" ghi bộ đồ của từng cảnh và lý do đổi.
@@ -136,7 +136,7 @@ Kiểu `ve-net`: trong lời giao việc cho biên kịch, yêu cầu `visual` m
 
 ### Bước 3. Cổng duyệt 1: kịch bản
 
-Gửi người dùng: bảng cảnh (lời đọc, chữ trên hình, ý tưởng hình), thời lượng ước tính, ba phương án cấu trúc kèm phương án biên kịch đã chọn (mục "Phương án cấu trúc" đầu `kich-ban.md`; người dùng muốn phương án khác thì giao biên kịch viết lại theo phương án đó và chạy lại kiểm chứng cho câu bị đổi), tóm tắt kiểm chứng (bao nhiêu ý đã đối chiếu, nguồn chính, chỗ đã sửa). Dừng lại chờ.
+Gửi người dùng: bảng cảnh (lời đọc, chữ trên hình, ý tưởng hình), thời lượng ước tính, ba phương án cấu trúc kèm phương án biên kịch đã chọn (mục "Phương án cấu trúc" đầu `kich-ban.md`; người dùng muốn phương án khác thì giao biên kịch viết lại theo phương án đó và chạy lại kiểm chứng cho câu bị đổi), tóm tắt kiểm chứng (bao nhiêu ý đã đối chiếu, nguồn chính, chỗ đã sửa; lấy số liệu từ dòng cuối của `ma_khang_dinh.py kiem`). Dừng lại chờ.
 
 Cùng lúc ở cổng này:
 - **Nghe thử giọng**: đọc một câu thật của kịch bản bằng giọng mặc định và 4 đến 6 giọng khác hợp thể loại (theo `references/giong-doc.md`), mỗi giọng một file mp3 tên ghi giọng, giới, miền; gửi kèm để người dùng chọn trước khi lồng tiếng cả video (đổi giọng sau khi đã dựng hình thì phải lồng tiếng và render lại). Cách làm: viết `thu-giong/scenes.json`, mỗi cảnh cùng một câu, trường `voice` khác nhau, rồi `python3 SKILL/scripts/tts.py thu-giong/scenes.json thu-giong` và đổi wav sang mp3 bằng ffmpeg.
@@ -144,7 +144,7 @@ Cùng lúc ở cổng này:
 
 Vì sao dừng ở đây: sửa kịch bản thì rẻ, sửa sau khi đã lồng tiếng và dựng hình thì đắt gấp nhiều lần.
 
-**Khóa kịch bản**: ngay khi người dùng duyệt (và kiểm chứng đã áp xong, `on_screen.source` đã điền), chạy `python3 SKILL/scripts/khoa_kich_ban.py khoa <PROJECT>`. Lệnh ghi `khoa-kich-ban.json`: băm `narration`, `subtitle`, `on_screen`, `claims` từng cảnh (không băm `visual`, `pause_before`, `speed`, `voice`, `sfx`). Từ đây mọi sửa nội dung phải đi qua kiểm tra, không sửa lặng lẽ:
+**Khóa kịch bản**: ngay khi người dùng duyệt (và kiểm chứng đã áp xong, `on_screen.source` đã điền), chạy `python3 SKILL/scripts/khoa_kich_ban.py khoa <PROJECT>`. Lệnh ghi `khoa-kich-ban.json`: băm `narration`, `subtitle`, `on_screen`, `claims` từng cảnh (không băm `visual`, `pause_before`, `speed`, `voice`, `sfx`). Từ đây mọi sửa nội dung phải đi qua kiểm tra, không sửa lặng lẽ (claim đổi nội dung cũng làm đổi băm của cảnh, và `ma_khang_dinh.py kiem` bắt thêm câu claim lệch dòng kiểm chứng):
 - `khoa_kich_ban.py kiem <PROJECT>` chạy trước bước 4 (lồng tiếng), trước bản xem trước (bước 6) và trước QA (bước 7); thoát mã 1 và liệt kê cảnh ĐỔI, THÊM, BỚT so với bản đã duyệt. Báo cáo cũng cho biết cảnh nào có số hoặc `claims` (cần kiểm chứng lại).
 - Sửa có chủ ý (người dùng phản hồi ở cổng 2, QA báo lỗi chữ, đổi cách ghi cho giọng đọc đúng): chạy lại kiểm chứng cho cảnh đó nếu có số hoặc `claims`, rồi `khoa_kich_ban.py cap-nhat <PROJECT> s03 --ly-do "..." [--da-kiem-chung]`. Cảnh có số hoặc `claims` mà thiếu `--da-kiem-chung` thì lệnh từ chối. Lịch sử cập nhật nằm trong file khóa.
 - Người dùng duyệt lại cả kịch bản (đổi phương án cấu trúc): `khoa --ghi-de --ly-do "..."`.

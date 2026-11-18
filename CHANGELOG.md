@@ -2,6 +2,15 @@
 
 Quy ước số phiên bản `MAJOR.MINOR.PATCH`, ghi ở `video-studio/VERSION` và dòng "Phiên bản skill" trong `video-studio/SKILL.md` (hai nơi phải khớp, CI kiểm tra khi đóng gói). Thêm kiểu hình hoặc tính năng thì tăng MINOR; sửa lỗi thì tăng PATCH; đổi lớn làm hỏng cách dùng cũ thì tăng MAJOR. Mỗi lần gộp PR thay đổi skill: tăng số, sửa hai nơi trên và thêm mục mới ở đầu file này.
 
+## [1.10.0] - 2026-11-18
+
+Mã khẳng định: mỗi claim có mã, mỗi mã đúng một dòng kiểm chứng, kiểm bằng script (ý tưởng chuỗi nguồn - khẳng định - cảnh bằng mã từ OpenCreator, xem README mục Ghi công; mã tự viết).
+
+- Thêm `scripts/ma_khang_dinh.py` (`gan`, `liet-ke`, `kiem`): `gan` đổi `claims` dạng chuỗi thành `{"id": "k01", "text": "..."}` (chạy lại không đổi gì, mã đã có được giữ); `liet-ke` in bảng Mã, Cảnh, Thông tin cho agent kiểm chứng; `kiem` đối chiếu `scenes.json` với bảng trong `kiem-chung.md` (tìm cột theo tên) và thoát mã 1 khi: claim không có dòng (THIEU), dòng không có claim (MO-COI), dòng còn `Cần sửa`, `Không kiểm chứng được` hoặc mã `moi` (CHUA-XU-LY), dòng `Đã bỏ` mà claim còn (DA-BO), dòng `Đúng` mà câu claim đã bị sửa sau khi kiểm (LECH-CAU), dòng `Đúng` hoặc `Đã sửa` thiếu nguồn hoặc trích đoạn (THIEU-NGUON), kết luận ngoài năm giá trị (KHONG-HIEU). Cảnh báo, không chặn: trích đoạn dài hơn 25 chữ; cảnh có chữ số mà không có claim. Script không biết nguồn có thật hay trích đoạn có đúng không.
+- `agents/kiem-chung.md`: bảng thêm cột đầu `Mã`; chép nguyên văn câu claim vào cột Thông tin; khẳng định tìm thêm ghi Mã `moi`. `SKILL.md` bước 2 (gán mã, `liet-ke`, đổi kết luận thành `Đã sửa` hoặc `Đã bỏ` khi áp sửa đổi, chạy `kiem` trước cổng 1) và bước 3; `agents/qa.md` nhận kết quả `kiem`. `kiem-chung.md` của dự án đã làm bằng bản cũ (không có cột Mã) cần thêm cột này trước khi chạy `kiem`.
+- Chế độ video có sẵn (`so_khang_dinh.py`) không đổi.
+- Đã chạy thử với dữ liệu mẫu: `gan` hai lần, `liet-ke`, `kiem` trước khi xử lý (bắt CHUA-XU-LY cho `Cần sửa`, `Không kiểm chứng được` và `moi`, MO-COI, cảnh báo cảnh có số không có claim), sau khi xử lý (bắt LECH-CAU khi claim bị sửa sau kiểm), và trạng thái khớp (thoát mã 0, đếm Đúng, Đã sửa, Đã bỏ). Chưa chạy trên một đợt kiểm chứng thật của agent: chưa biết agent có giữ đúng định dạng bảng và chép nguyên văn câu claim hay không; lần chạy video thật đầu tiên cần xem điểm này.
+
 ## [1.9.0] - 2026-11-18
 
 Vân tay tiếng đọc và khóa kịch bản sau cổng duyệt 1 (ý tưởng từ quy trình phim người que của OpenCreator, xem README mục Ghi công; mã tự viết).
