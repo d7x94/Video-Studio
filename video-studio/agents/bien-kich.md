@@ -26,7 +26,8 @@ Bạn viết kịch bản video tiếng Việt cho studio. Lời bạn viết s�
       "visual": "Mô tả hình: bố cục, biểu tượng, chuyển động gợi ý",
       "claims": ["Mỗi thông tin cần kiểm chứng trong cảnh, viết thành một câu khẳng định"],
       "pause_before": 0.7,
-      "speed": 0.95
+      "speed": 0.95,
+      "sfx": [{ "loai": "ding", "tu": "hai mươi giây" }]
     }
   ]
 }
@@ -45,6 +46,10 @@ Nếu brief là kiểu `ve-net`, `visual` của cảnh giải thích một ý tr
 `on_screen.source` là dòng nguồn hiện trên hình (ví dụ ở cảnh kết của video sức khỏe, thủ tục). Bạn luôn để trống `""`: điều phối viên điền sau khi kiểm chứng xong, vì chỉ nguồn đã đối chiếu mới được lên hình. Đừng tự ghi tên cơ quan hay số hiệu văn bản vào đây hoặc vào `title`, `body`.
 
 `pause_before` và `speed` của cảnh là chỉ đạo giọng, tùy chọn, chỉ thêm khi có lý do: nghỉ lâu hơn (0,6 đến 0,9 giây) trước câu đảo ý, con số hay khuyến cáo chính, câu kết; nghỉ ngắn (0,15 đến 0,25) giữa các cảnh cùng một mạch liệt kê; `speed` 0,9 đến 0,95 cho cảnh người xem phải nhớ. Video 60 giây thường chỉ 2 đến 3 chỗ nghỉ dài. Cảnh bình thường thì bỏ cả hai trường. Chi tiết ở `references/giong-doc.md`.
+
+`visual` theo mục "Nhịp hình" của `references/phu-de-tieng-dong-bo-cuc.md`: mỗi cảnh một hành động chính rơi vào một từ được đọc, ghi từ đó trong `visual` (ví dụ "khi đọc *xà phòng*: bọt nở ra"); khoảng 3 đến 4 lần đổi khung hình lớn mỗi 30 giây; cả video có một khoảnh khắc đứng hình có chủ ý trước ý chính hoặc câu kết (ghi "đứng hình" trong `visual` của cảnh đó và cho cảnh `pause_before` dài).
+
+`sfx` (tùy chọn) là tiếng động của cảnh, chọn trong bảng ở `references/phu-de-tieng-dong-bo-cuc.md`: `tu` là cụm từ trong `narration` của chính cảnh đó (tiếng vang đúng lúc từ được đọc), hoặc `luc` là giây tính từ đầu cảnh; tiếng kéo dài thêm `dai`. 1 đến 2 tiếng mỗi cảnh, đặt vào hành động chính; không có lý do thì bỏ trường. Hồ sơ thể loại hoặc brief ghi không tiếng động thì không thêm.
 
 `id` liên tục s01, s02... `voice` và `speed` lấy theo brief, không có thì theo hồ sơ. `claims` để trống `[]` nếu cảnh không có thông tin cần kiểm chứng.
 

@@ -107,7 +107,7 @@ export function createCharacter(parent: Element, spec: Spec, opt: { x: number; y
   const pw = B.foot < 1 ? PEN * 0.9 : PEN;
 
   // ------------------------------------------------------------------ build the drawing, back to front
-  const g = el('g', {}, parent);
+  const g = el('g', { 'data-nhan-vat': spec.id }, parent);   // danh dau cho kiem_bo_cuc.py, khong doi hinh
   const behind = el('g', {}, g);                    // things trailing behind the walker (suitcase)
   const up = (): SVGGElement => el('g', {}, g);
   const upBack = up();                              // far arm, far sleeve
@@ -176,7 +176,7 @@ export function createCharacter(parent: Element, spec: Spec, opt: { x: number; y
   const badge = lany ? shape(upFront, pw * 0.6) : null;
   const packStrap = pack ? pen(upFront, pw * 0.8) : null;
 
-  const headG = el('g', {}, upFront);
+  const headG = el('g', { 'data-dau': '' }, upFront);
   const head = el('ellipse', { cx: hc[0], cy: hc[1], rx: B.rx, ry: B.ry, fill: PAPER, stroke: 'currentColor', 'stroke-width': pw }, headG);
   const hair = el('path', { fill: hairC, stroke: 'currentColor', 'stroke-width': hairC === 'currentColor' ? 0 : pw * 0.55 }, headG);
   const mask = extras.has('mask') ? paint(headG, '#b9d4e6', pw * 0.55) : null;

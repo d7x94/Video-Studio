@@ -6,9 +6,9 @@ Dung:
   python3 nhac_nen.py PROJECT --kieu vui --chi-tao          # chi sang tac audio/nhac-nen.wav (+ .mp3 nghe thu)
   python3 nhac_nen.py PROJECT --kieu vui renders/preview_portrait.mp4   # ghep vao file chi dinh
   python3 nhac_nen.py PROJECT --bo                           # go nhac, tra lai ban khong nhac
-  python3 nhac_nen.py PROJECT --chi-hieu-ung                 # khong nhac, chi ghep tieng but ve-net (audio/hieu-ung.wav)
-Co audio/hieu-ung.wav (do tieng_but.py tao) thi moi lan ghep deu tron them file nay, khong giam theo loi doc;
---khong-hieu-ung de bo qua.
+  python3 nhac_nen.py PROJECT --chi-hieu-ung                 # khong nhac, chi ghep hieu ung (hieu-ung.wav, tieng-dong.wav)
+Co audio/hieu-ung.wav (tieng but, do tieng_but.py tao) va/hoac audio/tieng-dong.wav (do tieng_dong.py tao)
+thi moi lan ghep deu tron them cac file nay, khong giam theo loi doc; --khong-hieu-ung de bo qua ca hai.
 
 Kieu: vui, nhe-nhang, nghiem-tuc, hoi-hop, ke-chuyen (bang KIEU ben duoi).
 
@@ -222,7 +222,7 @@ def duration(path):
     return float(r.stdout.strip())
 
 
-def mix(video, music, out, level_db, fx=None):
+def mix(video, music, out, level_db, fx=()):
     """Ghep nhac (da giam am theo loi doc) va/hoac hieu ung (tieng but, khong giam theo loi) vao video; giu nguyen luong hinh."""
     ins = ["-i", str(video)]
     parts, labels, idx = [], ["[v1]"], 1
@@ -236,10 +236,11 @@ def mix(video, music, out, level_db, fx=None):
         idx += 1
     else:
         parts.append(voice + "[v1]")
-    if fx is not None:
-        ins += ["-i", str(fx)]
-        parts.append(f"[{idx}:a]aformat=sample_rates=48000:channel_layouts=stereo[fx]")
-        labels.append("[fx]")
+    for j, f in enumerate(fx or ()):
+        ins += ["-i", str(f)]
+        parts.append(f"[{idx}:a]aformat=sample_rates=48000:channel_layouts=stereo[fx{j}]")
+        labels.append(f"[fx{j}]")
+        idx += 1
     parts.append("".join(labels) + f"amix=inputs={len(labels)}:duration=first:normalize=0[a]")
     subprocess.run(["ffmpeg", "-v", "error", "-y", *ins, "-filter_complex", ";".join(parts),
                     "-map", "0:v", "-c:v", "copy", "-map", "[a]", "-c:a", "aac", "-b:a", "192k",
@@ -255,8 +256,8 @@ def main():
     ap.add_argument("--muc", type=float, default=-10.0, help="muc nhac truoc khi giam am (dB), mac dinh -10")
     ap.add_argument("--chi-tao", action="store_true")
     ap.add_argument("--bo", action="store_true", help="go nhac, tra lai ban khong nhac")
-    ap.add_argument("--chi-hieu-ung", action="store_true", help="khong nhac nen, chi ghep audio/hieu-ung.wav (tieng but ve-net)")
-    ap.add_argument("--khong-hieu-ung", action="store_true", help="bo qua audio/hieu-ung.wav du co file")
+    ap.add_argument("--chi-hieu-ung", action="store_true", help="khong nhac nen, chi ghep hieu ung (audio/hieu-ung.wav, audio/tieng-dong.wav)")
+    ap.add_argument("--khong-hieu-ung", action="store_true", help="bo qua audio/hieu-ung.wav va audio/tieng-dong.wav du co file")
     a = ap.parse_args()
     p = Path(a.project)
     vids = [Path(v) if Path(v).is_absolute() else p / v for v in a.videos] or sorted((p / "renders").glob("final_*.mp4"))
@@ -270,13 +271,13 @@ def main():
                 print(f"Da go nhac: {v}")
         return
     if not a.kieu and not a.chi_hieu_ung:
-        ap.error("can --kieu (hoac --chi-hieu-ung neu chi ghep tieng but)")
+        ap.error("can --kieu (hoac --chi-hieu-ung neu chi ghep hieu ung)")
     if a.kieu and a.chi_hieu_ung:
         ap.error("--chi-hieu-ung khong di cung --kieu")
-    fx = p / "audio/hieu-ung.wav"
-    use_fx = (fx.exists() or a.chi_hieu_ung) and not a.khong_hieu_ung
-    if a.chi_hieu_ung and not fx.exists():
-        sys.exit("[LOI] Chua co audio/hieu-ung.wav: chay tieng_but.py truoc")
+    fx = [] if a.khong_hieu_ung else [f for f in (p / "audio/hieu-ung.wav", p / "audio/tieng-dong.wav") if f.exists()]
+    use_fx = bool(fx)
+    if a.chi_hieu_ung and not fx:
+        sys.exit("[LOI] Chua co audio/hieu-ung.wav hay audio/tieng-dong.wav: chay tieng_but.py hoac tieng_dong.py truoc")
 
     tl = json.loads((p / "timeline.json").read_text(encoding="utf-8"))
     total = float(tl["total"])
@@ -305,12 +306,12 @@ def main():
         if abs(duration(raw) - total) > 1.0:
             print(f"[CANH BAO] {v.name} dai {duration(raw):.1f} giay, timeline {total:.1f} giay")
         tmp = v.with_name(v.stem + ".tmp.mp4")
-        mix(raw, wav, tmp, a.muc, fx if use_fx else None)
+        mix(raw, wav, tmp, a.muc, fx)
         tmp.replace(v)
         import os
         st = raw.stat()
         os.utime(raw, (st.st_atime, v.stat().st_mtime))   # ban goc cung moc gio: chay lai khong coi la ban moi
-        print(f"Da ghep {'nhac' if wav else ''}{' va ' if wav and use_fx else ''}{'tieng but' if use_fx else ''}: {v} (ban goc: {raw.name})")
+        print(f"Da ghep {'nhac' if wav else ''}{' va ' if wav and use_fx else ''}{' + '.join(f.stem for f in fx) if use_fx else ''}: {v} (ban goc: {raw.name})")
 
 
 if __name__ == "__main__":

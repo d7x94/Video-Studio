@@ -277,7 +277,7 @@ function createCharacter(parent, spec, opt) {
   const shoeC = spec.shoeColor ?? "currentColor";
   const gArm = HOLDS.includes(prop) ? "far" : "near";
   const pw = B.foot < 1 ? PEN * 0.9 : PEN;
-  const g = el("g", {}, parent);
+  const g = el("g", { "data-nhan-vat": spec.id }, parent);
   const behind = el("g", {}, g);
   const up = () => el("g", {}, g);
   const upBack = up();
@@ -342,7 +342,7 @@ function createCharacter(parent, spec, opt) {
   const lany = extras.has("lanyard") ? el("path", { fill: "none", stroke: "#3f6ea8", "stroke-width": 0.8 }, upFront) : null;
   const badge = lany ? shape(upFront, pw * 0.6) : null;
   const packStrap = pack ? pen(upFront, pw * 0.8) : null;
-  const headG = el("g", {}, upFront);
+  const headG = el("g", { "data-dau": "" }, upFront);
   const head = el("ellipse", { cx: hc[0], cy: hc[1], rx: B.rx, ry: B.ry, fill: PAPER, stroke: "currentColor", "stroke-width": pw }, headG);
   const hair = el("path", { fill: hairC, stroke: "currentColor", "stroke-width": hairC === "currentColor" ? 0 : pw * 0.55 }, headG);
   const mask = extras.has("mask") ? paint(headG, "#b9d4e6", pw * 0.55) : null;
