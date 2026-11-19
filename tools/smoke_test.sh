@@ -425,7 +425,8 @@ else
 fi
 
 # V10. kiem_khung_lam_mo: diem chu (giay trang co chu in giam manh sau khi mo)
-python3 - "$S" <<'PY'
+if python3 -I -c 'import cv2' 2>/dev/null; then
+python3 -I - "$S" <<'PY'
 import sys
 import cv2
 import numpy as np
@@ -441,7 +442,10 @@ d0, d1 = k.diem_chu(img), k.diem_chu(mo)
 assert d0 >= 12 and d1 < 12, (d0, d1)
 assert k.diem_chu(np.full((300, 400, 3), 235, np.uint8)) == 0
 PY
-pass "kiem_khung_lam_mo diem_chu (chu ro cao, sau khi mo thap, giay tron bang 0)"
+  pass "kiem_khung_lam_mo diem_chu (chu ro cao, sau khi mo thap, giay tron bang 0)"
+else
+  echo "[BO QUA] kiem_khung_lam_mo diem_chu: may khong co opencv"
+fi
 
 # 6. Script shell: cu phap
 for f in "$S"/*.sh "$ROOT"/tools/*.sh; do bash -n "$f"; done

@@ -30,7 +30,7 @@ jobs:
         run: |
           # venv: smoke_test.sh chay python3 -I (bo qua goi --user), nen goi phai nam trong venv
           python3 -m venv "$RUNNER_TEMP/venv"
-          "$RUNNER_TEMP/venv/bin/pip" install -q numpy soundfile
+          "$RUNNER_TEMP/venv/bin/pip" install -q numpy soundfile opencv-python-headless==5.0.0.93
           PATH="$RUNNER_TEMP/venv/bin:$PATH" bash tools/smoke_test.sh
       - name: Thu dong goi va kiem noi dung zip
         run: |
