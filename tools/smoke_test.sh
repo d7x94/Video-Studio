@@ -477,6 +477,28 @@ else
   echo "[BO QUA] may_tinh_tien.py: may thieu ffmpeg, fc-match hoac Pillow"
 fi
 
+# 5d. Danh muc mo hinh ASR bo sung (asr-models.json): kich thuoc, sha256, parts, tep giay phep (khong can mang)
+python3 -I - "$ROOT" <<'PY'
+import json, re, sys
+from pathlib import Path
+root = Path(sys.argv[1]); m = json.load(open(root / "video-studio/assets/asr-models.json"))
+bans = {s["dir"] for s in m["sources"].values()}
+assert m["release_tag"] and "{tag}" in m["release_url"] and "{asset}" in m["release_url"]
+for s in m["sources"].values():
+    assert re.fullmatch(r"[0-9a-f]{40}", s["revision"]), s
+    assert (root / "video-studio/references" / s["license_file"]).exists(), s["license_file"]
+for f in m["files"]:
+    assert f["path"].split("/")[0] in bans and f["repo"] in m["sources"], f["path"]
+    assert re.fullmatch(r"[0-9a-f]{64}", f["sha256"]) and f["size"] > 0, f["path"]
+    if f["size"] >= 2 << 30:
+        assert f.get("parts"), f["path"] + ": file tu 2 GiB tro len phai chia parts"
+    if f.get("parts"):
+        assert sum(p["size"] for p in f["parts"]) == f["size"], f["path"]
+        assert all(p["size"] < 2 << 30 and re.fullmatch(r"[0-9a-f]{64}", p["sha256"]) for p in f["parts"]), f["path"]
+assert len({f["asset"] for f in m["files"]}) == len(m["files"])
+PY
+pass "asr-models.json (kich thuoc, sha256, parts duoi 2 GiB, revision 40 ky tu, tep giay phep)"
+
 # 6. Script shell: cu phap
 for f in "$S"/*.sh "$ROOT"/tools/*.sh; do bash -n "$f"; done
 pass "cu phap script shell"
