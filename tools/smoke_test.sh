@@ -274,7 +274,21 @@ assert s02[1]["loai"] == "chua-phan-loai" and "xac_nhan" not in s02[1] and s02[1
 s01 = [e for e in kd if e["canh"] == "s01"]
 assert len(s01) == 1 and s01[0]["loai"] == "chua-phan-loai", "canh doi chua co trong so phai duoc them muc"
 PY
-pass "phu_de_tung_tu.py (moc ghep, kiem dinh dang), ap_sua_srt.py (xem truoc, ap, dong bo so khang dinh, srt lech, thu tu theo moc, cau doi chu), phu de khong chong, kiem_loi_doc timeline cu"
+# kiem_loi_doc truoc khi ghep: hai canh giu hinh lien tiep, canh sau bi day lui boi phan keo dai cua canh truoc (khong bao chong gia)
+V4="$P/vct4"; mkdir -p "$V4/audio"
+cat > "$V4/scenes.json" <<'EOF'
+{"voice": "Hải Đăng", "scenes": [
+ {"id": "s05", "narration": "Ảnh thứ nhất.", "visual": "x", "on_screen": {}},
+ {"id": "s06", "narration": "Ảnh thứ hai.", "visual": "x", "on_screen": {}}]}
+EOF
+echo '{"canh": {"s05": {"giu_hinh": {"hien_ro": 41.87, "dong_bang": 44.3}}, "s06": {"giu_hinh": {"hien_ro": 45.05, "dong_bang": 47.3}}}}' > "$V4/job.json"
+python3 -I - "$V4" <<'PY'
+import sys, numpy as np, soundfile as sf
+for k, d in (("s05", 3.7), ("s06", 2.0)):
+    sf.write(f"{sys.argv[1]}/audio/{k}.wav", np.zeros(int(d * 48000), np.float32), 48000)
+PY
+python3 "$S/kiem_loi_doc.py" "$V4" > "$V4/kq.txt" 2>&1 || { cat "$V4/kq.txt"; loi "kiem_loi_doc bao chong gia giua hai canh giu hinh lien tiep (chua co timeline_ghep.json)"; }
+pass "phu_de_tung_tu.py (moc ghep, kiem dinh dang), ap_sua_srt.py (xem truoc, ap, dong bo so khang dinh, srt lech, thu tu theo moc, cau doi chu), phu de khong chong, kiem_loi_doc timeline cu va giu hinh lien tiep"
 
 # 6. Script shell: cu phap
 for f in "$S"/*.sh "$ROOT"/tools/*.sh; do bash -n "$f"; done
