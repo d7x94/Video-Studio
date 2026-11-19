@@ -5,6 +5,7 @@ Dung:
   python3 chep_loi_goc.py VIDEO PROJECT                     # tu nhan dang ngon ngu, ban medium, bat VAD
   python3 chep_loi_goc.py VIDEO PROJECT --ngon-ngu en       # da biet ngon ngu: bo buoc nhan dang
   python3 chep_loi_goc.py VIDEO PROJECT --ban small         # nhanh hon, de bia cau hon (xem references/che-do-dich.md)
+  python3 chep_loi_goc.py VIDEO PROJECT --ban large-v3      # lon nhat (khoang 3,1 GB), cham hon medium
   python3 chep_loi_goc.py VIDEO PROJECT --khong-vad         # khong loc khoang lang (de bia cau o doan nhac, go phim)
 
 Dau ra trong PROJECT/dich/:
@@ -24,7 +25,7 @@ Co tung doan (chi la goi y de nguoi nghe lai, khong tu sua):
   ngan         doan duoi 0,5 giay
 Nguong lay theo phep do 18/11/2026 tren 3 clip (references/che-do-dich.md), chua hieu chinh tren nhieu video.
 
-Mo hinh: scripts/lay_whisper.py tai tu GitHub Release (du phong huggingface), kiem sha256.
+Mo hinh: scripts/lay_whisper.py (small, medium) va scripts/lay_asr.py (large-v3) tai tu GitHub Release (du phong huggingface), kiem sha256.
 Moc doan lay theo moc tu (word_timestamps) cua tu dau va tu cuoi, cong 0,4 giay: moc doan goc cua Whisper
 co the trum ca khoang nhac sau cau.
 Tieng doc bang ffmpeg ra mang so 16 kHz roi dua vao faster-whisper (tranh loi PyAV khi dua duong dan file).
@@ -54,7 +55,8 @@ def doc_tieng(video: Path) -> np.ndarray:
 
 
 def thu_muc_mo_hinh(ban: str) -> str:
-    r = subprocess.run([sys.executable, str(SCRIPTS / "lay_whisper.py"), ban], capture_output=True, text=True)
+    lay = "lay_asr.py" if ban == "large-v3" else "lay_whisper.py"
+    r = subprocess.run([sys.executable, str(SCRIPTS / lay), ban], capture_output=True, text=True)
     sys.stderr.write(r.stderr)
     if r.returncode != 0:
         sys.exit(r.returncode)
@@ -154,7 +156,7 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("video")
     ap.add_argument("project")
-    ap.add_argument("--ban", choices=["small", "medium"], default="medium")
+    ap.add_argument("--ban", choices=["small", "medium", "large-v3"], default="medium")
     ap.add_argument("--ngon-ngu", default="auto", help="auto hoac ma ngon ngu Whisper (en, zh, vi...)")
     ap.add_argument("--khong-vad", action="store_true")
     ap.add_argument("--luong", type=int, default=os.cpu_count() or 2, help="so luong CPU")

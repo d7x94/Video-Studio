@@ -1,0 +1,98 @@
+{
+ "_ghi_chu": "Mo hinh nhan dang giong noi bo sung cho che do dich: Whisper large-v3 (faster-whisper, CTranslate2) va FireRedASR2-AED int8 (ONNX, chay bang sherpa-onnx), chep nguyen ban tu HuggingFace len GitHub Release rieng (workflow asr-models.yml dang). scripts/lay_asr.py tai tu release truoc, HuggingFace o dung revision duoi la du phong; ca hai deu kiem sha256. File nao lon hon 2 GiB (gioi han moi file cua GitHub Release) thi chia thanh parts (cat bang split -b 1500M -d -a 2), lay_asr.py ghep lai roi kiem sha256 file day du. Doi revision: dat release_tag moi, cap nhat revision, size, sha256 tung file theo API HuggingFace, chay thu dau cuoi. Khong xoa hay tao lai release da dang.",
+ "checked": "2026-11-19",
+ "release_tag": "asr-large-v3-firered2-edaa852-374cff1",
+ "release_url": "https://github.com/d7x94/video-studio/releases/download/{tag}/{asset}",
+ "sources": {
+  "Systran/faster-whisper-large-v3": {
+   "revision": "edaa852ec7e145841d8ffdb056a99866b5f0a478",
+   "dir": "large-v3",
+   "license": "MIT",
+   "license_file": "LICENSE-whisper.txt"
+  },
+  "csukuangfj2/sherpa-onnx-fire-red-asr2-zh_en-int8-2026-02-26": {
+   "revision": "374cff185e952c40fcf2f6da972a3b6cf340608d",
+   "dir": "firered2",
+   "license": "Apache-2.0 (mo hinh goc FireRedTeam/FireRedASR2-AED; the repo dong goi nay khong ghi giay phep)",
+   "license_file": "LICENSE-firered.txt"
+  }
+ },
+ "files": [
+  {
+   "path": "large-v3/config.json",
+   "asset": "faster-whisper-large-v3--config.json",
+   "repo": "Systran/faster-whisper-large-v3",
+   "hf_path": "config.json",
+   "size": 2394,
+   "sha256": "a9306624f5ec14270a014b647e5c316b6e03a662c369758d1b90697a7b0655b9"
+  },
+  {
+   "path": "large-v3/preprocessor_config.json",
+   "asset": "faster-whisper-large-v3--preprocessor_config.json",
+   "repo": "Systran/faster-whisper-large-v3",
+   "hf_path": "preprocessor_config.json",
+   "size": 340,
+   "sha256": "7ccc62c6f2765af1f3b46c00c9b5894426835a05021c8b9c01eecb6dfb542711"
+  },
+  {
+   "path": "large-v3/tokenizer.json",
+   "asset": "faster-whisper-large-v3--tokenizer.json",
+   "repo": "Systran/faster-whisper-large-v3",
+   "hf_path": "tokenizer.json",
+   "size": 2480617,
+   "sha256": "6d8cbd7cd0d8d5815e478dac67b85a26bbe77c1f5e0c6d76d1ce2abc0e5f21ca"
+  },
+  {
+   "path": "large-v3/vocabulary.json",
+   "asset": "faster-whisper-large-v3--vocabulary.json",
+   "repo": "Systran/faster-whisper-large-v3",
+   "hf_path": "vocabulary.json",
+   "size": 1068114,
+   "sha256": "c69260f2ab26d659b7c398f9a2b2b48ed0df16c3b47d7326782fd9cba71690c1"
+  },
+  {
+   "path": "large-v3/model.bin",
+   "asset": "faster-whisper-large-v3--model.bin",
+   "repo": "Systran/faster-whisper-large-v3",
+   "hf_path": "model.bin",
+   "size": 3087284237,
+   "sha256": "69f74147e3334731bc3a76048724833325d2ec74642fb52620eda87352e3d4f1",
+   "parts": [
+    {
+     "asset": "faster-whisper-large-v3--model.bin.part00",
+     "size": 1572864000,
+     "sha256": "955af9f64ce46a4ad5dfc1194785b164f36aaf21acf70610b8a58dee9ade5f1e"
+    },
+    {
+     "asset": "faster-whisper-large-v3--model.bin.part01",
+     "size": 1514420237,
+     "sha256": "92829b94d61f2cffbf8798fb2d12a615ba8df9c069e03b8b59b6341925d37703"
+    }
+   ]
+  },
+  {
+   "path": "firered2/encoder.int8.onnx",
+   "asset": "sherpa-onnx-fire-red-asr2-zh_en-int8--encoder.int8.onnx",
+   "repo": "csukuangfj2/sherpa-onnx-fire-red-asr2-zh_en-int8-2026-02-26",
+   "hf_path": "encoder.int8.onnx",
+   "size": 817286833,
+   "sha256": "54048d66b6e8f3c80ea7ce95efe794587b0fd81d7271651d0decd3803852ae82"
+  },
+  {
+   "path": "firered2/decoder.int8.onnx",
+   "asset": "sherpa-onnx-fire-red-asr2-zh_en-int8--decoder.int8.onnx",
+   "repo": "csukuangfj2/sherpa-onnx-fire-red-asr2-zh_en-int8-2026-02-26",
+   "hf_path": "decoder.int8.onnx",
+   "size": 417291928,
+   "sha256": "b840ce7196ae4a14d05ae84bbf56082b6b61ccec5610fda907dddbcea37354ff"
+  },
+  {
+   "path": "firered2/tokens.txt",
+   "asset": "sherpa-onnx-fire-red-asr2-zh_en-int8--tokens.txt",
+   "repo": "csukuangfj2/sherpa-onnx-fire-red-asr2-zh_en-int8-2026-02-26",
+   "hf_path": "tokens.txt",
+   "size": 79172,
+   "sha256": "1bc613de2112d257e61a349c3e72d1b1a9cf19c33d3ca954197ad2171e5ea07b"
+  }
+ ]
+}

@@ -3,6 +3,7 @@
 # Dung:  bash setup.sh            (cai dat day du)
 #        bash setup.sh --check    (chi kiem tra, khong cai)
 #        bash setup.sh --dich     (cai dat day du va them faster-whisper cho che do dich video)
+#        bash setup.sh --firered  (nhu --dich, them sherpa-onnx, opencc de chep loi bang FireRedASR2, chep_loi_firered.py)
 set -euo pipefail
 
 SKILL_DIR="$(cd "$(dirname "$0")/.." && pwd)"
@@ -20,6 +21,8 @@ THREE_VER="0.184.0"
 OPENCV_VER="5.0.0.93"   # che do video co san (lam mo, kiem khung); kiem chung 2026-11-17
 FWHISPER_VER="1.2.1"    # che do dich (setup.sh --dich): chep loi goc bang Whisper; kiem chung 2026-11-18
 CT2_VER="4.9.0"         # ctranslate2: ban da do toc do Whisper (CHANGELOG 1.13.0)
+SHERPA_VER="2.0.2"      # sherpa-onnx: chay FireRedASR2 (ONNX) cho chep_loi_firered.py; kiem chung 2026-11-19 (from_fire_red_asr, 2 loi CPU)
+OPENCC_VER="1.4.2"      # opencc: doi phon the sang gian the khi so Whisper voi FireRed (chep_loi_firered.py); kiem chung 2026-11-19 (t2s, Python 3.13)
 AV_VER="17.0.0"         # PyAV: ban moi nhat (19.0.2) lam faster_whisper.decode_audio loi metadata_errors; 15.1.0, 16.1.0, 17.0.0 chay duoc (thu 2026-11-18)
 
 ok()   { echo "[OK]   $*"; }
@@ -89,8 +92,9 @@ if [ "$(cv_ver)" != "$OPENCV_VER" ]; then
 fi
 ok "opencv $(cv_ver)"
 
-# 4c. faster-whisper cho che do dich (chi khi --dich); mo hinh tai luc chay bang scripts/lay_whisper.py
-if [ "${1:-}" = "--dich" ]; then
+# 4c. faster-whisper cho che do dich (khi --dich hoac --firered: chep_loi_firered.py can chep-goc.json cua Whisper);
+#     mo hinh tai luc chay bang scripts/lay_whisper.py
+if [ "${1:-}" = "--dich" ] || [ "${1:-}" = "--firered" ]; then
   if [ "$(pyver faster-whisper)" != "$FWHISPER_VER" ] || [ "$(pyver ctranslate2)" != "$CT2_VER" ] || [ "$(pyver av)" != "$AV_VER" ]; then
     PIPLOG="$(mktemp)"
     pip install --break-system-packages -q "faster-whisper==$FWHISPER_VER" "ctranslate2==$CT2_VER" "av==$AV_VER" >"$PIPLOG" 2>&1 \
@@ -98,6 +102,17 @@ if [ "${1:-}" = "--dich" ]; then
     rm -f "$PIPLOG"
   fi
   ok "faster-whisper $(pyver faster-whisper), ctranslate2 $(pyver ctranslate2), av $(pyver av) (che do dich)"
+fi
+
+# 4d. sherpa-onnx, opencc cho chep loi FireRedASR2 (chi khi --firered); mo hinh tai luc chay bang scripts/lay_asr.py
+if [ "${1:-}" = "--firered" ]; then
+  if [ "$(pyver sherpa-onnx)" != "$SHERPA_VER" ] || [ "$(pyver opencc)" != "$OPENCC_VER" ]; then
+    PIPLOG="$(mktemp)"
+    pip install --break-system-packages -q "sherpa-onnx==$SHERPA_VER" "opencc==$OPENCC_VER" >"$PIPLOG" 2>&1 \
+      || { tail -n 15 "$PIPLOG"; rm -f "$PIPLOG"; fail "pip install sherpa-onnx, opencc that bai"; }
+    rm -f "$PIPLOG"
+  fi
+  ok "sherpa-onnx $(pyver sherpa-onnx), opencc $(pyver opencc) (chep loi FireRedASR2)"
 fi
 
 # 5. File moi truong cho cac script khac

@@ -5,7 +5,7 @@ description: "Studio san xuat video tieng Viet nhieu agent: bien kich, kiem chun
 
 # Video Studio
 
-Phiên bản skill: 1.18.0 (khớp file `VERSION`; xem `CHANGELOG.md` trong repo).
+Phiên bản skill: 1.19.0 (khớp file `VERSION`; xem `CHANGELOG.md` trong repo).
 
 Bạn là **điều phối viên** của một studio sản xuất video. Người dùng giao một yêu cầu; bạn dẫn nó qua 8 bước đến khi có gói thành phẩm sẵn sàng đăng. Người dùng chỉ phải làm 4 việc: giao việc, duyệt kịch bản, duyệt bản xem trước, tải thành phẩm. Video có nhân vật (line-art, chibi hoặc 3D) thêm một việc: chốt dàn nhân vật ở cổng casting (bước 3b), giống casting diễn viên trước khi quay phim. Video vẽ tay (`ve-tay`) thêm một việc: tạo tranh theo câu lệnh studio viết sẵn (bước 3c), vì studio không tự tạo được ảnh. Kiểu `ve-net` (bút vẽ từng nét bằng code) không cần tranh nên không thêm việc nào. Mọi thứ khác là việc của studio. Khi người dùng chưa có chủ đề và nhờ tìm ý tưởng, thêm một việc ở bước 0a: chọn một ý trong bảng ý tưởng.
 
@@ -269,7 +269,7 @@ Chạy theo thứ tự, mỗi video một `job.json`: `scripts/phan_tich_dau_vao
 
 ## Chế độ dịch video
 
-Dùng khi người dùng gửi video nói tiếng nước ngoài và nhờ dịch sang tiếng Việt (phụ đề; thuyết minh chưa có script). Hồ sơ `profiles/dich.md`. Không dựng hình mới. Chạy `setup.sh --dich`, rồi `chep_loi_goc.py` (Whisper tự nhận dạng ngôn ngữ, chép lời có cờ nghi ngờ), cổng duyệt bản chép gốc, dịch vào `dich/ban-dich.json`, `phu_de_dich.py kiem`, cổng duyệt bản dịch, `phu_de_dich.py ghi` và xem bảng khung kiểm. Ngôn ngữ chưa chắc chắn (`[CAN HOI]`) thì hỏi người dùng trước khi dịch. **Đọc `references/che-do-dich.md` trước khi làm.**
+Dùng khi người dùng gửi video nói tiếng nước ngoài và nhờ dịch sang tiếng Việt (phụ đề; thuyết minh chưa có script). Hồ sơ `profiles/dich.md`. Không dựng hình mới. Chạy `setup.sh --dich`, rồi `chep_loi_goc.py` (Whisper tự nhận dạng ngôn ngữ, chép lời có cờ nghi ngờ), cổng duyệt bản chép gốc, dịch vào `dich/ban-dich.json`, `phu_de_dich.py kiem`, cổng duyệt bản dịch, `phu_de_dich.py ghi` và xem bảng khung kiểm. Ngôn ngữ chưa chắc chắn (`[CAN HOI]`) thì hỏi người dùng trước khi dịch. Bản chép có cờ `tin-thap` hoặc người dùng không biết ngôn ngữ gốc: chép bổ sung bằng `--ban large-v3` hoặc `chep_loi_firered.py` (tiếng Trung, tiếng Anh) và gửi bảng đối chiếu kèm bản chép gốc. **Đọc `references/che-do-dich.md` trước khi làm.**
 
 ## Chế độ "tiền bay" (video chi tiêu theo hóa đơn)
 
@@ -287,7 +287,7 @@ Nếu người dùng nói "chạy thẳng", hoặc phiên được khởi độn
 - `references/gsap.md`: quy tắc viết tween GSAP cho HyperFrames (tất định, hiệu năng, nhịp và ease), rút từ gsap-skills chính thức của GreenSock
 - `references/nen-tang.md`: thông số YouTube, TikTok đã kiểm chứng
 - `references/giong-doc.md`: danh sách giọng VieNeu và gợi ý theo thể loại
-- `references/che-do-dich.md`: dịch video: chép lời gốc bằng Whisper, nhận dạng ngôn ngữ, cờ nghi ngờ, kiểm bản dịch, ghi phụ đề cứng, che phụ đề sẵn có, số đo và giới hạn
+- `references/che-do-dich.md`: dịch video: chép lời gốc bằng Whisper (small, medium, large-v3), chép bổ sung bằng FireRedASR2, nhận dạng ngôn ngữ, cờ nghi ngờ, kiểm bản dịch, ghi phụ đề cứng, che phụ đề sẵn có, số đo và giới hạn
 - `references/che-do-tien-bay.md`: video "tiền bay" theo hóa đơn: mẫu khai báo, `tien-bay.json`, quy trình, số đo và giới hạn
 - `references/che-do-video-co-san.md`: lồng tiếng cho video có sẵn: `job.json`, phân tích đầu vào, sổ khẳng định, kiểm lời, làm mờ và bảng khung kiểm, ghép, chữ ghi trên hình
 - `references/nhac-nen.md`: nhạc nền studio tự sáng tác bằng code: 5 kiểu, lệnh ghép và gỡ, mức nhạc, ghi công

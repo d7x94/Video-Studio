@@ -12,7 +12,7 @@ Bản này (1.14.0) làm trọn được **phụ đề**. Thuyết minh (lồng 
 
 ## Môi trường
 
-`bash SKILL/scripts/setup.sh --dich`: dựng như thường lệ, cài thêm `faster-whisper`, `ctranslate2` và `av` (ghim phiên bản trong `setup.sh`; `av` mới hơn 17.0.0 làm `faster_whisper` lỗi `metadata_errors`). Mô hình Whisper tải lúc chạy bằng `scripts/lay_whisper.py` (GitHub Release của repo, dự phòng huggingface, kiểm sha256): bản `medium` khoảng 1,5 GB, tải một lần mỗi workspace.
+`bash SKILL/scripts/setup.sh --dich`: dựng như thường lệ, cài thêm `faster-whisper`, `ctranslate2` và `av` (ghim phiên bản trong `setup.sh`; `av` mới hơn 17.0.0 làm `faster_whisper` lỗi `metadata_errors`). Mô hình Whisper tải lúc chạy bằng `scripts/lay_whisper.py` (GitHub Release của repo, dự phòng huggingface, kiểm sha256): bản `medium` khoảng 1,5 GB, tải một lần mỗi workspace. Bản `large-v3` (`--ban large-v3`, khoảng 3,1 GB) và FireRedASR2 (`setup.sh --firered`, khoảng 1,2 GB; cờ này cài luôn phần của `--dich`) là tùy chọn, xem mục "Chép bổ sung bằng mô hình khác"; tải bằng `scripts/lay_asr.py`.
 
 ## Quy trình
 
@@ -37,6 +37,18 @@ Bản này (1.14.0) làm trọn được **phụ đề**. Thuyết minh (lồng 
    - Xem bảng khung kiểm trước khi giao. Video gốc đã có phụ đề cứng (ví dụ song ngữ Trung Anh ở đáy) thì chữ dịch chồng lên: chạy lại với `--che-day 0.2` (làm mờ dải đáy cao 20% khung rồi ghi phụ đề dịch lên đó) hoặc `--vi-tri tren`.
    - `--song-ngu`: dòng gốc nhỏ dưới dòng dịch (để học ngoại ngữ). Dòng gốc dài được ngắt dòng riêng (cỡ chữ 0,7 lần bản dịch) và dòng dịch tự đẩy lên theo số dòng gốc; vẫn xem bảng khung kiểm.
 7. **Giao**: video có phụ đề, `phu-de-vi.srt`, `chep-goc.md`. Nêu chỗ đã sửa lời gốc, câu chưa chắc nghĩa, đoạn VAD bỏ mà chưa ai nghe lại.
+
+## Chép bổ sung bằng mô hình khác (tùy chọn)
+
+Dùng khi bản chép `medium` có cờ `tin-thap` hoặc người dùng không biết ngôn ngữ gốc nên không tự nghe kiểm được (video tiếng Trung có tiếng lóng, giọng trẻ em, nói nhanh). Cả hai mô hình chép nguyên bản lên Release riêng `asr-large-v3-firered2-edaa852-374cff1` (danh mục, revision và sha256 ở `assets/asr-models.json`; `model.bin` của large-v3 chia hai phần vì mỗi file trong release phải dưới 2 GiB, `lay_asr.py` ghép lại và kiểm sha256).
+
+- **Whisper large-v3**: `python3 chep_loi_goc.py VIDEO PROJECT --ban large-v3`. Cùng cách chạy như `medium`, chỉ đổi mô hình.
+- **FireRedASR2-AED int8 (ONNX)**: `bash setup.sh --firered` (cài mọi thứ của `--dich`, thêm `sherpa-onnx` và `opencc` bản ghim; không cần chạy `--dich` riêng), rồi `python3 chep_loi_firered.py VIDEO PROJECT` sau khi đã có `dich/chep-goc.json`. Ra `dich/chep-firered.md` và `chep-firered.json`: bảng đối chiếu từng đoạn Whisper, FireRed nghe cả cụm (cửa sổ tối đa 30 giây) và FireRed nghe đoạn cắt rời. Dòng `KHÁC` là đoạn mà lời Whisper không nằm trong bản chép của cả cụm, sau khi bỏ dấu câu, khoảng trắng và đổi cả hai bên về chữ giản thể bằng OpenCC (`t2s`), vì Whisper hay chép tiếng phổ thông bằng phồn thể còn FireRed ra giản thể. Bảng vẫn giữ nguyên chữ của từng mô hình. Chưa quy đổi số: "3" và "三" vẫn báo `KHÁC`. Không ghi đè `chep-goc.json`: gửi bảng này kèm bản chép gốc ở cổng duyệt, người dùng quyết định lấy bên nào.
+  - Chỉ hỗ trợ tiếng Trung (phổ thông, hơn 20 giọng địa phương) và tiếng Anh; ngôn ngữ khác thì script dừng. Theo tác giả, FireRedASR2-AED đạt CER trung bình 3,05% trên 4 bộ kiểm tra tiếng Trung phổ thông (bảng trong [thẻ model](https://huggingface.co/FireRedTeam/FireRedASR2-AED), báo cáo [arXiv:2603.10420](https://arxiv.org/abs/2603.10420)); số này không so với Whisper.
+  - Dùng bản ONNX int8 của [csukuangfj2](https://huggingface.co/csukuangfj2/sherpa-onnx-fire-red-asr2-zh_en-int8-2026-02-26), chạy bằng `sherpa-onnx` vì `download.pytorch.org` bị chặn ở workspace (HTTP 403 từ proxy, thử 2026-11-19) nên không cài được PyTorch cho mã gốc. Đây là bản đóng gói của người khác, thẻ model không ghi giấy phép; mô hình gốc `FireRedTeam/FireRedASR2-AED` là Apache-2.0 (xem README, mục Ghi công).
+  - Đoạn cắt rời hay lẫn chữ của đoạn bên cạnh và có thể ra khác cụm, nên cột đó chỉ để tham khảo.
+- Số đo (2026-11-19, workspace 2 lõi CPU, không GPU, video 27,6 giây tiếng Trung, mô hình đã có trên đĩa): `--ban large-v3` 34 giây (có VAD, chỉ định `--ngon-ngu zh`); `chep_loi_firered.py` 39 giây, gồm 1 cụm và 19 đoạn.
+- Giới hạn đã thấy trên clip đó: ba lần chạy Whisper (medium, large-v3 có VAD, large-v3 không VAD) ra ba bản khác nhau ở cùng một cụm ba chữ, và `large-v3` không chắc đúng hơn `medium`. FireRedASR2 ra bản mạch lạc hơn khi nghe cả cụm, nhưng cắt rời từng đoạn lại cho chữ khác (một cụm "头发" khi nghe liền, "豆腐" khi cắt rời). Chưa có người biết tiếng Trung nghe kiểm lại: coi chỗ `KHÁC` là chỗ cần nghe lại, không phải đáp án. Chưa đo trên nhiều video, chưa thử tiếng Anh, tiếng Quảng Đông hay video dài trên 5 phút.
 
 ## Số đo (2026-11-18, workspace 2 lõi CPU, không GPU)
 
