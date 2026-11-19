@@ -119,6 +119,9 @@ def main():
     a = ap.parse_args()
 
     tl = json.loads(Path(a.timeline).read_text(encoding="utf-8"))
+    for sc in tl["scenes"]:   # timeline cua kieu khong co loi doc (may_tinh_tien.py) co the chi co start, end
+        sc.setdefault("visual_start", sc.get("start", 0.0))
+        sc.setdefault("visual_duration", max(0.0, sc.get("end", sc["visual_start"]) - sc["visual_start"]))
     info = probe(a.video)
     errors, notes, warns, warns_khac = [], [], [], []
 

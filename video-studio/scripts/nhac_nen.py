@@ -8,7 +8,7 @@ Dung:
   python3 nhac_nen.py PROJECT --bo                           # go nhac, tra lai ban khong nhac
   python3 nhac_nen.py PROJECT --kieu nhe-nhang --doan 57.5,81.3   # nhac chi nghe trong doan nay (giay tren video da ghep), co the lap --doan
   python3 nhac_nen.py PROJECT --chi-hieu-ung                 # khong nhac, chi ghep hieu ung (hieu-ung.wav, tieng-dong.wav)
-Co audio/hieu-ung.wav (tieng but, do tieng_but.py tao) va/hoac audio/tieng-dong.wav (do tieng_dong.py tao)
+Co audio/hieu-ung.wav (tieng but do tieng_but.py tao, hoac tieng may tinh tien do may_tinh_tien.py tao) va/hoac audio/tieng-dong.wav (do tieng_dong.py tao)
 thi moi lan ghep deu tron them cac file nay, khong giam theo loi doc; --khong-hieu-ung de bo qua ca hai.
 
 Kieu: vui, nhe-nhang, nghiem-tuc, hoi-hop, ke-chuyen (bang KIEU ben duoi).
