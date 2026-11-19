@@ -12,6 +12,7 @@ job.json (phan_tich_dau_vao.py tao ban mau, dien them tay):
  "phien_ban": 1, "ten": "obge", "video_goc": "goc.mov",
  "giong": "Hai Dang", "toc_do": 1.0,              # phai khop voi voice, speed trong scenes.json (canh bao neu lech)
  "anh_tinh": [{"tu": 53.6, "den": 83.4}],         # doan anh tinh do bang freezedetect
+ "anh_tinh_khong_loi": false,                     # true: doan anh_tinh chi co nhac, kiem_loi_doc.py canh bao canh nao co loi cham vao (tuy chon)
  "lam_mo": [                                      # chay theo thu tu, ket qua buoc truoc la dau vao buoc sau
    {"cach": "vung_trang", "tu": 0, "den": 2.97, "vung": "430:850", "le": 18},
    {"cach": "phieu_chat", "tu": 3.0, "den": 5.6, "vung": [200, 520, 500, 740]},

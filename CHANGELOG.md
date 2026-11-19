@@ -2,6 +2,19 @@
 
 Quy ước số phiên bản `MAJOR.MINOR.PATCH`, ghi ở `video-studio/VERSION` và dòng "Phiên bản skill" trong `video-studio/SKILL.md` (hai nơi phải khớp, CI kiểm tra khi đóng gói). Thêm kiểu hình hoặc tính năng thì tăng MINOR; sửa lỗi thì tăng PATCH; đổi lớn làm hỏng cách dùng cũ thì tăng MAJOR. Mỗi lần gộp PR thay đổi skill: tăng số, sửa hai nơi trên và thêm mục mới ở đầu file này.
 
+## [1.16.0] - 2026-11-19
+
+Chế độ lồng tiếng cho video có sẵn: rút kinh nghiệm từ một job khui hàng khổ dọc 720x1280 (81,3 giây, 10 cảnh lời, ảnh tĩnh cuối video chỉ có nhạc, phiếu giao hàng xoay nhanh trong tay). Không đổi quy tắc kiểm chứng, bản quyền, khóa nhân vật.
+
+- `scripts/kiem_loi_doc.py`: khóa `anh_tinh_khong_loi` trong `job.json`. Bật thì cảnh nào có lời chạm vào đoạn `anh_tinh` (kể cả lời bắt đầu trước đoạn rồi tràn vào) bị `[CANH BAO]`. Kiểm hiện có chỉ bắt lời bắt đầu bên trong đoạn ảnh tĩnh, nên lời tràn từ ngoài vào không bị báo (trong job trên, cảnh cuối dài 4,28 giây trong cửa sổ khoảng 3 giây, phải tự phát hiện khi xem mốc). Lời tính trên video ghép còn `anh_tinh` tính trên video gốc, nên chỉ dùng khi không có `giu_hinh` đứng trước đoạn đó (ghi trong tài liệu). `scripts/job.py` ghi thêm khóa này trong phần mô tả `job.json`.
+- `scripts/check_output.py --co-san`: video có sẵn không phóng to, độ phân giải khác 1080x1920 hay 1920x1080 chỉ là `[CANH BAO]`, không còn là `[LOI]` (mặc định không đổi). Đã thử trên video 720x1280 của job trên: không cờ báo 1 LỖI, có cờ báo CẢNH BÁO và KẾT QUẢ ĐẠT.
+- `references/che-do-video-co-san.md`: thêm mục 4b (phiếu xoay nhanh: nối nhiều bước `lam_mo` `phieu_chat` rồi `tay`, đặt mốc cách 0,2 giây, nới khung, xem lại từng khung cách 0,1 giây; ghi rõ chưa có bước tự nhận biết phiếu), 4c (đoạn ảnh tĩnh chỉ có nhạc, nhạc chạy xuyên video), 4d (`--co-san`).
+- `profiles/unbox.md`: hỏi thêm ở bước 0 người dùng đã dùng thử chưa hoặc người nhà nhận xét gì (đọc rõ ai nhận xét, không viết như kết luận khách quan; đổi sau khi lồng tiếng thì cập nhật khóa kịch bản), và nhạc nền chạy xuyên video hay chỉ ở ảnh tĩnh.
+- `references/giong-doc.md`: thêm hai dòng "QR" và "XL" vào bảng cách đọc viết tắt, ghi rõ đã dùng và chưa nghe kiểm bằng tai.
+- `tools/smoke_test.sh`: thêm ca `anh_tinh_khong_loi` (lời tràn vào đoạn ảnh tĩnh bị báo; không bật thì không báo; lời kết thúc trước đoạn ảnh tĩnh không báo nhầm) và kiểm có `--co-san`. Đã xác nhận ca đầu thất bại trên mã 1.15.1.
+- Đã chạy thử: `smoke_test.sh` đạt; `ruff F,E9` sạch; `check_output.py` thật với ffprobe và ffmpeg trên video đã giao của job trên. Chưa chạy: `setup.sh`, `tts.py`, `new_project.sh`, `inject.py`, `hyperframes check`, `render.sh`, `job.py dung` trọn chuỗi (thay đổi không chạm các bước này).
+- Chưa làm (đề xuất, cần thiết kế và thử riêng): tự nhận biết và theo dõi phiếu giao hàng (hộp trắng có mã vạch hoặc QR) để đặt khung làm mờ; kiểm tự động video đã làm mờ bằng đọc mã vạch hoặc QR và báo đích danh khung còn đọc được; nhạc nền chỉ ở đoạn ảnh tĩnh; lệnh đồng bộ `khang-dinh.json` khi sửa lời mà giữ loại cũ cho câu trùng; đóng gói riêng cho video có sẵn (`package.py` hiện chỉ chép `renders/final_*.mp4` và tạo thumbnail); `phan_tich_dau_vao.py` nhận diện đoạn ảnh tĩnh tốt hơn khi có chuyển mờ và đoạn quay đứng yên.
+
 ## [1.15.1] - 2026-11-19
 
 Sửa hai lỗi ở bước ghép lời vào video có sẵn (tìm ra khi rà soát repo sau 1.15.0); không đổi quy tắc kiểm chứng, bản quyền, khóa nhân vật.

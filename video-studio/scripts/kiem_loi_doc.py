@@ -18,6 +18,8 @@ hoac mot audio/<id>.wav: chay job.py dung roi kiem lai). Kiem:
       trong narration va chu chuan trong subtitle
     - khoang cach giua hai loi duoi 0,2 giay
     - loi dai hon doan anh tinh chua no (khi job.json co anh_tinh va canh khong dung giu_hinh)
+    - "anh_tinh_khong_loi": true trong job.json (doan anh tinh chi co nhac, khong thuyet minh): canh bao canh nao co loi doc cham vao doan anh tinh,
+      ke ca loi bat dau truoc doan do roi tran vao. So sanh moc loi (video ghep) voi anh_tinh (video goc), nen chi dung khi khong co giu_hinh truoc doan do
   THONG TIN: so tieng moi giay tung canh (tieng = tu cach nhau dau cach); khong co nguong, chi de chia ngan sach loi.
 Danh sach tu va nguong 0,2 giay lay tu quy tac trong SKILL.md va profiles/unbox.md; script khong hieu ngu nghia,
 cau dung quy tac van phai doc lai bang mat. --nghiem: thoat ma 1 neu co bat ky canh bao nao.
@@ -165,6 +167,14 @@ def main():
             if at["tu"] <= s < at["den"] and s + dur[k] > at["den"]:
                 cb.append(f"{k}: loi dai hon doan anh tinh {at['tu']}-{at['den']}s (ket thuc {s + dur[k]:.2f}s): "
                           "rut loi hoac dung giu_hinh")
+    if job.get("anh_tinh_khong_loi"):
+        for k, s in start.items():
+            if k not in dur:
+                continue
+            for at in job.get("anh_tinh", []):
+                if s < at["den"] and s + dur[k] > at["tu"] + 0.05:
+                    cb.append(f"{k}: loi doc ({s:.2f}-{s + dur[k]:.2f}s) cham vao doan anh tinh {at['tu']}-{at['den']}s "
+                              "(anh_tinh_khong_loi): rut loi hoac doi cue som hon")
     for sc in scenes:
         if start and sc["id"] not in start:
             cb.append(f"{sc['id']}: chua co moc bat dau")
