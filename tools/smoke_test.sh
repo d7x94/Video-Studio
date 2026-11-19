@@ -447,6 +447,32 @@ else
   echo "[BO QUA] kiem_khung_lam_mo diem_chu: may khong co opencv"
 fi
 
+# may_tinh_tien.py: kiem cau hinh va xuat khung lop phu (can ffmpeg, ffprobe, fc-match, Pillow; render day du da thu tay, xem CHANGELOG)
+if command -v ffmpeg >/dev/null 2>&1 && command -v fc-match >/dev/null 2>&1 && python3 -c "import PIL" 2>/dev/null; then
+  V10="$P/vct10"; mkdir -p "$V10/src"
+  ffmpeg -v error -y -f lavfi -i testsrc=size=160x284:rate=10:duration=30 -c:v libx264 -pix_fmt yuv420p "$V10/src/v.mp4"
+  cat > "$V10/tien-bay.json" <<'EOF2'
+{"video": "src/v.mp4", "ngay": "01/01/2026", "tong_hoa_don": 150000,
+ "mo_dau": {"tu": 1.0, "dai": 3.0}, "ket": {"nen_tu": 2.0, "dai": 9.0},
+ "mon": [
+  {"ten": "Mon dat", "so_luong": 2, "gia": 100000, "nhom": "A", "chia": {"so": 8, "don_vi": "cai"}, "anh": {"tu": 5.0, "dai": 4.0}},
+  {"ten": "Mon re", "so_luong": 1, "gia": 50000, "nhom": "B", "mo": {"tu": 10.0, "dai": 2.0}, "anh": {"tu": 13.0, "dai": 3.2}}]}
+EOF2
+  python3 "$S/may_tinh_tien.py" "$V10" kiem > "$V10/kq.txt" || loi "may_tinh_tien kiem that bai tren cau hinh dung"
+  python3 "$S/may_tinh_tien.py" "$V10" khung > /dev/null || loi "may_tinh_tien khung that bai"
+  [ "$(ls "$V10"/qa/tien-bay/khung_*.png | wc -l)" -ge 5 ] || loi "may_tinh_tien khung: thieu anh"
+  sed 's/"tong_hoa_don": 150000/"tong_hoa_don": 140000/' "$V10/tien-bay.json" > "$V10/x.json"
+  cp "$V10/tien-bay.json" "$V10/ok.json"; cp "$V10/x.json" "$V10/tien-bay.json"
+  expect_fail python3 "$S/may_tinh_tien.py" "$V10" kiem
+  sed 's/"tu": 13.0, "dai": 3.2/"tu": 29.0, "dai": 3.2/' "$V10/ok.json" > "$V10/tien-bay.json"
+  expect_fail python3 "$S/may_tinh_tien.py" "$V10" kiem
+  sed 's/"dai": 4.0}/"dai": 2.0}/' "$V10/ok.json" > "$V10/tien-bay.json"
+  expect_fail python3 "$S/may_tinh_tien.py" "$V10" kiem
+  pass "may_tinh_tien.py (kiem dung, xuat khung, chan tong lech, doan cat vuot video, the gia qua ngan)"
+else
+  echo "[BO QUA] may_tinh_tien.py: may thieu ffmpeg, fc-match hoac Pillow"
+fi
+
 # 6. Script shell: cu phap
 for f in "$S"/*.sh "$ROOT"/tools/*.sh; do bash -n "$f"; done
 pass "cu phap script shell"

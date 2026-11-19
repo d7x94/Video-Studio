@@ -5,7 +5,7 @@ description: "Studio san xuat video tieng Viet nhieu agent: bien kich, kiem chun
 
 # Video Studio
 
-Phiên bản skill: 1.17.0 (khớp file `VERSION`; xem `CHANGELOG.md` trong repo).
+Phiên bản skill: 1.18.0 (khớp file `VERSION`; xem `CHANGELOG.md` trong repo).
 
 Bạn là **điều phối viên** của một studio sản xuất video. Người dùng giao một yêu cầu; bạn dẫn nó qua 8 bước đến khi có gói thành phẩm sẵn sàng đăng. Người dùng chỉ phải làm 4 việc: giao việc, duyệt kịch bản, duyệt bản xem trước, tải thành phẩm. Video có nhân vật (line-art, chibi hoặc 3D) thêm một việc: chốt dàn nhân vật ở cổng casting (bước 3b), giống casting diễn viên trước khi quay phim. Video vẽ tay (`ve-tay`) thêm một việc: tạo tranh theo câu lệnh studio viết sẵn (bước 3c), vì studio không tự tạo được ảnh. Kiểu `ve-net` (bút vẽ từng nét bằng code) không cần tranh nên không thêm việc nào. Mọi thứ khác là việc của studio. Khi người dùng chưa có chủ đề và nhờ tìm ý tưởng, thêm một việc ở bước 0a: chọn một ý trong bảng ý tưởng.
 
@@ -56,6 +56,7 @@ Chủ đề video thì vô hạn, nhưng **thể loại** quyết định cách 
 | `unbox.md` | Mở hộp sản phẩm từ góc nhìn người tiêu dùng, trên cảnh quay thật của người dùng |
 | `ke-chuyen.md` | Kể chuyện, hoạt hình đồ họa |
 | `dich.md` | Dịch video tiếng nước ngoài sang tiếng Việt (phụ đề), trên video người dùng gửi |
+| `chi-tieu.md` | Video "tiền bay" theo hóa đơn thật (đi chợ, mua sắm): thẻ giá bay vào ô tiền, biên lai ở cuối, không lời đọc |
 
 Không khớp hồ sơ nào: dùng hồ sơ gần nhất, báo người dùng, và đề nghị tạo hồ sơ mới (một file theo cấu trúc các hồ sơ có sẵn). Hồ sơ là chỗ người dùng tùy biến studio, đừng ghi cứng quy tắc thể loại vào lõi này.
 
@@ -270,6 +271,10 @@ Chạy theo thứ tự, mỗi video một `job.json`: `scripts/phan_tich_dau_vao
 
 Dùng khi người dùng gửi video nói tiếng nước ngoài và nhờ dịch sang tiếng Việt (phụ đề; thuyết minh chưa có script). Hồ sơ `profiles/dich.md`. Không dựng hình mới. Chạy `setup.sh --dich`, rồi `chep_loi_goc.py` (Whisper tự nhận dạng ngôn ngữ, chép lời có cờ nghi ngờ), cổng duyệt bản chép gốc, dịch vào `dich/ban-dich.json`, `phu_de_dich.py kiem`, cổng duyệt bản dịch, `phu_de_dich.py ghi` và xem bảng khung kiểm. Ngôn ngữ chưa chắc chắn (`[CAN HOI]`) thì hỏi người dùng trước khi dịch. **Đọc `references/che-do-dich.md` trước khi làm.**
 
+## Chế độ "tiền bay" (video chi tiêu theo hóa đơn)
+
+Dùng khi người dùng có cảnh quay hàng vừa mua và hóa đơn thật, muốn video thẻ giá bay vào ô tiền, số nhảy kèm tiếng máy tính tiền và biên lai in ra ở cuối. Hồ sơ `profiles/chi-tieu.md`. Không có lời đọc nên bỏ bước 2 đến 4 và bước 5 (kịch bản, lồng tiếng, HyperFrames); hình và tiếng hiệu ứng do `scripts/may_tinh_tien.py` tạo từ `tien-bay.json` (`kiem`, `khung`, `dung`), rồi ghép nhạc, chuẩn âm, kiểm như bước 6 và 7, giữ cổng duyệt bản xem trước. Tổng tiền do code cộng và phải khớp `tong_hoa_don` của hóa đơn thật; hóa đơn thiếu dòng thì hỏi lại trước khi dựng. **Đọc `references/che-do-tien-bay.md` trước khi làm** (mẫu người dùng khai báo, `tien-bay.json`, quy trình, giới hạn).
+
 ## Khi người dùng không có mặt
 
 Nếu người dùng nói "chạy thẳng", hoặc phiên được khởi động theo lịch: không dừng ở các cổng duyệt (vẫn chạy `khoa_kich_ban.py khoa` đúng chỗ cổng 1 sẽ đứng, và ghi vào tin nhắn cuối rằng kịch bản chưa được người duyệt; kể cả cổng casting; khi đó tự chọn phương án đầu cho mỗi vai và vẫn ghi `casting.json`, `casting.md`; kể cả cổng chọn ý tưởng ở bước 0a: khi đó chọn ý điểm cao nhất toàn bảng và ghi lý do ở đầu tin nhắn đầu tiên). Ghi ở đầu tin nhắn đầu tiên cách hiểu yêu cầu đã chọn, làm hết 8 bước, và trong tin nhắn cuối liệt kê những gì lẽ ra đã hỏi ở cổng duyệt để người dùng xem lại.
@@ -283,6 +288,7 @@ Nếu người dùng nói "chạy thẳng", hoặc phiên được khởi độn
 - `references/nen-tang.md`: thông số YouTube, TikTok đã kiểm chứng
 - `references/giong-doc.md`: danh sách giọng VieNeu và gợi ý theo thể loại
 - `references/che-do-dich.md`: dịch video: chép lời gốc bằng Whisper, nhận dạng ngôn ngữ, cờ nghi ngờ, kiểm bản dịch, ghi phụ đề cứng, che phụ đề sẵn có, số đo và giới hạn
+- `references/che-do-tien-bay.md`: video "tiền bay" theo hóa đơn: mẫu khai báo, `tien-bay.json`, quy trình, số đo và giới hạn
 - `references/che-do-video-co-san.md`: lồng tiếng cho video có sẵn: `job.json`, phân tích đầu vào, sổ khẳng định, kiểm lời, làm mờ và bảng khung kiểm, ghép, chữ ghi trên hình
 - `references/nhac-nen.md`: nhạc nền studio tự sáng tác bằng code: 5 kiểu, lệnh ghép và gỡ, mức nhạc, ghi công
 - `references/nhan-vat-line-art.md`: cảnh có nhân vật nét mực: dàn 12 nhân vật người Việt đã khóa (nam, nữ, trẻ em, người già, nhiều nghề), API `lineart.js`, cỡ và vị trí theo khổ, thời gian render

@@ -2,6 +2,18 @@
 
 Quy ước số phiên bản `MAJOR.MINOR.PATCH`, ghi ở `video-studio/VERSION` và dòng "Phiên bản skill" trong `video-studio/SKILL.md` (hai nơi phải khớp, CI kiểm tra khi đóng gói). Thêm kiểu hình hoặc tính năng thì tăng MINOR; sửa lỗi thì tăng PATCH; đổi lớn làm hỏng cách dùng cũ thì tăng MAJOR. Mỗi lần gộp PR thay đổi skill: tăng số, sửa hai nơi trên và thêm mục mới ở đầu file này.
 
+## [1.18.0] - 2026-11-19
+
+Thêm kiểu video "tiền bay" theo hóa đơn thật (đi chợ, mua sắm), rút từ một job TikTok khổ dọc: 11 món, thẻ giá bay vào ô tiền, biên lai in ra ở cuối, không lời đọc. Không đổi quy tắc kiểm chứng, bản quyền, khóa nhân vật.
+
+- `scripts/may_tinh_tien.py` (mới): đọc `PROJECT/tien-bay.json`; ba lệnh `kiem`, `khung`, `dung`. Vẽ ô tiền nhảy số, thẻ giá, biên lai, thanh chia nhóm bằng Pillow; tổng hợp tiếng máy tính tiền, máy in, thẻ giá bằng numpy (`audio/hieu-ung.wav`, `nhac_nen.py` tự trộn); ghi `timeline.json`. Tổng do code cộng, `tong_hoa_don` có thì phải khớp; chặn đoạn cắt vượt video gốc, thẻ giá có `anh.dai` dưới 3,0 giây, quá 16 món, quá 4 nhóm. Mỗi đoạn cắt dùng một đầu vào ffmpeg riêng có `-ss`.
+- `profiles/chi-tieu.md`, `references/che-do-tien-bay.md` (mới), `SKILL.md`: hồ sơ, mẫu người dùng khai báo, `tien-bay.json`, quy trình, giới hạn. Hóa đơn chụp nhiều tấm phải trùng dòng ở chỗ nối; chọn giây ảnh bìa sau khi hiệu ứng dừng và đối chiếu số trên ảnh bìa với tổng (lần dựng đầu của job mẫu lấy ảnh bìa giữa lúc số đang nhảy).
+- `scripts/check_output.py`: timeline thiếu `visual_start`, `visual_duration` thì lấy từ `start`, `end` thay vì báo `KeyError` khi dùng `--frames` (timeline của kiểu không có lời đọc không có hai khóa này).
+- `tools/smoke_test.sh`: thêm ca `may_tinh_tien.py` (`kiem` đúng, `khung`, chặn tổng lệch, đoạn cắt vượt video, thẻ giá quá ngắn; bỏ qua khi máy thiếu ffmpeg, fc-match hoặc Pillow). Đã đạt; `ruff F,E9` sạch.
+- Đã chạy thử trọn chuỗi `may_tinh_tien.py dung`, `nhac_nen.py --kieu vui --muc -16`, `chuan_am.sh`, `check_output.py --frames --chuan-am` trên job mẫu (nguồn 720x1280, 3 phút 43 giây, 11 món, 2 nhóm): video 69,8 giây, ĐẠT, -14,8 LUFS, đỉnh -1,0 dBTP. Render 94 giây cho video 69,8 giây; lần dựng đầu của cùng job 107 giây cho 59,7 giây.
+- Chưa chạy: `setup.sh`, `tts.py`, `new_project.sh`, `inject.py`, `hyperframes check`, `render.sh` (kiểu này không dùng); khổ 16:9, nguồn video có độ phân giải dưới 720x1280, hóa đơn trên 11 món.
+- Đã cân nhắc và KHÔNG làm: cảnh báo độ phân giải thấp ở `phan_tich_dau_vao.py` (video chỉ để lấy âm thanh thì độ phân giải thấp là có chủ ý). Chưa làm: tự tìm mốc cảnh mở bao bì và ảnh sản phẩm trong video gốc (hiện ghi tay mốc `tu`, `dai`), tiếng gốc của video, khổ 16:9, kiểm tự động chữ biên lai tràn khung.
+
 ## [1.17.0] - 2026-11-19
 
 Làm tiếp các đề xuất "Chưa làm" của 1.16.0 cho chế độ video có sẵn. Không đổi quy tắc kiểm chứng, bản quyền, khóa nhân vật.
