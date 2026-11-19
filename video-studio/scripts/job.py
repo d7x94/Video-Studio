@@ -21,6 +21,8 @@ job.json (phan_tich_dau_vao.py tao ban mau, dien them tay):
    "s11": {"giu_hinh": {"hien_ro": 76.13, "dong_bang": 78.64}}},   # keo dai anh tinh bang cach giu khung hinh
  "chu": [[42.6, 46.0, "Chu chinh", "Nguon: ..."]],   # chu ghi tren hinh (chu_may_chu.py), tuy chon
  "nhac": {"kieu": "khong", "muc": -13},           # kieu nhac nen cua nhac_nen.py, "khong" = khong them nhac
+ "tung_tu": false,                                # true: them output/<ten>-phu-de-tung-tu.mp4 (phu de tung tu, tu dang doc doi mau);
+                                                  # co ca "chu" thi them output/<ten>-chu-phu-de-tung-tu.mp4 (du ca hai)
  "khoang_truoc": 0.15, "khoang_sau": 0.35         # tuy chon
 }
 Duong dan trong job.json tuong doi PROJECT (hoac tuyet doi). Tat ca script goi ben duoi la script san co:
@@ -122,6 +124,35 @@ def chay(cmd):
         sys.exit(f"[LOI] lenh tren that bai (ma {r.returncode})")
 
 
+def thoi_luong_file(path):
+    r = subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "default=nw=1:nk=1", str(path)],
+                       capture_output=True, text=True)
+    try:
+        return float(r.stdout.strip())
+    except ValueError:
+        return None
+
+
+def uoc_thoi_luong(proj, job):
+    """Uoc tong thoi luong sau khi giu khung hinh (cung cong thuc ghep_loi_video_co_san.py). None neu thieu tieng hoac video."""
+    gv = duong(proj, job.get("video_goc", ""))
+    if not gv.is_file() or not job.get("canh"):
+        return None
+    goc = thoi_luong_file(gv)
+    truoc, sau = job.get("khoang_truoc", 0.15), job.get("khoang_sau", 0.35)
+    giu = sorted(((k, v["giu_hinh"]) for k, v in job["canh"].items() if "giu_hinh" in v), key=lambda x: x[1]["hien_ro"])
+    chi_tiet, dich = [], 0.0
+    for sid, g in giu:
+        w = proj / "audio" / f"{sid}.wav"
+        d = thoi_luong_file(w) if w.exists() else None
+        if goc is None or d is None:
+            return None
+        ext = max(0.0, g["hien_ro"] + dich + truoc + d + sau - (g["dong_bang"] + dich))
+        chi_tiet.append((sid, ext))
+        dich += ext
+    return goc, dich, chi_tiet
+
+
 def cmd_kiem(proj, job, im=False):
     loi, cb = kiem_tra(proj, job)
     for x in cb:
@@ -132,6 +163,12 @@ def cmd_kiem(proj, job, im=False):
         sys.exit(f"[CHAN] {len(loi)} loi trong job.json")
     if not im:
         print("[OK] job.json hop le")
+        u = uoc_thoi_luong(proj, job)
+        if u and u[0] is not None:
+            goc, them, ct = u
+            dai = ", ".join(f"{k} +{e:.1f}s" for k, e in sorted(ct, key=lambda x: -x[1])[:3] if e >= 0.05)
+            print(f"[THONG TIN] thoi luong du kien {goc + them:.1f}s (video goc {goc:.1f}s, giu hinh them {them:.1f}s"
+                  + (f"; keo dai nhieu nhat: {dai}" if dai else "") + "). Muon ngan hon thi rut loi cac canh giu hinh")
 
 
 def cmd_lam_mo(proj, job):
@@ -202,10 +239,15 @@ def cmd_dung(proj, job):
     nhac = job.get("nhac", {"kieu": "khong", "muc": -13})
     ten = job.get("ten") or "video"
     chay(["bash", HERE / "dung_lai_video_co_san.sh", proj, "--kieu", nhac.get("kieu", "khong"),
-          "--muc", nhac.get("muc", -13), "--ten", ten])
+          "--muc", nhac.get("muc", -13), "--ten", ten] + (["--tung-tu"] if job.get("tung_tu") else []))
     if job.get("chu"):
         chay([sys.executable, HERE / "chu_may_chu.py", proj / "dong.json", proj / "chu.ass",
               "--vao", proj / "renders" / "final_portrait.mp4", "--ra", proj / "output" / f"{ten}-chu.mp4"])
+        if job.get("tung_tu"):
+            # ban du ca hai: chu ghi tren hinh (dai nen phia tren) chong len ban da co phu de tung tu (day khung)
+            chay([sys.executable, HERE / "chu_may_chu.py", proj / "dong.json", proj / "chu.ass",
+                  "--vao", proj / "output" / f"{ten}-phu-de-tung-tu.mp4",
+                  "--ra", proj / "output" / f"{ten}-chu-phu-de-tung-tu.mp4"])
 
 
 def main():

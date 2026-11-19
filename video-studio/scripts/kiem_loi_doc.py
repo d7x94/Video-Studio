@@ -5,7 +5,8 @@ Dung:
   python3 kiem_loi_doc.py PROJECT [--xung-ho-toi-da N] [--nghiem]
 
 Doc PROJECT/scenes.json; neu co PROJECT/job.json thi doi chieu moc anh tinh; neu co audio/<id>.wav thi do do dai loi
-(ffprobe), neu co timeline_ghep.json thi dung moc da ghep. Kiem:
+(ffprobe), neu co timeline_ghep.json thi dung moc da ghep (khong co thi tinh moc cue va giu_hinh tu job.json, co cong phan keo dai giu hinh) (CANH BAO neu file nay cu hon job.json, scenes.json
+hoac mot audio/<id>.wav: chay job.py dung roi kiem lai). Kiem:
   LOI (thoat ma 1):
     - loi chong len nhau (ket thuc loi truoc sau luc bat dau loi sau)
   CANH BAO:
@@ -79,13 +80,28 @@ def main():
     tg = proj / "timeline_ghep.json"
     if tg.exists():
         start = {k: float(v) for k, v in json.loads(tg.read_text(encoding="utf-8")).get("start", {}).items()}
+        moi_hon = [f for f in ("job.json", "scenes.json") if (proj / f).exists() and (proj / f).stat().st_mtime > tg.stat().st_mtime]
+        moi_hon += [f"audio/{k}.wav" for k in dur if (proj / "audio" / f"{k}.wav").stat().st_mtime > tg.stat().st_mtime]
+        if moi_hon:
+            cb.append(f"timeline_ghep.json cu hon {', '.join(moi_hon[:4])}{' ...' if len(moi_hon) > 4 else ''}: moc loi va ket qua kiem chong loi "
+                      "co the sai; chay job.py dung (hoac ghep_loi_video_co_san.py) roi kiem lai")
     elif job.get("canh"):
         truoc = job.get("khoang_truoc", 0.15)
+        sau = job.get("khoang_sau", 0.35)
         for k, v in job["canh"].items():
             if "cue" in v:
                 start[k] = float(v["cue"])
-            elif "giu_hinh" in v:
-                start[k] = float(v["giu_hinh"]["hien_ro"]) + truoc
+        # Chua co timeline_ghep.json: tinh moc giu_hinh bang cung cong thuc ghep_loi_video_co_san.py
+        # (moi canh giu hinh keo dai khung hinh nen day cac canh giu hinh sau no); thieu tieng thi khong keo dai duoc.
+        dich = 0.0
+        giu = sorted(((k, v["giu_hinh"]) for k, v in job["canh"].items() if "giu_hinh" in v), key=lambda x: float(x[1]["hien_ro"]))
+        for k, g in giu:
+            s = float(g["hien_ro"]) + dich + truoc
+            start[k] = s
+            if k in dur:
+                dich += max(0.0, s + dur[k] + sau - (float(g["dong_bang"]) + dich))
+            else:
+                cb.append(f"{k}: chua co audio/{k}.wav, chua tinh duoc phan keo dai giu hinh nen moc cac canh giu hinh sau no co the lech")
 
     tong_xh = 0
     for sc in scenes:

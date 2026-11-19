@@ -16,8 +16,8 @@ Script chi bao diem nghi ngo. Khong thay duoc mat nguoi: van phai xem bang anh v
 (script khong biet phieu o dau nen khong bao duoc "con lo phieu"; vung trang lon khong doi chi duoc danh dau neu
 dat --vung-trang).
 --nghiem: thoat voi ma 1 neu co bat ky canh bao nao (de dung trong chuoi lenh).
---vung-trang X0,X1,Y0,Y1: trong khung nay, bao CON-TRANG (vien cam) neu mot thanh phan trang lon (V>190, S<45, >= 1200
-  diem) cua anh da mo van sac net: do sac net (Laplacian) con hon --sac-ti-le (0,5) so voi anh goc, nghia la chu tren phieu
+--vung-trang X0,X1,Y0,Y1: trong khung nay, bao CON-TRANG (vien cam) neu mot thanh phan trang lon (V>190, S<45, >= --trang-min diem, mac dinh 1200;
+  ha xuong 300 khi can bat manh phieu boc nho) cua anh da mo van sac net: do sac net (Laplacian) con hon --sac-ti-le (0,5) so voi anh goc, nghia la chu tren phieu
   chua bi lam mo. Vung trang lon nhung chi la nen trang tron (do sac net goc < --sac-min) khong bi bao.
 Chi doc hinh (khong tieng). Yeu cau: ffmpeg, ffprobe, python3 co numpy va opencv-python.
 """
@@ -109,6 +109,7 @@ def main():
     ap.add_argument("--da-min", type=int, default=600, help="vung mo toi thieu (diem) de xet da")
     ap.add_argument("--lan-max", type=float, default=0.35)
     ap.add_argument("--vung-trang", help="X0,X1,Y0,Y1")
+    ap.add_argument("--trang-min", type=int, default=1200, help="so diem toi thieu cua thanh phan trang de xet con sot (mac dinh 1200; mang phieu boc nho thi ha xuong 300)")
     ap.add_argument("--sac-min", type=float, default=1.0, help="do sac net toi thieu cua vung trang goc de xet con sot")
     ap.add_argument("--sac-ti-le", type=float, default=0.5, help="vung trang con sac net hon ti le nay so voi goc thi bao con sot")
     ap.add_argument("--nghiem", action="store_true")
@@ -154,7 +155,7 @@ def main():
             lg = np.abs(cv2.Laplacian(cv2.cvtColor(g, cv2.COLOR_BGR2GRAY), cv2.CV_32F))
             lm = np.abs(cv2.Laplacian(cv2.cvtColor(m, cv2.COLOR_BGR2GRAY), cv2.CV_32F))
             for k in range(1, n):
-                if st[k][4] < 1200:
+                if st[k][4] < a.trang_min:
                     continue
                 bx, by, bw, bh = x0 + int(st[k][0]), y0 + int(st[k][1]), int(st[k][2]), int(st[k][3])
                 sg = float(lg[by:by + bh, bx:bx + bw].mean())
