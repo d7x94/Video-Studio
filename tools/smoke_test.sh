@@ -198,6 +198,21 @@ import importlib.util, sys
 spec = importlib.util.spec_from_file_location("pdt", sys.argv[1]); m = importlib.util.module_from_spec(spec); spec.loader.exec_module(m)
 assert m.kiem_dinh_dang("Dialogue: 0,0:00:01.00,0:00:02.00,Cap,,,Xin chào") == [], "dong dung bi bao loi"
 assert m.kiem_dinh_dang("Dialogue: 0,0:00:01.00,0:00:02.00,Cap,,0,0,0,,Xin chào"), "dong thua truong khong bi bat"
+assert m.kiem_dinh_dang("Dialogue: 0,0:00:01.00,0:00:02.00,Cap,,,2,5 mét dây cáp") == [], "so thap phan kieu Viet dau cau bi bao nham"
+PY
+# hai loi cach nhau 0,2 giay: su kien khong duoc chong (tu cuoi s01 keo dai 0,25 giay, tu dau s02 hien som 0,05 giay)
+V2="$P/vct2"; mkdir -p "$V2"
+echo '{"total": 3.0, "scenes": [{"id": "s01", "start": 0.0, "duration": 1.0}, {"id": "s02", "start": 1.2, "duration": 1.0}]}' > "$V2/timeline.json"
+echo '{"start": {"s01": 0.0, "s02": 1.2}, "tong_giay": 3.0}' > "$V2/timeline_ghep.json"
+echo '{"scenes": [{"id": "s01", "sub": [{"w": "Một", "s": 0.1, "e": 0.5}, {"w": "hai", "s": 0.5, "e": 1.0}]}, {"id": "s02", "sub": [{"w": "Ba", "s": 1.2, "e": 2.0}]}]}' > "$V2/moc-tu.json"
+python3 "$S/phu_de_tung_tu.py" "$V2" --font Inter >/dev/null || loi "phu_de_tung_tu.py (vct2) le ra dat"
+python3 -I - "$V2/phu-de-tung-tu.ass" <<'PY'
+import sys
+def g(x):
+    h, m, s = x.split(":"); return int(h) * 3600 + int(m) * 60 + float(s)
+ev = sorted((g(d.split(",")[1]), g(d.split(",")[2])) for d in open(sys.argv[1], encoding="utf-8") if d.startswith("Dialogue:"))
+assert len(ev) == 3, ev
+assert all(e1 <= s2 + 1e-6 for (_, e1), (s2, _) in zip(ev, ev[1:])), f"su kien phu de chong nhau: {ev}"
 PY
 cat > "$V/sua.srt" <<'EOF'
 1
@@ -222,7 +237,8 @@ p = Path(sys.argv[1]); sc = json.loads((p / "scenes.json").read_text(encoding="u
 assert sc[0]["narration"] == "Hôm nay hàng về, khui ngay!" and "subtitle" not in sc[0]
 assert sc[1]["subtitle"].endswith("dài 2 mét.") and sc[1]["narration"].startswith("Mặt trước ghi chữ Bel-kin"), "narration cach doc phai giu nguyen"
 kd = json.loads((p / "khang-dinh.json").read_text(encoding="utf-8"))["khang_dinh"]
-assert kd[0]["loai"] == "khong-khang-dinh" and kd[1]["loai"] == "chua-phan-loai", "canh nhan doi chu phai ve chua-phan-loai"
+assert kd[0]["loai"] == "chua-phan-loai" and kd[0].get("loai_cu") == "khong-khang-dinh", "cau khong-khang-dinh doi chu phai ve chua-phan-loai"
+assert kd[1]["loai"] == "chua-phan-loai" and kd[1].get("nhan_doc") == "belkin", "canh nhan doi chu phai ve chua-phan-loai, giu goi y"
 assert (p / "scenes.truoc-sua.json").exists()
 PY
 expect_fail python3 "$S/so_khang_dinh.py" kiem "$V"
@@ -230,7 +246,35 @@ printf '1\n00:00:09,000 --> 00:00:10,000\nSai moc\n' > "$V/lech.srt"
 python3 "$S/ap_sua_srt.py" "$V" "$V/lech.srt" 2>&1 | grep -q "lech moc canh" || loi "ap_sua_srt khong bao srt lech moc"
 touch -d "2000-01-01" "$V/timeline_ghep.json"
 python3 "$S/kiem_loi_doc.py" "$V" 2>&1 | grep -q "timeline_ghep.json cu hon" || loi "kiem_loi_doc khong bao timeline_ghep.json cu"
-pass "phu_de_tung_tu.py (moc ghep, kiem dinh dang), ap_sua_srt.py (xem truoc, ap, dong bo so khang dinh, srt lech), kiem_loi_doc timeline cu"
+# scenes.json khac thu tu thoi gian: khoi srt ghep theo moc; cau giu nguyen chu giu muc; canh chua co trong so duoc them muc
+V3="$P/vct3"; mkdir -p "$V3"
+cat > "$V3/scenes.json" <<'EOF'
+{"voice": "Hải Đăng", "scenes": [
+ {"id": "s02", "narration": "Cáp dài hai mét. Màu đen.", "visual": "x", "on_screen": {}},
+ {"id": "s01", "narration": "Mở hộp ra.", "visual": "x", "on_screen": {}}]}
+EOF
+echo '{"start": {"s01": 1.0, "s02": 5.0}, "tong_giay": 8.0}' > "$V3/timeline_ghep.json"
+cat > "$V3/khang-dinh.json" <<'EOF'
+{"khang_dinh": [
+ {"canh": "s02", "cau": "Cáp dài hai mét.", "loai": "nhan", "moc_giay": 5.2, "nhan_doc": "2m"},
+ {"canh": "s02", "cau": "Màu đen.", "loai": "quan-sat", "moc_giay": 5.5, "xac_nhan": "co"}]}
+EOF
+printf '1\n00:00:01,000 --> 00:00:02,000\nMở hộp ra, dài 3 mét.\n\n2\n00:00:05,000 --> 00:00:07,000\nCáp dài hai mét. Màu đen nhám.\n' > "$V3/sua.srt"
+python3 "$S/ap_sua_srt.py" "$V3" "$V3/sua.srt" --ap >/dev/null 2>&1 || loi "ap_sua_srt (vct3) le ra dat"
+python3 -I - "$V3" <<'PY'
+import json, sys
+from pathlib import Path
+p = Path(sys.argv[1]); sc = {s["id"]: s for s in json.loads((p / "scenes.json").read_text(encoding="utf-8"))["scenes"]}
+assert sc["s01"]["narration"] == "Mở hộp ra, dài 3 mét.", "khoi 1 phai vao canh som nhat (s01), khong phai canh dau scenes.json"
+assert sc["s02"]["narration"] == "Cáp dài hai mét. Màu đen nhám."
+kd = json.loads((p / "khang-dinh.json").read_text(encoding="utf-8"))["khang_dinh"]
+s02 = [e for e in kd if e["canh"] == "s02"]
+assert s02[0]["loai"] == "nhan" and s02[0]["cau"] == "Cáp dài hai mét.", "cau giu nguyen chu phai giu muc cu"
+assert s02[1]["loai"] == "chua-phan-loai" and "xac_nhan" not in s02[1] and s02[1]["loai_cu"] == "quan-sat"
+s01 = [e for e in kd if e["canh"] == "s01"]
+assert len(s01) == 1 and s01[0]["loai"] == "chua-phan-loai", "canh doi chua co trong so phai duoc them muc"
+PY
+pass "phu_de_tung_tu.py (moc ghep, kiem dinh dang), ap_sua_srt.py (xem truoc, ap, dong bo so khang dinh, srt lech, thu tu theo moc, cau doi chu), phu de khong chong, kiem_loi_doc timeline cu"
 
 # 6. Script shell: cu phap
 for f in "$S"/*.sh "$ROOT"/tools/*.sh; do bash -n "$f"; done

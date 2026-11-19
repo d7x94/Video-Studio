@@ -15,7 +15,8 @@ Phai chay SAU job.py dung (timeline_ghep.json moi) va SAU moc_tu.py (moc-tu.json
 Font: --font, neu khong co thi tim "Be Vietnam Pro" ban TTF/OTF trong he thong (fc-list), roi "Inter"; khong co ca hai thi
 dung font mac dinh cua fontconfig va in [CANH BAO]. Be Vietnam Pro do setup.sh cai (@fontsource) chi co woff/woff2
 nen libass (ffmpeg ass=) khong doc duoc; muon dung phai tu cai ban TTF/OTF.
-Script tu kiem dinh dang ASS (moi dong Dialogue du 7 truong, van ban khong bat dau bang so va dau phay); loi thi thoat ma 1.
+Hai su kien khong hien cung luc: ket thuc cua su kien bi cat o luc su kien ke tiep bat dau (ke ca giua hai canh).
+Script tu kiem dinh dang ASS (moi dong Dialogue du 7 truong, moc thoi gian dung dang, Name va Effect rong); loi thi thoat ma 1.
 Phu de nam o day khung hinh doc 720x1280 (PlayRes theo video khi co --ghi: doc kich thuoc bang ffprobe).
 Yeu cau: python3, ffmpeg/ffprobe, fc-list (tuy chon).
 """
@@ -71,7 +72,7 @@ def dung_ass(proj, font, mau, mep, co_chu, rong, cao):
         f"Style: Cap,{font},{co_chu},&H00FFFFFF,&H00FFFFFF,&H00000000,&H80000000,1,0,0,0,100,100,0,0,1,4,1,2,50,50,{mep},1\n\n"
         "[Events]\nFormat: Layer,Start,End,Style,Name,Effect,Text\n"
     )
-    dong = []
+    su_kien = []
     thieu = []
     for sid, m in moc.items():
         tu = m.get("sub") or []
@@ -88,13 +89,29 @@ def dung_ass(proj, font, mau, mep, co_chu, rong, cao):
             if i == 0:
                 s = max(0.0, s - 0.05)
             van = " ".join((f"{{\\c{hi}}}{x['w']}{{\\c&H00FFFFFF&}}" if j == i else x["w"]) for j, x in enumerate(tu))
-            dong.append(f"Dialogue: 0,{tg(s)},{tg(e)},Cap,,,{van}")
+            su_kien.append([s, e, van])
     if thieu:
         print(f"[CANH BAO] canh co trong moc-tu.json nhung khong co trong timeline: {', '.join(thieu)}", file=sys.stderr)
+    # Khong de hai su kien hien cung luc (libass xep thanh hai dong): cat ket thuc o luc su kien ke tiep bat dau.
+    # Hai loi cach nhau duoi 0,3 giay thi phan keo dai 0,25 giay cua tu cuoi va 0,05 giay hien som cua tu dau se chong.
+    su_kien.sort(key=lambda x: x[0])
+    dong = []
+    for k, (s, e, van) in enumerate(su_kien):
+        if k + 1 < len(su_kien):
+            e = min(e, su_kien[k + 1][0])
+        if e - s < 0.01:
+            continue
+        dong.append(f"Dialogue: 0,{tg(s)},{tg(e)},Cap,,,{van}")
     return dau + "\n".join(dong) + "\n", len(dong)
 
 
+THOI_ASS = re.compile(r"^\d+:\d{2}:\d{2}\.\d{2}$")
+
+
 def kiem_dinh_dang(noi_dung):
+    """Moi dong Dialogue: Layer,Start,End,Style,Name,Effect,Text. Script nay luon de trong Name va Effect, nen
+    Name hoac Effect khac rong nghia la dong bi thua truong (vd ban viet tay "Cap,,0,0,0,,chu" lam "0,0,," lot len hinh).
+    Khong xet noi dung Text: phu de co the bat dau bang so thap phan kieu Viet ("2,5 met")."""
     loi = []
     for n, d in enumerate(noi_dung.splitlines(), 1):
         if not d.startswith("Dialogue:"):
@@ -102,8 +119,10 @@ def kiem_dinh_dang(noi_dung):
         truong = d[len("Dialogue:"):].strip().split(",", 6)
         if len(truong) != 7:
             loi.append(f"dong {n}: {len(truong)} truong, can 7")
-        elif re.match(r"^\d+,", truong[6]):
-            loi.append(f"dong {n}: van ban bat dau bang so va dau phay (thua truong)")
+        elif not (THOI_ASS.match(truong[1]) and THOI_ASS.match(truong[2])):
+            loi.append(f"dong {n}: moc thoi gian sai dinh dang")
+        elif truong[4] or truong[5]:
+            loi.append(f"dong {n}: truong Name/Effect khac rong (thua truong)")
     return loi
 
 

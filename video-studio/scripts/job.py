@@ -21,7 +21,8 @@ job.json (phan_tich_dau_vao.py tao ban mau, dien them tay):
    "s11": {"giu_hinh": {"hien_ro": 76.13, "dong_bang": 78.64}}},   # keo dai anh tinh bang cach giu khung hinh
  "chu": [[42.6, 46.0, "Chu chinh", "Nguon: ..."]],   # chu ghi tren hinh (chu_may_chu.py), tuy chon
  "nhac": {"kieu": "khong", "muc": -13},           # kieu nhac nen cua nhac_nen.py, "khong" = khong them nhac
- "tung_tu": false,                                # true: them output/<ten>-phu-de-tung-tu.mp4 (phu de tung tu, tu dang doc doi mau)
+ "tung_tu": false,                                # true: them output/<ten>-phu-de-tung-tu.mp4 (phu de tung tu, tu dang doc doi mau);
+                                                  # co ca "chu" thi them output/<ten>-chu-phu-de-tung-tu.mp4 (du ca hai)
  "khoang_truoc": 0.15, "khoang_sau": 0.35         # tuy chon
 }
 Duong dan trong job.json tuong doi PROJECT (hoac tuyet doi). Tat ca script goi ben duoi la script san co:
@@ -242,6 +243,11 @@ def cmd_dung(proj, job):
     if job.get("chu"):
         chay([sys.executable, HERE / "chu_may_chu.py", proj / "dong.json", proj / "chu.ass",
               "--vao", proj / "renders" / "final_portrait.mp4", "--ra", proj / "output" / f"{ten}-chu.mp4"])
+        if job.get("tung_tu"):
+            # ban du ca hai: chu ghi tren hinh (dai nen phia tren) chong len ban da co phu de tung tu (day khung)
+            chay([sys.executable, HERE / "chu_may_chu.py", proj / "dong.json", proj / "chu.ass",
+                  "--vao", proj / "output" / f"{ten}-phu-de-tung-tu.mp4",
+                  "--ra", proj / "output" / f"{ten}-chu-phu-de-tung-tu.mp4"])
 
 
 def main():
