@@ -15,6 +15,10 @@ Ra RA_DIR:
 Script chi bao diem nghi ngo. Khong thay duoc mat nguoi: van phai xem bang anh va kiem tra phieu con sot
 (script khong biet phieu o dau nen khong bao duoc "con lo phieu"; vung trang lon khong doi chi duoc danh dau neu
 dat --vung-trang).
+--vung-chu X0,X1,Y0,Y1: trong khung nay, tinh "diem chu" cua anh da mo: so o 16x16 nam trong vung sang, it sac (giay trang) co mat do canh cao
+  (chu in, ma vach). Diem >= --chu-nguong (mac dinh 12) bao CON-CHU. Day la phep do thuc nghiem: tren video khui hang mau, anh goc co diem 10 den 155
+  khi phieu vao khung, anh da mo da lam mo dung cach co diem toi da 9. Khong doc duoc ma vach hay QR (da thu cv2.barcode va QRCodeDetector: 0 lan nhan ra
+  tren anh goc), nen chi la tin hieu "con nhieu net chu tren nen trang", khong phai bang chung doc duoc hay khong. Nguong can dat lai theo tung video.
 --nghiem: thoat voi ma 1 neu co bat ky canh bao nao (de dung trong chuoi lenh).
 --vung-trang X0,X1,Y0,Y1: trong khung nay, bao CON-TRANG (vien cam) neu mot thanh phan trang lon (V>190, S<45, >= --trang-min diem, mac dinh 1200;
   ha xuong 300 khi can bat manh phieu boc nho) cua anh da mo van sac net: do sac net (Laplacian) con hon --sac-ti-le (0,5) so voi anh goc, nghia la chu tren phieu
@@ -74,6 +78,23 @@ def changed_mask(goc, mo, nguong):
     return m.astype(bool)
 
 
+def diem_chu(bgr):
+    """Diem chu: so o 16x16 trong vung sang it sac co mat do canh cao (chu in, ma vach tren giay trang)."""
+    hsv = cv2.cvtColor(bgr, cv2.COLOR_BGR2HSV)
+    sang = ((hsv[..., 2] > 150) & (hsv[..., 1] < 70)).astype(np.uint8)
+    sang = cv2.morphologyEx(sang, cv2.MORPH_CLOSE, np.ones((9, 9), np.uint8))
+    g = cv2.cvtColor(bgr, cv2.COLOR_BGR2GRAY)
+    grad = cv2.morphologyEx(g, cv2.MORPH_GRADIENT, cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3)))
+    edge = (grad > 45) & (sang > 0)
+    h, w = edge.shape
+    n = 0
+    for y in range(0, h - 15, 16):
+        for x in range(0, w - 15, 16):
+            if edge[y:y + 16, x:x + 16].mean() > 0.18:
+                n += 1
+    return n
+
+
 def draw_row(goc, mo, ch, do_hit, da_hit, nhan, tr, vung_trang_box):
     h, w = goc.shape[:2]
     ov = goc.copy()
@@ -112,6 +133,8 @@ def main():
     ap.add_argument("--trang-min", type=int, default=1200, help="so diem toi thieu cua thanh phan trang de xet con sot (mac dinh 1200; mang phieu boc nho thi ha xuong 300)")
     ap.add_argument("--sac-min", type=float, default=1.0, help="do sac net toi thieu cua vung trang goc de xet con sot")
     ap.add_argument("--sac-ti-le", type=float, default=0.5, help="vung trang con sac net hon ti le nay so voi goc thi bao con sot")
+    ap.add_argument("--vung-chu", help="X0,X1,Y0,Y1")
+    ap.add_argument("--chu-nguong", type=int, default=12, help="diem chu cua anh da mo tu muc nay bao CON-CHU")
     ap.add_argument("--nghiem", action="store_true")
     a = ap.parse_args()
 
@@ -127,6 +150,7 @@ def main():
     if a.vung_trang:
         vt = tuple(int(v) for v in a.vung_trang.split(","))
 
+    vc = tuple(int(v) for v in a.vung_chu.split(",")) if a.vung_chu else None
     rows, bao_cao, canh_bao = [], [], []
     for i, (g, m) in enumerate(zip(frames(a.goc, w, h, a.tu, den, a.buoc), frames(a.mo, w, h, a.tu, den, a.buoc))):
         t = a.tu + i * a.buoc
@@ -165,13 +189,21 @@ def main():
                     box.append((bx, by, bw, bh))
             if box:
                 flags.append("CON-TRANG")
+        d_chu = None
+        if vc:
+            x0, x1, y0, y1 = vc
+            d_goc, d_chu = diem_chu(g[y0:y1, x0:x1]), diem_chu(m[y0:y1, x0:x1])
+            if d_chu >= a.chu_nguong:
+                flags.append("CON-CHU")
         nhan = f"t={t:5.2f}s  mo {100 * n_ch / (w * h):4.1f}%  do {n_do_hit}  da {n_da}"
+        if vc:
+            nhan += f"  chu {d_goc}->{d_chu}"
         if flags:
             nhan += "  CANH BAO " + ",".join(flags)
             canh_bao.append(round(t, 2))
         rows.append(draw_row(g, m, ch, do_hit, da_hit, nhan, a.rong_o, box))
         bao_cao.append({"giay": round(t, 2), "mo_pct": round(100 * n_ch / (w * h), 2), "do_doi": n_do_hit,
-                        "da_doi": n_da, "canh_bao": flags})
+                        "da_doi": n_da, "diem_chu_mo": d_chu, "canh_bao": flags})
 
     if not rows:
         sys.exit("[LOI] khong doc duoc khung hinh nao trong khoang da chon")

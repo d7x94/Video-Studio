@@ -5,7 +5,7 @@ description: "Studio san xuat video tieng Viet nhieu agent: bien kich, kiem chun
 
 # Video Studio
 
-Phiên bản skill: 1.16.0 (khớp file `VERSION`; xem `CHANGELOG.md` trong repo).
+Phiên bản skill: 1.17.0 (khớp file `VERSION`; xem `CHANGELOG.md` trong repo).
 
 Bạn là **điều phối viên** của một studio sản xuất video. Người dùng giao một yêu cầu; bạn dẫn nó qua 8 bước đến khi có gói thành phẩm sẵn sàng đăng. Người dùng chỉ phải làm 4 việc: giao việc, duyệt kịch bản, duyệt bản xem trước, tải thành phẩm. Video có nhân vật (line-art, chibi hoặc 3D) thêm một việc: chốt dàn nhân vật ở cổng casting (bước 3b), giống casting diễn viên trước khi quay phim. Video vẽ tay (`ve-tay`) thêm một việc: tạo tranh theo câu lệnh studio viết sẵn (bước 3c), vì studio không tự tạo được ảnh. Kiểu `ve-net` (bút vẽ từng nét bằng code) không cần tranh nên không thêm việc nào. Mọi thứ khác là việc của studio. Khi người dùng chưa có chủ đề và nhờ tìm ý tưởng, thêm một việc ở bước 0a: chọn một ý trong bảng ý tưởng.
 
@@ -264,7 +264,7 @@ Gửi từng file trong `output/` bằng công cụ gửi file (không gửi th�
 
 Dùng khi người dùng gửi một video đã quay hoặc đã dựng và chỉ nhờ viết lời, lồng tiếng (có thể kèm làm mờ thông tin nhạy cảm, thêm thông tin cho các ảnh tĩnh). Không dựng hình mới nên bỏ bước 5 (HyperFrames). Giữ nguyên các cổng duyệt và quy tắc chung; thể loại thường là `unbox.md` hoặc `review.md`. **Đọc `references/che-do-video-co-san.md` trước khi làm** (quy trình chi tiết, quy tắc làm mờ, ghép, ghi chữ, giới hạn đã biết).
 
-Chạy theo thứ tự, mỗi video một `job.json`: `scripts/phan_tich_dau_vao.py` (phân tích đầu vào, tạo `job.json`) → viết lời theo mốc → `scripts/so_khang_dinh.py kiem` (sổ khẳng định, chặn câu chưa xác nhận) → `tts.py` → `scripts/kiem_loi_doc.py` → `scripts/job.py lam-mo` rồi xem bảng khung `qa/lam-mo/` bằng mắt → `scripts/job.py dung` → giao. Người dùng sửa lời bằng srt: `scripts/ap_sua_srt.py`. Cần phụ đề từng từ ghi cứng: `"tung_tu": true` trong `job.json` hoặc `scripts/phu_de_tung_tu.py`. Các script chỉ gom việc cơ học và báo điểm nghi ngờ; viết lời, chọn nguồn thương hiệu và chọn vùng che vẫn do người duyệt quyết định.
+Chạy theo thứ tự, mỗi video một `job.json`: `scripts/phan_tich_dau_vao.py` (phân tích đầu vào, tạo `job.json`) → viết lời theo mốc → `scripts/so_khang_dinh.py kiem` (sổ khẳng định, chặn câu chưa xác nhận) → `tts.py` → `scripts/kiem_loi_doc.py` → `scripts/job.py lam-mo` rồi xem bảng khung `qa/lam-mo/` bằng mắt → `scripts/job.py dung` → `scripts/giao_co_san.py` → giao. Người dùng sửa lời bằng srt: `scripts/ap_sua_srt.py`; sửa thẳng `scenes.json` thì `scripts/so_khang_dinh.py dong-bo`. Nhạc chỉ ở đoạn ảnh tĩnh: `nhac.doan` trong `job.json`. Cần phụ đề từng từ ghi cứng: `"tung_tu": true` trong `job.json` hoặc `scripts/phu_de_tung_tu.py`. Các script chỉ gom việc cơ học và báo điểm nghi ngờ; viết lời, chọn nguồn thương hiệu và chọn vùng che vẫn do người duyệt quyết định.
 
 ## Chế độ dịch video
 

@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 # Dung lai video co san sau moi lan sua loi doc hoac lam mo: ghep loi, cap nhat timeline, nhac nen (neu co),
 # chuan am, chep ra output/. Chay sau khi da doc lai cac canh bi sua (tts.py --only ...).
-# Dung:  bash dung_lai_video_co_san.sh PROJECT [--cau-hinh ghep.json] [--kieu nhe-nhang|khong] [--muc -13] [--ten ten-video]
+# Dung:  bash dung_lai_video_co_san.sh PROJECT [--cau-hinh ghep.json] [--kieu nhe-nhang|khong] [--muc -13] [--ten ten-video] [--doan TU,DEN]
 #   --kieu   kieu nhac nen cua nhac_nen.py; "khong" (mac dinh) = khong them nhac
 #   --muc    muc nhac nen dB truoc khi giam theo loi (mac dinh -13; video loi thua nen nhe hon mac dinh -10 cua nhac_nen.py)
+#   --doan   nhac chi nghe trong doan TU,DEN giay (tren video da ghep), lap lai duoc; mac dinh nhac chay het video
 #   --ten    ten file ra o PROJECT/output/<ten>.mp4 (mac dinh video)
 #   --tung-tu  them output/<ten>-phu-de-tung-tu.mp4: phu de tung tu (tu dang doc doi mau) ghi cung vao hinh
 #              (moc_tu.py roi phu_de_tung_tu.py --ghi); giu nguyen output/<ten>.mp4 khong phu de cung
@@ -14,13 +15,14 @@ die() { echo "[LOI] dung_lai_video_co_san.sh: $*" >&2; exit 1; }
 
 PROJECT="${1:-}"; [ -d "$PROJECT" ] || die "dung: bash dung_lai_video_co_san.sh PROJECT [--cau-hinh ghep.json] [--kieu K] [--muc dB] [--ten ten] [--tung-tu]"
 shift
-CFG="ghep.json"; KIEU="khong"; MUC="-13"; TEN="video"; TUNG_TU=0
+CFG="ghep.json"; KIEU="khong"; MUC="-13"; TEN="video"; TUNG_TU=0; DOAN=()
 while [ $# -gt 0 ]; do
   case "$1" in
     --cau-hinh) CFG="$2"; shift 2 ;;
     --kieu) KIEU="$2"; shift 2 ;;
     --muc) MUC="$2"; shift 2 ;;
     --ten) TEN="$2"; shift 2 ;;
+    --doan) DOAN+=(--doan "$2"); shift 2 ;;
     --tung-tu) TUNG_TU=1; shift ;;
     *) die "tham so la: $1" ;;
   esac
@@ -46,7 +48,7 @@ t["total"] = g["tong_giay"]
 json.dump(t, open("timeline.json", "w"))
 PY
 if [ "$KIEU" != "khong" ]; then
-  python3 "$HERE/nhac_nen.py" . --kieu "$KIEU" --muc "$MUC" "$OUT"
+  python3 "$HERE/nhac_nen.py" . --kieu "$KIEU" --muc "$MUC" ${DOAN[@]+"${DOAN[@]}"} "$OUT"
 fi
 # chuan_am.sh thoat ma 1 ca khi chi lech muc tieu (da ghi file chuan hoa) lan khi loi that. Chi bo qua truong hop thu nhat:
 # van chep ra output/ va in lai canh bao o cuoi; co dong [LOI] trong stderr thi dung chuoi.

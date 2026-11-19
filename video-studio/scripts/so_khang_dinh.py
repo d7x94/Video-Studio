@@ -3,6 +3,7 @@
 
 Dung:
   python3 so_khang_dinh.py khoi PROJECT     # tao PROJECT/khang-dinh.json mau tu scenes.json (moi cau mot muc, loai "chua-phan-loai")
+  python3 so_khang_dinh.py dong-bo PROJECT  # sau khi sua scenes.json: giu muc cu cua cau khong doi chu, cau moi/doi chu ve "chua-phan-loai"
   python3 so_khang_dinh.py kiem PROJECT     # kiem so khang dinh; thoat ma 1 neu con loi chan
   python3 so_khang_dinh.py ghi PROJECT      # kiem roi ghi PROJECT/kiem-chung.md (bang) tu so khang dinh
 
@@ -84,6 +85,43 @@ def tai(proj):
     if not p.exists():
         sys.exit(f"[LOI] chua co {p}: chay so_khang_dinh.py khoi {proj}")
     return json.loads(p.read_text(encoding="utf-8"))["khang_dinh"]
+
+
+def dong_bo(proj):
+    """Dong bo khang-dinh.json voi scenes.json sau khi sua loi: cau trung chu (cung canh, so khop khong dau) giu nguyen muc cu
+    (loai, moc_giay, xac_nhan, nguon...); cau moi hoac doi chu ve "chua-phan-loai" (loai cu ghi o "loai_cu" neu cung canh con muc
+    chua duoc dung); muc khong con cau nao tuong ung bi bo. Giu ban sao khang-dinh.truoc-dong-bo.json."""
+    cu = tai(proj)
+    (proj / "khang-dinh.truoc-dong-bo.json").write_text(json.dumps({"khang_dinh": cu}, ensure_ascii=False, indent=1), encoding="utf-8")
+    con = {}
+    for e in cu:
+        con.setdefault((e["canh"], chuan(e["cau"])), []).append(e)
+    moi, giu, them, doi = [], 0, [], []
+    for sc in doc_canh(proj):
+        chu = sc.get("subtitle") or sc["narration"]
+        for c in tach_cau(chu):
+            ds = con.get((sc["id"], chuan(c)))
+            if ds:
+                e = dict(ds.pop(0)); e["cau"] = c
+                moi.append(e); giu += 1
+            else:
+                moi.append({"canh": sc["id"], "cau": c, "loai": "chua-phan-loai"})
+                them.append(f"{sc['id']}: {c}")
+    # muc cu khong con cau tuong ung: ghi loai cu vao cau moi chua phan loai cung canh (goi y), roi bo
+    bo = [e for ds in con.values() for e in ds]
+    for e in bo:
+        for m in moi:
+            if m["canh"] == e["canh"] and m["loai"] == "chua-phan-loai" and "loai_cu" not in m:
+                if e.get("loai") and e["loai"] != "chua-phan-loai":
+                    m["loai_cu"] = e["loai"]
+                doi.append(e)
+                break
+    (proj / "khang-dinh.json").write_text(json.dumps({"khang_dinh": moi}, ensure_ascii=False, indent=1), encoding="utf-8")
+    print(f"[OK] khang-dinh.json: giu {giu} muc cu, {len(them)} cau moi hoac doi chu ve chua-phan-loai, bo {len(bo)} muc khong con cau")
+    for x in them:
+        print(f"[CAN PHAN LOAI] {x}")
+    for e in bo:
+        print(f"[DA BO] {e['canh']}: {e['cau']} ({e.get('loai')})")
 
 
 def kiem_tra(proj):
@@ -177,11 +215,13 @@ def ghi(proj):
 
 
 def main():
-    if len(sys.argv) != 3 or sys.argv[1] not in ("khoi", "kiem", "ghi"):
+    if len(sys.argv) != 3 or sys.argv[1] not in ("khoi", "dong-bo", "kiem", "ghi"):
         sys.exit(__doc__)
     cmd, proj = sys.argv[1], Path(sys.argv[2])
     if cmd == "khoi":
         return khoi(proj)
+    if cmd == "dong-bo":
+        return dong_bo(proj)
     loi, cb = kiem_tra(proj)
     for x in cb:
         print(f"[CANH BAO] {x}", file=sys.stderr)

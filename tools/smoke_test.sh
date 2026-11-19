@@ -343,6 +343,106 @@ if grep -q "anh_tinh_khong_loi" "$V6/kq.txt"; then loi "kiem_loi_doc canh bao nh
 python3 "$S/check_output.py" --help | grep -q -- "--co-san" || loi "check_output thieu --co-san"
 pass "phu_de_tung_tu.py (moc ghep, kiem dinh dang), ap_sua_srt.py (xem truoc, ap, dong bo so khang dinh, srt lech, thu tu theo moc, cau doi chu), phu de khong chong, kiem_loi_doc timeline cu, giu hinh lien tiep, cue sau giu_hinh va loi vuot cuoi video, anh_tinh_khong_loi"
 
+# so_khang_dinh.py dong-bo: sua loi thi giu muc cu cua cau khong doi, cau doi chu ve chua-phan-loai, ban sao truoc khi dong bo
+V7="$P/vct7"; mkdir -p "$V7"
+cat > "$V7/scenes.json" <<'EOF'
+{"voice": "Hải Đăng", "scenes": [
+ {"id": "s01", "narration": "Hàng đã về. Túi nguyên vẹn.", "visual": "x", "on_screen": {}},
+ {"id": "s02", "narration": "Dây chỉnh được bằng khóa.", "visual": "x", "on_screen": {}}]}
+EOF
+python3 "$S/so_khang_dinh.py" khoi "$V7" > /dev/null
+python3 -I - "$V7" <<'PY'
+import json, sys
+p = sys.argv[1] + "/khang-dinh.json"
+d = json.load(open(p, encoding="utf-8"))
+for e in d["khang_dinh"]:
+    if e["cau"].startswith("Hàng"):
+        e["loai"] = "khong-khang-dinh"
+    elif e["cau"].startswith("Túi"):
+        e.update({"loai": "quan-sat", "moc_giay": 4.5, "xac_nhan": "co"})
+    else:
+        e.update({"loai": "quan-sat", "moc_giay": 50.0, "xac_nhan": "co"})
+json.dump(d, open(p, "w", encoding="utf-8"), ensure_ascii=False)
+sc = json.load(open(sys.argv[1] + "/scenes.json", encoding="utf-8"))
+sc["scenes"][0]["narration"] = "Hàng đã về. Túi nguyên vẹn, không móp."
+sc["scenes"][1]["narration"] = "Dây chỉnh được bằng khóa."
+json.dump(sc, open(sys.argv[1] + "/scenes.json", "w", encoding="utf-8"), ensure_ascii=False)
+PY
+python3 "$S/so_khang_dinh.py" dong-bo "$V7" > "$V7/kq.txt" || { cat "$V7/kq.txt"; loi "so_khang_dinh dong-bo loi"; }
+python3 -I - "$V7" <<'PY' || loi "so_khang_dinh dong-bo: ket qua sai"
+import json, sys
+d = json.load(open(sys.argv[1] + "/khang-dinh.json", encoding="utf-8"))["khang_dinh"]
+by = {e["cau"]: e for e in d}
+assert by["Hàng đã về."]["loai"] == "khong-khang-dinh", by
+assert by["Dây chỉnh được bằng khóa."]["xac_nhan"] == "co" and by["Dây chỉnh được bằng khóa."]["moc_giay"] == 50.0, by
+moi = by["Túi nguyên vẹn, không móp."]
+assert moi["loai"] == "chua-phan-loai" and moi.get("loai_cu") == "quan-sat" and "xac_nhan" not in moi, moi
+assert len(d) == 3, d
+PY
+[ -f "$V7/khang-dinh.truoc-dong-bo.json" ] || loi "so_khang_dinh dong-bo khong giu ban sao"
+grep -q "CAN PHAN LOAI" "$V7/kq.txt" || loi "so_khang_dinh dong-bo khong liet ke cau can phan loai"
+expect_fail python3 "$S/so_khang_dinh.py" kiem "$V7"
+pass "so_khang_dinh.py dong-bo (giu muc cu cua cau khong doi, cau doi chu ve chua-phan-loai, ban sao, kiem chan)"
+
+# giao_co_san.py: gom thanh pham video co san, credits sinh tu job.json, thieu kiem-chung.md thi chan
+V9="$P/vct9"; mkdir -p "$V9/output"
+echo '{"ten": "demo", "giong": "Hải Đăng", "nhac": {"kieu": "nhe-nhang"}, "lam_mo": [{"cach": "tay"}]}' > "$V9/job.json"
+for f in demo.mp4 demo-phu-de-tung-tu.mp4; do echo x > "$V9/output/$f"; done
+echo 1 > "$V9/output/phu-de.srt"; echo 1 > "$V9/output/loi-doc.md"
+printf 'Style: Cap,Inter,64,&H00FFFFFF\n' > "$V9/phu-de-tung-tu.ass"
+expect_fail python3 "$S/giao_co_san.py" "$V9"
+echo kc > "$V9/kiem-chung.md"
+python3 "$S/giao_co_san.py" "$V9" > "$V9/kq.txt" || { cat "$V9/kq.txt"; loi "giao_co_san loi bat ngo"; }
+for f in demo_khong-phu-de.mp4 demo_phu-de-tung-tu.mp4 phu-de.srt loi-doc.md kiem-chung.md credits.md; do
+  [ -s "$V9/giao/$f" ] || loi "giao_co_san thieu $f"
+done
+[ ! -e "$V9/giao/demo_chu.mp4" ] || loi "giao_co_san chep file khong co"
+grep -q "Hải Đăng" "$V9/giao/credits.md" && grep -q "nhe-nhang" "$V9/giao/credits.md" && grep -q "font Inter" "$V9/giao/credits.md" || loi "giao_co_san: credits thieu giong, nhac hoac font"
+grep -q "metadata.md" "$V9/kq.txt" || loi "giao_co_san khong canh bao thieu metadata.md"
+pass "giao_co_san.py (gom file, credits tu job.json, chan thieu kiem-chung.md, canh bao thieu metadata.md)"
+
+# nhac_nen.py --doan: nhac chi nghe trong doan chi dinh (can ffmpeg that; bo qua khi may khong co ffmpeg)
+if command -v ffmpeg >/dev/null 2>&1; then
+  V8="$P/vct8"; mkdir -p "$V8/renders"
+  echo '{"total": 10.0, "scenes": []}' > "$V8/timeline.json"
+  ffmpeg -v error -y -f lavfi -i testsrc=size=160x90:rate=10:duration=10 -f lavfi -i anullsrc=r=48000:cl=stereo -t 10 \
+    -c:v libx264 -pix_fmt yuv420p -c:a aac "$V8/renders/final_t.mp4"
+  python3 "$S/nhac_nen.py" "$V8" --kieu nhe-nhang --doan 6,9 "$V8/renders/final_t.mp4" > /dev/null || loi "nhac_nen --doan that bai"
+  expect_fail python3 "$S/nhac_nen.py" "$V8" --kieu nhe-nhang --doan 9,6 "$V8/renders/final_t.mp4"
+  ffmpeg -v error -y -i "$V8/renders/final_t.mp4" -f f32le -ac 1 -ar 8000 "$V8/a.f32"
+  python3 -I - "$V8/a.f32" <<'PY' || loi "nhac_nen --doan: nhac nghe ngoai doan hoac khong nghe trong doan"
+import sys, numpy as np
+x = np.fromfile(sys.argv[1], dtype=np.float32)
+def db(a, b):
+    seg = x[int(a * 8000):int(b * 8000)]
+    return 20 * np.log10(np.sqrt((seg ** 2).mean()) + 1e-9)
+assert db(0, 5) < -60 and db(9.2, 10) < -60, (db(0, 5), db(9.2, 10))
+assert db(6.5, 8.5) > -45, db(6.5, 8.5)
+PY
+  pass "nhac_nen.py --doan (nhac chi nghe trong doan, loi tham so)"
+else
+  echo "[BO QUA] nhac_nen.py --doan: may khong co ffmpeg"
+fi
+
+# V10. kiem_khung_lam_mo: diem chu (giay trang co chu in giam manh sau khi mo)
+python3 - "$S" <<'PY'
+import sys
+import cv2
+import numpy as np
+sys.path.insert(0, sys.argv[1])
+import kiem_khung_lam_mo as k
+img = np.full((300, 400, 3), 235, np.uint8)
+for y in range(20, 280, 14):
+    for x in range(20, 380, 10):
+        if (x * 7 + y * 3) % 5 < 3:
+            cv2.rectangle(img, (x, y), (x + 5, y + 8), (20, 20, 20), -1)
+mo = cv2.GaussianBlur(img, (0, 0), 12)
+d0, d1 = k.diem_chu(img), k.diem_chu(mo)
+assert d0 >= 12 and d1 < 12, (d0, d1)
+assert k.diem_chu(np.full((300, 400, 3), 235, np.uint8)) == 0
+PY
+pass "kiem_khung_lam_mo diem_chu (chu ro cao, sau khi mo thap, giay tron bang 0)"
+
 # 6. Script shell: cu phap
 for f in "$S"/*.sh "$ROOT"/tools/*.sh; do bash -n "$f"; done
 pass "cu phap script shell"
