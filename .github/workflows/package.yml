@@ -26,6 +26,11 @@ jobs:
         run: |
           for f in video-studio/scripts/*.sh tools/*.sh; do bash -n "$f"; done
           python3 -m py_compile video-studio/scripts/*.py
+      - name: Ruff (chi loi cu phap va Pyflakes, khong luat kieu dang)
+        run: |
+          python3 -m venv "$RUNNER_TEMP/ruff-venv"
+          "$RUNNER_TEMP/ruff-venv/bin/pip" install -q ruff==0.16.9
+          "$RUNNER_TEMP/ruff-venv/bin/ruff" check --isolated --select E9,F video-studio/scripts tools
       - name: Thu nhanh cac script (khong can mo hinh, trinh duyet)
         run: |
           # venv: smoke_test.sh chay python3 -I (bo qua goi --user), nen goi phai nam trong venv
