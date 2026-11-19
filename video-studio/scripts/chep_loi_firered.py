@@ -16,7 +16,10 @@ Moi cum dung nguyen am thanh trong cua so. Doan cat rieng hay lan chu cua doan b
 ket qua khac cum (da gap tren mot clip 27 giay: cum doc "吹头发", cat rieng doan lai ra "吃豆腐"), nen ca hai
 deu duoc ghi, nhung co KHAC chi dua tren cum: loi Whisper khong nam trong ban chep cua cum thi moi bao khac.
 Mo hinh: scripts/lay_asr.py firered2 (GitHub Release, du phong HuggingFace, kiem sha256).
-Can: pip install sherpa-onnx (ban ghim trong setup.sh, chay: bash setup.sh --firered). AED gioi han 60 giay moi lan
+So sanh KHAC: ca hai ben chuyen ve chu Han gian the bang OpenCC (t2s) truoc khi so, vi Whisper hay chep tieng
+pho thong bang phon the con FireRed ra gian the. Bang .md van giu nguyen chu cua tung mo hinh. Chua quy doi so
+(Whisper "3", FireRed "三" van bao KHAC).
+Can: pip install sherpa-onnx opencc (ban ghim trong setup.sh, chay: bash setup.sh --firered). AED gioi han 60 giay moi lan
 doc; script dung cua so toi da 30 giay.
 """
 import argparse
@@ -49,9 +52,16 @@ def thu_muc_mo_hinh() -> Path:
     return Path(r.stdout.strip().splitlines()[-1])
 
 
+_T2S = None
+
+
 def chuan(s: str) -> str:
-    """Chi giu chu, so de so sanh (bo dau cau, khoang trang)."""
-    return re.sub(r"[^\w]", "", s, flags=re.UNICODE).lower()
+    """Chuyen ve gian the (OpenCC t2s), chi giu chu, so de so sanh (bo dau cau, khoang trang)."""
+    global _T2S
+    if _T2S is None:
+        import opencc
+        _T2S = opencc.OpenCC("t2s")
+    return re.sub(r"[^\w]", "", _T2S.convert(s), flags=re.UNICODE).lower()
 
 
 def gom_cum(doan):
@@ -70,7 +80,8 @@ def ghi_md(path: Path, kq):
     lines = [f"# Đối chiếu FireRedASR2: {kq['video']}", "",
              "- Mô hình: FireRedASR2-AED int8 (ONNX, sherpa-onnx). Bản này chỉ để đối chiếu với Whisper, không thay bản chép gốc.",
              "- Cột FireRed (đoạn riêng) là đoạn cắt rời, hay lẫn chữ của đoạn bên cạnh và có thể nghe khác cụm; chỉ để tham khảo.",
-             "- Cột Khác báo KHÁC khi lời Whisper không nằm trong bản chép FireRed của cả cụm (bỏ dấu câu, khoảng trắng).",
+             "- Cột Khác báo KHÁC khi lời Whisper không nằm trong bản chép FireRed của cả cụm (bỏ dấu câu, khoảng trắng, "
+             "đổi cả hai bên về giản thể). Chưa quy đổi số: \"3\" và \"三\" vẫn báo KHÁC.",
              "", "| Mã | Giây | Whisper | FireRed (đoạn riêng) | Khác |", "|---|---|---|---|---|"]
     for d in kq["doan"]:
         lines.append(f"| {d['id']} | {d['start']:.1f}-{d['end']:.1f} | {d['whisper'].replace('|', '/')} | "
@@ -98,9 +109,10 @@ def main():
     if ngon_ngu not in HO_TRO:
         sys.exit(f"[LOI] Ngon ngu {ngon_ngu} ngoai danh sach FireRedASR2 ho tro {HO_TRO}.")
     try:
+        import opencc  # noqa: F401  (dung trong chuan)
         import sherpa_onnx
-    except ImportError:
-        sys.exit("[LOI] Thieu sherpa-onnx: chay bash setup.sh --firered")
+    except ImportError as e:
+        sys.exit(f"[LOI] Thieu {e.name}: chay bash setup.sh --firered")
 
     md = thu_muc_mo_hinh()
     rec = sherpa_onnx.OfflineRecognizer.from_fire_red_asr(
