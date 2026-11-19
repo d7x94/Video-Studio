@@ -2,6 +2,19 @@
 
 Quy ước số phiên bản `MAJOR.MINOR.PATCH`, ghi ở `video-studio/VERSION` và dòng "Phiên bản skill" trong `video-studio/SKILL.md` (hai nơi phải khớp, CI kiểm tra khi đóng gói). Thêm kiểu hình hoặc tính năng thì tăng MINOR; sửa lỗi thì tăng PATCH; đổi lớn làm hỏng cách dùng cũ thì tăng MAJOR. Mỗi lần gộp PR thay đổi skill: tăng số, sửa hai nơi trên và thêm mục mới ở đầu file này.
 
+## [1.17.0] - 2026-11-19
+
+Làm tiếp các đề xuất "Chưa làm" của 1.16.0 cho chế độ video có sẵn. Không đổi quy tắc kiểm chứng, bản quyền, khóa nhân vật.
+
+- `scripts/so_khang_dinh.py dong-bo`: đồng bộ `khang-dinh.json` sau khi sửa lời trực tiếp trong `scenes.json`. Câu không đổi chữ giữ mục cũ; câu mới hoặc đổi chữ về `chua-phan-loai` (loại cũ ghi ở `loai_cu`); mục mồ côi bị bỏ; sao lưu `khang-dinh.truoc-dong-bo.json`; in `[CAN PHAN LOAI]` và `[DA BO]`.
+- Nhạc chỉ ở đoạn chọn: `nhac_nen.py --doan TỪ,ĐẾN` (lặp được), `dung_lai_video_co_san.sh --doan`, khóa `nhac.doan` trong `job.json` (`job.py dung` chuyển thành `--doan`). Ngoài đoạn nhạc tắt, vào và ra có chuyển dần 1 giây, trước bước nén theo lời. Đo trên job khui hàng mẫu chạy `job.py dung` thật (bản sao): khoảng im giữa các lời -180 dB (trước đây -23 đến -24 dB), đoạn ảnh tĩnh còn nhạc khoảng -19 dB.
+- `scripts/giao_co_san.py` (mới): đóng gói `PROJECT/giao/` cho video có sẵn, sinh `credits.md` từ `job.json` và phông trong `phu-de-tung-tu.ass`; thoát mã 1 khi thiếu video chính hoặc `kiem-chung.md`.
+- `scripts/kiem_khung_lam_mo.py --vung-chu`: thêm "điểm chữ" (mật độ cạnh trên nền sáng ít sắc) cho ảnh đã mờ, báo `CON-CHU` từ `--chu-nguong` (mặc định 12). Đo trên một video khổ dọc: ảnh gốc 10 đến 155 khi phiếu vào khung, ảnh đã mờ đúng cách tối đa 9. Phép đo thực nghiệm trên một video, ngưỡng phải đặt lại theo từng video.
+- `references/che-do-video-co-san.md` (mục 3, 4, 4c, 4e), `SKILL.md`: ghi các tính năng trên.
+- `tools/smoke_test.sh`: thêm ca `dong-bo`, `nhac_nen.py --doan` (đo RMS trong và ngoài đoạn, cần ffmpeg), `giao_co_san.py`, `diem_chu` (ảnh tổng hợp). Đã đạt; `ruff F,E9` sạch.
+- Đã điều tra và KHÔNG làm: (1) kiểm bằng đọc mã vạch hoặc QR: `cv2.barcode.BarcodeDetector` và `QRCodeDetector` cho 0 lần nhận ra trên 85 khung cách 0,1 giây của video gốc (mã nhỏ, nghiêng, nhòe chuyển động) nên không dùng làm bằng chứng; (2) tự nhận biết và theo dõi phiếu để đặt khung mờ: chưa thử, phiếu xoay nhanh trong tay vẫn phải đặt mốc tay (xem 4b); (3) `phan_tich_dau_vao.py` nhận diện ảnh tĩnh tốt hơn: chưa sửa.
+- Chưa chạy: `setup.sh`, `tts.py` mới, `new_project.sh`, `inject.py`, `hyperframes check`, `render.sh`, `check_output.py` trên bản dựng mới (không chạm các bước này); `job.py dung` chỉ chạy trên một bản sao dự án khui hàng, chưa chạy trọn chuỗi từ đầu.
+
 ## [1.16.0] - 2026-11-19
 
 Chế độ lồng tiếng cho video có sẵn: rút kinh nghiệm từ một job khui hàng khổ dọc 720x1280 (81,3 giây, 10 cảnh lời, ảnh tĩnh cuối video chỉ có nhạc, phiếu giao hàng xoay nhanh trong tay). Không đổi quy tắc kiểm chứng, bản quyền, khóa nhân vật.

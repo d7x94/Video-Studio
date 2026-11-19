@@ -6,6 +6,7 @@ Dung:
   python3 nhac_nen.py PROJECT --kieu vui --chi-tao          # chi sang tac audio/nhac-nen.wav (+ .mp3 nghe thu)
   python3 nhac_nen.py PROJECT --kieu vui renders/preview_portrait.mp4   # ghep vao file chi dinh
   python3 nhac_nen.py PROJECT --bo                           # go nhac, tra lai ban khong nhac
+  python3 nhac_nen.py PROJECT --kieu nhe-nhang --doan 57.5,81.3   # nhac chi nghe trong doan nay (giay tren video da ghep), co the lap --doan
   python3 nhac_nen.py PROJECT --chi-hieu-ung                 # khong nhac, chi ghep hieu ung (hieu-ung.wav, tieng-dong.wav)
 Co audio/hieu-ung.wav (tieng but, do tieng_but.py tao) va/hoac audio/tieng-dong.wav (do tieng_dong.py tao)
 thi moi lan ghep deu tron them cac file nay, khong giam theo loi doc; --khong-hieu-ung de bo qua ca hai.
@@ -222,14 +223,19 @@ def duration(path):
     return float(r.stdout.strip())
 
 
-def mix(video, music, out, level_db, fx=()):
-    """Ghep nhac (da giam am theo loi doc) va/hoac hieu ung (tieng but, khong giam theo loi) vao video; giu nguyen luong hinh."""
+def mix(video, music, out, level_db, fx=(), doan=()):
+    """Ghep nhac (da giam am theo loi doc) va/hoac hieu ung (tieng but, khong giam theo loi) vao video; giu nguyen luong hinh.
+    doan: danh sach (tu, den) giay; co thi nhac chi nghe trong cac doan do (vao dan 1,0 giay, ra dan 1,0 giay)."""
     ins = ["-i", str(video)]
     parts, labels, idx = [], ["[v1]"], 1
     voice = "[0:a]aformat=sample_rates=48000:channel_layouts=stereo"
     if music is not None:
         ins += ["-i", str(music)]
-        parts += [f"[{idx}:a]volume={level_db}dB,aformat=sample_rates=48000:channel_layouts=stereo[m]",
+        gate = ""
+        if doan:
+            terms = "+".join(f"max(0,min((t-{a})/1.0,({b}-t)/1.0))" for a, b in doan)
+            gate = f",volume='min(1,{terms})':eval=frame"
+        parts += [f"[{idx}:a]volume={level_db}dB,aformat=sample_rates=48000:channel_layouts=stereo{gate}[m]",
                   voice + ",asplit=2[v1][v2]",
                   "[m][v2]sidechaincompress=threshold=0.03:ratio=4:attack=30:release=450[md]"]
         labels.append("[md]")
@@ -254,12 +260,22 @@ def main():
     ap.add_argument("--kieu", choices=sorted(KIEU), help="bat buoc tru khi --bo")
     ap.add_argument("--seed", type=int, help="doi ban nhac khac cung kieu")
     ap.add_argument("--muc", type=float, default=-10.0, help="muc nhac truoc khi giam am (dB), mac dinh -10")
+    ap.add_argument("--doan", action="append", metavar="TU,DEN", help="nhac chi nghe trong doan nay (giay tren video da ghep); lap lai duoc")
     ap.add_argument("--chi-tao", action="store_true")
     ap.add_argument("--bo", action="store_true", help="go nhac, tra lai ban khong nhac")
     ap.add_argument("--chi-hieu-ung", action="store_true", help="khong nhac nen, chi ghep hieu ung (audio/hieu-ung.wav, audio/tieng-dong.wav)")
     ap.add_argument("--khong-hieu-ung", action="store_true", help="bo qua audio/hieu-ung.wav va audio/tieng-dong.wav du co file")
     a = ap.parse_args()
     p = Path(a.project)
+    doan = []
+    for d in a.doan or []:
+        try:
+            tu, den = (float(x) for x in d.split(","))
+        except ValueError:
+            ap.error(f"--doan can dang TU,DEN (giay), nhan {d!r}")
+        if not 0 <= tu < den:
+            ap.error(f"--doan {d}: can 0 <= TU < DEN")
+        doan.append((tu, den))
     vids = [Path(v) if Path(v).is_absolute() else p / v for v in a.videos] or sorted((p / "renders").glob("final_*.mp4"))
     vids = [v for v in vids if not v.name.endswith(".khong-nhac.mp4")]
 
@@ -306,7 +322,7 @@ def main():
         if abs(duration(raw) - total) > 1.0:
             print(f"[CANH BAO] {v.name} dai {duration(raw):.1f} giay, timeline {total:.1f} giay")
         tmp = v.with_name(v.stem + ".tmp.mp4")
-        mix(raw, wav, tmp, a.muc, fx)
+        mix(raw, wav, tmp, a.muc, fx, doan)
         tmp.replace(v)
         import os
         st = raw.stat()
