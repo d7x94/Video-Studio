@@ -14,6 +14,7 @@ Doc PROJECT/tien-bay.json (xem references/che-do-tien-bay.md). Ghi:
 Tong tien tinh bang code tu cac dong "mon"; neu co "tong_hoa_don" thi phai khop, lech thi dung lai.
 Can: ffmpeg, ffprobe, Pillow, numpy, soundfile.
 """
+import functools
 import json
 import math
 import subprocess
@@ -64,13 +65,25 @@ def back_out(x):
     return 1 + c3 * (x - 1) ** 3 + c1 * (x - 1) ** 2
 
 
+_DA_BAO_FONT = set()
+
+
+@functools.lru_cache(maxsize=None)
 def tim_font(ho, kieu):
-    """Tim file font qua fc-match (Inter neu co, khong thi DejaVu Sans); font phai co chu Viet co dau."""
-    for fam in (ho, "DejaVu Sans"):
-        r = subprocess.run(["fc-match", "-f", "%{file}", f"{fam}:style={kieu}"], capture_output=True, text=True)
-        if r.returncode == 0 and r.stdout and Path(r.stdout).exists():
-            return r.stdout
-    sys.exit("[LOI] khong tim thay font (can Inter hoac DejaVu Sans, kiem bang fc-list)")
+    """Tim file font qua fc-match (Inter neu co, khong thi DejaVu Sans); font phai co chu Viet co dau.
+
+    fc-match luon tra ve mot font thay the khi khong co ho yeu cau, nen phai so ten ho tra ve voi ho yeu cau."""
+    for fam in dict.fromkeys((ho, "DejaVu Sans")):
+        r = subprocess.run(["fc-match", "-f", "%{family}\n%{file}", f"{fam}:style={kieu}"], capture_output=True, text=True)
+        if r.returncode != 0 or "\n" not in r.stdout:
+            continue
+        ho_tra, file = r.stdout.split("\n", 1)
+        if fam.lower() in [h.strip().lower() for h in ho_tra.split(",")] and Path(file).exists():
+            if fam != ho and ho not in _DA_BAO_FONT:
+                _DA_BAO_FONT.add(ho)
+                print(f"[CANH BAO] khong co font '{ho}', dung {fam}", file=sys.stderr)
+            return file
+    sys.exit(f"[LOI] khong tim thay font '{ho}' hay DejaVu Sans (kiem bang fc-list)")
 
 
 # ---------- doc va kiem cau hinh ----------
@@ -88,7 +101,25 @@ def doc_cau_hinh(proj):
         if isinstance(o, dict):
             return {k: nfc(v) for k, v in o.items()}
         return o
-    return nfc(cfg)
+    cfg = nfc(cfg)
+    # lam tron moi 'dai' ve luoi khung (1/FPS giay): trim cat theo so khung nguyen, neu khong lam tron thi
+    # moi doan du toi 1 khung va hinh nen lech dan so voi lop phu (tinh theo giay)
+    doan = [cfg.get("mo_dau"), cfg.get("ket")]
+    for m in cfg.get("mon", []) if isinstance(cfg.get("mon"), list) else []:
+        if isinstance(m, dict):
+            doan += [m.get("mo"), m.get("anh")]
+    for d in doan:
+        if isinstance(d, dict) and la_so(d.get("dai")):
+            d["dai"] = round(d["dai"] * FPS) / FPS
+    return cfg
+
+
+def la_so(x):
+    return isinstance(x, (int, float)) and not isinstance(x, bool)
+
+
+def la_nguyen(x):
+    return isinstance(x, int) and not isinstance(x, bool)
 
 
 def do_dai(video):
@@ -115,8 +146,9 @@ def kiem(proj, cfg):
     doan = []
 
     def kiem_doan(ten, d):
-        if not isinstance(d, dict) or "tu" not in d or "dai" not in d or d["dai"] <= 0:
-            loi.append(f"{ten}: can {{'tu': giay, 'dai': giay}} voi dai > 0")
+        if (not isinstance(d, dict) or not la_so(d.get("tu")) or not la_so(d.get("dai"))
+                or d["tu"] < 0 or d["dai"] <= 0):
+            loi.append(f"{ten}: can {{'tu': giay >= 0, 'dai': giay > 0}}")
             return False
         doan.append((ten, d))
         if dai_goc is not None and d["tu"] + d["dai"] > dai_goc + 0.05:
@@ -128,19 +160,22 @@ def kiem(proj, cfg):
     else:
         loi.append("thieu 'mo_dau' {tu, dai}")
     ket = cfg.get("ket", {})
-    if "nen_tu" not in ket or ket.get("dai", 0) < 8:
+    if not la_so(ket.get("nen_tu")) or not la_so(ket.get("dai")) or ket["dai"] < 8:
         loi.append("'ket' can nen_tu (giay khung lam nen) va dai >= 8 (bien lai in het moi toi cuoi)")
+    elif ket["nen_tu"] < 0 or (dai_goc is not None and ket["nen_tu"] > dai_goc - 0.2):
+        loi.append(f"ket.nen_tu = {ket['nen_tu']} nam ngoai video goc"
+                   + (f" ({dai_goc:.1f} giay; can 0 den {max(0.0, dai_goc - 0.2):.1f})" if dai_goc is not None else ""))
     for i, m in enumerate(mon):
         ten = m.get("ten", f"mon {i + 1}")
         for k in ("ten", "so_luong", "gia", "nhom", "anh"):
             if k not in m:
                 loi.append(f"{ten}: thieu '{k}'")
         if "gia" in m:
-            if not isinstance(m["gia"], int) or m["gia"] <= 0:
+            if not la_nguyen(m["gia"]) or m["gia"] <= 0:
                 loi.append(f"{ten}: 'gia' phai la so nguyen duong (thanh tien cua dong, don vi dong)")
             else:
                 tong += m["gia"]
-        if "so_luong" in m and (not isinstance(m["so_luong"], int) or m["so_luong"] < 1):
+        if "so_luong" in m and (not la_nguyen(m["so_luong"]) or m["so_luong"] < 1):
             loi.append(f"{ten}: 'so_luong' phai la so nguyen >= 1")
         if "anh" in m and kiem_doan(f"{ten}.anh", m["anh"]) and m["anh"]["dai"] < ARRIVE + ROLL + 0.5:
             loi.append(f"{ten}.anh.dai = {m['anh']['dai']} qua ngan, can >= {ARRIVE + ROLL + 0.5:.1f} (the bay vao o tien roi so nhay)")
@@ -148,7 +183,7 @@ def kiem(proj, cfg):
             kiem_doan(f"{ten}.mo", m["mo"])
         if "chia" in m:
             c = m["chia"]
-            if not isinstance(c.get("so"), int) or c["so"] < 1 or not c.get("don_vi"):
+            if not la_nguyen(c.get("so")) or c["so"] < 1 or not c.get("don_vi"):
                 loi.append(f"{ten}.chia: can so (nguyen >= 1) va don_vi")
             elif "anh" in m and m["anh"].get("dai", 0) < 3.4:
                 canh_bao.append(f"{ten}: co 'chia' nhung anh.dai < 3.4 giay, nhan 'mot {c['don_vi']}' se hien rat ngan")
@@ -535,12 +570,12 @@ def loc_nen(d, segs):
     for n, s in enumerate(segs):
         z = 0.05
         dur = s["dai"]
-        parts.append(f"[{n}:v]setpts=PTS-STARTPTS,fps={FPS},trim=duration={dur},"
+        parts.append(f"[{n}:v]setpts=PTS-STARTPTS,fps={FPS},trim=end_frame={round(dur * FPS)},"
                      f"scale=w='trunc({W}*(1+{z}*t/{dur})/2)*2':h='trunc({H}*(1+{z}*t/{dur})/2)*2':eval=frame:flags=bicubic,"
                      f"crop={W}:{H},setsar=1,format=yuv420p[s{n}]")
         labels.append(f"[s{n}]")
     parts.append(f"[{len(segs)}:v]setpts=PTS-STARTPTS,fps={FPS},trim=duration=0.05,scale={W}:{H},"
-                 f"tpad=stop_mode=clone:stop_duration={d.end_dur},trim=duration={d.end_dur},boxblur=20:2,"
+                 f"tpad=stop_mode=clone:stop_duration={d.end_dur},trim=end_frame={round(d.end_dur * FPS)},boxblur=20:2,"
                  f"eq=brightness=-0.12:saturation=0.8,setsar=1,format=yuv420p[se]")
     labels.append("[se]")
     parts.append("".join(labels) + f"concat=n={len(labels)}:v=1:a=0[base]")
@@ -632,7 +667,10 @@ def main():
         return
     ra = proj / "renders/final_portrait.mp4"
     if "--ra" in sys.argv:
-        ra = Path(sys.argv[sys.argv.index("--ra") + 1])
+        i = sys.argv.index("--ra")
+        if i + 1 >= len(sys.argv):
+            sys.exit("[LOI] --ra can duong dan file ra")
+        ra = Path(sys.argv[i + 1])
     ghi_timeline(d)
     tao_tieng(d)
     print(f"Tong {d.total:.2f} giay; {len(d.mon)} mon; nhom: " + ", ".join(f"{g} {vnd(v)}" for g, v in d.nhom_tien.items()))

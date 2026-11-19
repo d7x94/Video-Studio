@@ -468,7 +468,11 @@ EOF2
   expect_fail python3 "$S/may_tinh_tien.py" "$V10" kiem
   sed 's/"dai": 4.0}/"dai": 2.0}/' "$V10/ok.json" > "$V10/tien-bay.json"
   expect_fail python3 "$S/may_tinh_tien.py" "$V10" kiem
-  pass "may_tinh_tien.py (kiem dung, xuat khung, chan tong lech, doan cat vuot video, the gia qua ngan)"
+  sed 's/"nen_tu": 2.0/"nen_tu": 45.0/' "$V10/ok.json" > "$V10/tien-bay.json"
+  expect_fail python3 "$S/may_tinh_tien.py" "$V10" kiem
+  sed 's/"tu": 1.0, "dai": 3.0/"tu": -1.0, "dai": 3.0/' "$V10/ok.json" > "$V10/tien-bay.json"
+  expect_fail python3 "$S/may_tinh_tien.py" "$V10" kiem
+  pass "may_tinh_tien.py (kiem dung, xuat khung, chan tong lech, doan cat vuot video, the gia qua ngan, nen ket ngoai video, tu am)"
 else
   echo "[BO QUA] may_tinh_tien.py: may thieu ffmpeg, fc-match hoac Pillow"
 fi

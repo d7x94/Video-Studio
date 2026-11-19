@@ -273,7 +273,7 @@ Dùng khi người dùng gửi video nói tiếng nước ngoài và nhờ dịc
 
 ## Chế độ "tiền bay" (video chi tiêu theo hóa đơn)
 
-Dùng khi người dùng có cảnh quay hàng vừa mua và hóa đơn thật, muốn video thẻ giá bay vào ô tiền, số nhảy kèm tiếng máy tính tiền và biên lai in ra ở cuối. Hồ sơ `profiles/chi-tieu.md`. Không có lời đọc nên bỏ bước 2 đến 4 và bước 5 (kịch bản, lồng tiếng, HyperFrames); hình và tiếng hiệu ứng do `scripts/may_tinh_tien.py` tạo từ `tien-bay.json` (`kiem`, `khung`, `dung`), rồi ghép nhạc, chuẩn âm, kiểm như bước 6 và 7, giữ cổng duyệt bản xem trước. Tổng tiền do code cộng và phải khớp `tong_hoa_don` của hóa đơn thật; hóa đơn thiếu dòng thì hỏi lại trước khi dựng. **Đọc `references/che-do-tien-bay.md` trước khi làm** (mẫu người dùng khai báo, `tien-bay.json`, quy trình, giới hạn).
+Dùng khi người dùng có cảnh quay hàng vừa mua và hóa đơn thật, muốn video thẻ giá bay vào ô tiền, số nhảy kèm tiếng máy tính tiền và biên lai in ra ở cuối. Hồ sơ `profiles/chi-tieu.md`. Không có lời đọc nên bỏ bước 2 đến 5 (kịch bản, lồng tiếng, HyperFrames); hình và tiếng hiệu ứng do `scripts/may_tinh_tien.py` tạo từ `tien-bay.json` (`kiem`, `khung`, `dung`), rồi ghép nhạc, chuẩn âm, kiểm như bước 6 và 7, giữ cổng duyệt bản xem trước. Tổng tiền do code cộng và phải khớp `tong_hoa_don` của hóa đơn thật; hóa đơn thiếu dòng thì hỏi lại trước khi dựng. **Đọc `references/che-do-tien-bay.md` trước khi làm** (mẫu người dùng khai báo, `tien-bay.json`, quy trình, giới hạn).
 
 ## Khi người dùng không có mặt
 

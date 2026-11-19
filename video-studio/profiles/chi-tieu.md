@@ -2,7 +2,7 @@
 
 **Dùng khi**: người dùng có cảnh quay hàng vừa mua (mở túi, ảnh từng món) và hóa đơn thật, muốn video cho thấy tiền "bay" dần vào máy tính tiền và tổng cuối cùng. Không có lời đọc. Mở hộp một sản phẩm có lời đọc thì dùng `unbox.md`.
 
-Công cụ riêng: `scripts/may_tinh_tien.py`, quy trình ở `references/che-do-tien-bay.md`. Không đi qua bước 2 đến 4 và bước 5 của `SKILL.md` (không kịch bản, không lồng tiếng, không HyperFrames); vẫn giữ cổng duyệt bản xem trước và các quy tắc chung.
+Công cụ riêng: `scripts/may_tinh_tien.py`, quy trình ở `references/che-do-tien-bay.md`. Không đi qua bước 2 đến 5 của `SKILL.md` (không kịch bản, không lồng tiếng, không HyperFrames); vẫn giữ cổng duyệt bản xem trước và các quy tắc chung.
 
 ## Mặc định
 

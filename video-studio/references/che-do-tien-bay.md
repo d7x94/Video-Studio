@@ -1,6 +1,6 @@
 # Chế độ "tiền bay" (video chi tiêu theo hóa đơn)
 
-Dùng cùng hồ sơ `profiles/chi-tieu.md`. Không có lời đọc nên bỏ bước 2 đến 4 và bước 5 của `SKILL.md` (kịch bản, kiểm chứng câu chữ, lồng tiếng, HyperFrames); giữ cổng duyệt bản xem trước (bước 6), hoàn thiện (bước 7) và giao gói (bước 8). `scripts/may_tinh_tien.py` làm cả hình và tiếng hiệu ứng.
+Dùng cùng hồ sơ `profiles/chi-tieu.md`. Không có lời đọc nên bỏ bước 2 đến 5 của `SKILL.md` (kịch bản, kiểm chứng câu chữ, lồng tiếng, HyperFrames); giữ cổng duyệt bản xem trước (bước 6), hoàn thiện (bước 7) và giao gói (bước 8). `scripts/may_tinh_tien.py` làm cả hình và tiếng hiệu ứng.
 
 ## Cách người dùng khai báo
 
@@ -22,7 +22,7 @@ Người dùng không phải học lệnh. Mẫu dán vào đầu tin nhắn, k�
 
 ## Quy trình
 
-1. **Nhận việc**: chuẩn hóa brief; hóa đơn nhiều tấm thì ghép các dòng, loại dòng trùng ở chỗ nối, báo người dùng danh sách món và tổng đã cộng để xác nhận đủ món (không có tấm tổng đơn thì nói rõ tổng chưa đối chiếu được).
+1. **Nhận việc**: chuẩn hóa brief; hóa đơn nhiều tấm thì ghép các dòng, loại dòng trùng ở chỗ nối, báo người dùng danh sách món và tổng đã cộng để xác nhận đủ món (không có tấm tổng đơn thì nói rõ tổng chưa đối chiếu được). Ghi `kiem-chung.md`: mỗi món một dòng gồm tên, số lượng, thành tiền và tấm ảnh hóa đơn chứa dòng đó; dòng cuối ghi tổng đã cộng và đã khớp `tong_hoa_don` hay chưa đối chiếu được. Bỏ bước 2 nhưng không bỏ việc kiểm chứng: số tiền là số liệu duy nhất trên hình nên phải có nguồn.
 2. **Xem video gốc**: xuất bảng khung mỗi giây để tìm đoạn mở bao bì của từng món và đoạn ảnh sản phẩm sạch (sản phẩm đứng yên giữa khung, không có tay). Gợi ý lệnh: `ffmpeg -i video -vf "fps=1,scale=200:-1,drawtext=...:text='%{eif\:t\:d}',tile=10x14" -frames:v 1 qa/bang.jpg`. Ghi mốc `tu` và `dai` vào `tien-bay.json`.
 3. **`may_tinh_tien.py PROJECT kiem`** rồi **`khung`**: kiểm cấu hình, xem `qa/tien-bay/khung_*.png` (lớp phủ đặt trên một khung tạm, chỉ để xem bố cục; cảnh thật ở bước 5).
 4. **`may_tinh_tien.py PROJECT dung`**: tạo `timeline.json`, `audio/hieu-ung.wav` và `renders/final_portrait.mp4`.
@@ -54,7 +54,7 @@ Người dùng không phải học lệnh. Mẫu dán vào đầu tin nhắn, k�
 | `video` | video gốc, đường dẫn trong dự án (bắt buộc) |
 | `ngay` | nhãn ngày ở mở đầu; bỏ thì không hiện (tùy chọn) |
 | `tong_hoa_don` | tổng ghi trên hóa đơn thật; có thì cộng các dòng phải khớp, lệch thì dừng (nên có) |
-| `mo_dau`, `ket.nen_tu` | đoạn cảnh mở đầu; giây lấy khung làm nền mờ cho phần kết (bắt buộc) |
+| `mo_dau`, `ket.nen_tu` | đoạn cảnh mở đầu; giây lấy khung làm nền mờ cho phần kết, phải nằm trong video gốc (bắt buộc) |
 | `ket.dai` | tối thiểu 8 giây để biên lai in hết; `ket.tieu_de` đổi tiêu đề biên lai |
 | `mon[].gia` | thành tiền của dòng (số nguyên, đồng), không phải đơn giá |
 | `mon[].nhom` | nhóm cho thanh phần trăm ở cuối; tối đa 4 nhóm; chỉ một nhóm thì không vẽ thanh |
@@ -66,7 +66,7 @@ Người dùng không phải học lệnh. Mẫu dán vào đầu tin nhắn, k�
 | `mon_dat_nhat` | mặc định `true`: đánh dấu món đắt nhất; `false` tắt nhãn, rung và tiếng trầm |
 | `font` | họ font tìm bằng `fc-match` (mặc định Inter, không có thì DejaVu Sans); phải có chữ Việt có dấu |
 
-Tối đa 16 món (biên lai tràn khung). Chữ Việt trong file được chuẩn hóa NFC khi đọc.
+Tối đa 16 món (biên lai tràn khung). Chữ Việt trong file được chuẩn hóa NFC khi đọc. Mọi `dai` được làm tròn về bội số 1/30 giây (một khung) để hình nền và lớp phủ không lệch nhau; ghi mốc theo bước 0,1 giây thì không bị đổi.
 
 ## Số đo và giới hạn
 
