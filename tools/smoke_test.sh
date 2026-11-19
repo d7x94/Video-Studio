@@ -287,7 +287,11 @@ import sys, numpy as np, soundfile as sf
 for k, d in (("s05", 3.7), ("s06", 2.0)):
     sf.write(f"{sys.argv[1]}/audio/{k}.wav", np.zeros(int(d * 48000), np.float32), 48000)
 PY
-python3 "$S/kiem_loi_doc.py" "$V4" > "$V4/kq.txt" 2>&1 || { cat "$V4/kq.txt"; loi "kiem_loi_doc bao chong gia giua hai canh giu hinh lien tiep (chua co timeline_ghep.json)"; }
+# ffprobe gia (chi cho ca kiem nay, smoke test khong can ffmpeg): in do dai file wav tu header
+mkdir -p "$V4/bin"
+printf '#!/usr/bin/env python3\nimport sys, wave\nw = wave.open(sys.argv[-1]); print(w.getnframes() / w.getframerate())\n' > "$V4/bin/ffprobe"
+chmod +x "$V4/bin/ffprobe"
+PATH="$V4/bin:$PATH" python3 "$S/kiem_loi_doc.py" "$V4" > "$V4/kq.txt" 2>&1 || { cat "$V4/kq.txt"; loi "kiem_loi_doc bao chong gia giua hai canh giu hinh lien tiep (chua co timeline_ghep.json)"; }
 pass "phu_de_tung_tu.py (moc ghep, kiem dinh dang), ap_sua_srt.py (xem truoc, ap, dong bo so khang dinh, srt lech, thu tu theo moc, cau doi chu), phu de khong chong, kiem_loi_doc timeline cu va giu hinh lien tiep"
 
 # 6. Script shell: cu phap
