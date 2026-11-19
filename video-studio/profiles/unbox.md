@@ -23,6 +23,8 @@ Hỏi một lần ở bước 0, gom thành một tin:
 4. Chi tiết sản phẩm khó hiểu cần người dùng xác nhận (cơ cấu, công dụng của bộ phận lạ). Ghi vào `brief.md` và `kiem-chung.md`, nếu không QA sẽ coi là khẳng định không nguồn.
 5. Hàng nào là hàng mua, hàng nào là quà tặng kèm.
 6. Có tài trợ hay không. Mặc định là không; không đọc câu "không tài trợ" trong video.
+7. Đã có ai dùng thử chưa (người quay hoặc người nhà) và nhận xét gì. Có thì đưa vào lời, đọc rõ là người nhà hay người quay nhận xét, không viết như kết luận khách quan; chưa thì lời nói rõ là chưa dùng thử. Đổi thông tin này sau khi đã lồng tiếng thì phải cập nhật khóa kịch bản và đọc lại cảnh liên quan.
+8. Nhạc nhẹ chạy xuyên video hay chỉ ở đoạn ảnh tĩnh, và đoạn ảnh tĩnh có lời hay không (xem `references/che-do-video-co-san.md`, mục 4c).
 
 ## Giọng
 

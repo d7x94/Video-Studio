@@ -317,7 +317,31 @@ PATH="$V5/bin:$PATH" python3 "$S/kiem_loi_doc.py" "$V5" > "$V5/kq.txt" 2>&1 || {
 vct5_audio 4.0
 if PATH="$V5/bin:$PATH" python3 "$S/kiem_loi_doc.py" "$V5" > "$V5/kq.txt" 2>&1; then loi "kiem_loi_doc khong chan loi vuot cuoi video"; fi
 grep -q "sau cuoi video" "$V5/kq.txt" || loi "kiem_loi_doc thieu thong bao loi vuot cuoi video"
-pass "phu_de_tung_tu.py (moc ghep, kiem dinh dang), ap_sua_srt.py (xem truoc, ap, dong bo so khang dinh, srt lech, thu tu theo moc, cau doi chu), phu de khong chong, kiem_loi_doc timeline cu, giu hinh lien tiep, cue sau giu_hinh va loi vuot cuoi video"
+# kiem_loi_doc: anh_tinh_khong_loi canh bao loi tran vao doan anh tinh; check_output --co-san ha loi do phan giai thanh canh bao
+V6="$P/vct6"; mkdir -p "$V6/audio" "$V6/bin"
+cat > "$V6/scenes.json" <<'EOF'
+{"voice": "Hải Đăng", "scenes": [
+ {"id": "s01", "narration": "Lời tràn vào ảnh tĩnh.", "visual": "x", "on_screen": {}}]}
+EOF
+echo '{"video_goc": "v.mp4", "anh_tinh": [{"tu": 5.0, "den": 9.0}], "canh": {"s01": {"cue": 3.0}}}' > "$V6/job.json"
+: > "$V6/v.mp4"
+printf '#!/usr/bin/env python3\nimport sys, wave\nf = sys.argv[-1]\nif f.endswith(".wav"):\n    w = wave.open(f); print(w.getnframes() / w.getframerate())\nelse:\n    print(20.0)\n' > "$V6/bin/ffprobe"
+chmod +x "$V6/bin/ffprobe"
+python3 -I - "$V6" <<'PY'
+import sys, numpy as np, soundfile as sf
+sf.write(f"{sys.argv[1]}/audio/s01.wav", np.zeros(int(3.0 * 48000), np.float32), 48000)
+PY
+PATH="$V6/bin:$PATH" python3 "$S/kiem_loi_doc.py" "$V6" > "$V6/kq.txt" 2>&1 || { cat "$V6/kq.txt"; loi "kiem_loi_doc loi bat ngo o ca anh_tinh_khong_loi"; }
+if grep -q "anh_tinh_khong_loi" "$V6/kq.txt"; then loi "kiem_loi_doc canh bao anh_tinh_khong_loi khi chua bat"; fi
+echo '{"video_goc": "v.mp4", "anh_tinh": [{"tu": 5.0, "den": 9.0}], "anh_tinh_khong_loi": true, "canh": {"s01": {"cue": 3.0}}}' > "$V6/job.json"
+PATH="$V6/bin:$PATH" python3 "$S/kiem_loi_doc.py" "$V6" > "$V6/kq.txt" 2>&1 || { cat "$V6/kq.txt"; loi "kiem_loi_doc loi bat ngo khi bat anh_tinh_khong_loi"; }
+grep -q "anh_tinh_khong_loi" "$V6/kq.txt" || { cat "$V6/kq.txt"; loi "kiem_loi_doc khong canh bao loi tran vao doan anh tinh"; }
+# loi ket thuc truoc doan anh tinh (cue 0,5, dai 3 s -> den 3,5 s) thi khong canh bao
+echo '{"video_goc": "v.mp4", "anh_tinh": [{"tu": 5.0, "den": 9.0}], "anh_tinh_khong_loi": true, "canh": {"s01": {"cue": 0.5}}}' > "$V6/job.json"
+PATH="$V6/bin:$PATH" python3 "$S/kiem_loi_doc.py" "$V6" > "$V6/kq.txt" 2>&1 || { cat "$V6/kq.txt"; loi "kiem_loi_doc loi bat ngo (loi truoc anh tinh)"; }
+if grep -q "anh_tinh_khong_loi" "$V6/kq.txt"; then loi "kiem_loi_doc canh bao nham loi ket thuc truoc doan anh tinh"; fi
+python3 "$S/check_output.py" --help | grep -q -- "--co-san" || loi "check_output thieu --co-san"
+pass "phu_de_tung_tu.py (moc ghep, kiem dinh dang), ap_sua_srt.py (xem truoc, ap, dong bo so khang dinh, srt lech, thu tu theo moc, cau doi chu), phu de khong chong, kiem_loi_doc timeline cu, giu hinh lien tiep, cue sau giu_hinh va loi vuot cuoi video, anh_tinh_khong_loi"
 
 # 6. Script shell: cu phap
 for f in "$S"/*.sh "$ROOT"/tools/*.sh; do bash -n "$f"; done

@@ -63,5 +63,7 @@ Dùng có chủ ý, mỗi chỗ một lý do:
 | HDMI | hát đê em ai | câu "Cáp ... hai mét" 2,2 giây thay vì 3,4 giây khi viết "H-D-M-I" |
 | HDR | hát đi rờ | câu thử 3,3 giây thay vì 4,6 giây khi viết "H-D-R" |
 | 4K, 8K | bốn ca, tám ca | |
+| QR | kiu a | đã dùng trong một video khui hàng (Hải Đăng), người dùng chưa xác nhận lại bằng tai |
+| XL (cỡ áo) | sai ích xì eo lờ | đã dùng trong cùng video, chưa xác nhận bằng tai; chưa so thời lượng với biến thể khác |
 
   Cách chọn cách viết cho một viết tắt mới: đọc thử 4 đến 6 biến thể trong cùng một câu mẫu rồi so thời lượng, bản viết liền ngắn hơn rõ rệt so với bản đánh vần; thời lượng chỉ là chỉ báo thô (đếm khoảng lặng bằng `silencedetect` không phân biệt được các bản), nên vẫn nhờ người dùng nghe lại và ghi kết quả vào bảng. Tên thương hiệu nước ngoài (Belkin, Foxconn) chưa kiểm bằng tai: đã viết phiên âm "Bel-kin", "Fốc-con", kết quả chưa được người dùng xác nhận.

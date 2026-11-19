@@ -5,7 +5,7 @@ Dung:  python3 check_output.py PROJECT/timeline.json VIDEO.mp4 [--frames DIR] [-
 
 Kiem tra:
   - co luong hinh H.264 va luong tieng
-  - do phan giai dung khung doc (1080x1920) hoac ngang (1920x1080)
+  - do phan giai dung khung doc (1080x1920) hoac ngang (1920x1080); --co-san: chi canh bao (video co san khong phong to)
   - thoi luong khop timeline (lech <= 0.5s)
   - tieng khong bi cam: muc am trung binh > -45 dB
   - do on tich hop (LUFS) va true peak: luon in ra; voi --chuan-am thi ngoai -15..-13 LUFS hoac dinh > -1 dBTP la loi
@@ -113,12 +113,14 @@ def main():
     ap.add_argument("--srt")
     ap.add_argument("--dung-hinh", type=float, default=4.0,
                     help="giay: doan hinh dung yen dai tu day tro len thi canh bao (mac dinh 4)")
+    ap.add_argument("--co-san", action="store_true",
+                    help="video co san (che do long tieng cho video quay san): do phan giai khac 1080x1920 / 1920x1080 chi canh bao, khong phai loi (khong phong to de khong them chi tiet gia)")
     ap.add_argument("--chuan-am", action="store_true", help="bat buoc -14 LUFS (+-1) va dinh <= -1 dBTP (sau chuan_am.sh)")
     a = ap.parse_args()
 
     tl = json.loads(Path(a.timeline).read_text(encoding="utf-8"))
     info = probe(a.video)
-    errors, notes, warns = [], [], []
+    errors, notes, warns, warns_khac = [], [], [], []
 
     v = [s for s in info["streams"] if s["codec_type"] == "video"]
     au = [s for s in info["streams"] if s["codec_type"] == "audio"]
@@ -130,7 +132,11 @@ def main():
         if v[0]["codec_name"] != "h264":
             errors.append(f"Codec hinh la {v[0]['codec_name']}, can h264")
         if (w, h) not in [(1080, 1920), (1920, 1080)]:
-            errors.append(f"Do phan giai la {w}x{h}, can 1080x1920 hoac 1920x1080")
+            msg = f"Do phan giai la {w}x{h}, can 1080x1920 hoac 1920x1080"
+            if a.co_san:
+                warns_khac.append(msg + " (video co san, giu nguyen do phan giai goc)")
+            else:
+                errors.append(msg)
     if not au:
         errors.append("Khong co luong tieng")
 
@@ -211,6 +217,8 @@ def main():
         print("[INFO]", n)
     for w in warns:
         print("[CANH BAO]", w, "(dung hinh co chu y thi bo qua)")
+    for w in warns_khac:
+        print("[CANH BAO]", w)
     for e in errors:
         print("[LOI] ", e)
     print("KET QUA:", "DAT" if not errors else f"{len(errors)} LOI")
