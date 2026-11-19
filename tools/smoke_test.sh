@@ -171,6 +171,40 @@ assert ev[1].count("\\N") >= 2, "dong goc dai khong duoc ngat dong"
 PY
 pass "phu_de_dich.py so thap phan kieu Viet, thoat ky tu libass, ngat dong goc song ngu"
 
+# 5b. phu_de_dich: goi y gop doan ngan sat doan sau, canh bao gan nguoi_noi mot phan
+python3 -I - "$S/phu_de_dich.py" "$P" <<'PY'
+import importlib.util, json, sys
+from pathlib import Path
+spec = importlib.util.spec_from_file_location("pdd", sys.argv[1]); m = importlib.util.module_from_spec(spec); spec.loader.exec_module(m)
+proj = Path(sys.argv[2]) / "gop"; (proj / "dich").mkdir(parents=True, exist_ok=True)
+doan = [{"id": "d001", "start": 0.0, "end": 2.0, "goc": "你知道吗", "dich": "Em biết không?", "nguoi_noi": "chi"},
+        {"id": "d002", "start": 2.0, "end": 2.5, "goc": "不知道", "dich": "Không biết.", "nguoi_noi": ""},
+        {"id": "d003", "start": 2.5, "end": 4.5, "goc": "现在知道了", "dich": "Giờ biết rồi đó.", "nguoi_noi": "chi"}]
+(proj / "dich" / "ban-dich.json").write_text(json.dumps({"phien_ban": 1, "doan": doan}, ensure_ascii=False), encoding="utf-8")
+loi, canh, _ = m.kiem(proj, 15.0)
+assert not loi, loi
+assert any("goi y gop vao d003" in c for c in canh), "thieu goi y gop doan ngan"
+assert any("thieu nguoi_noi o d002" in c for c in canh), "thieu canh bao nguoi_noi gan mot phan"
+assert not any(c.startswith("d001") and "goi y gop" in c for c in canh), "goi y gop cho doan khong ngan"
+PY
+pass "phu_de_dich.py goi y gop doan ngan, canh bao nguoi_noi"
+
+# 5b. chep_loi_firered: doan chi khac tro tu cuoi cau khong bao KHAC (can opencc; khong co thi bo qua)
+if python3 -c "import opencc, numpy" 2>/dev/null; then
+python3 -I - "$S/chep_loi_firered.py" <<'PY'
+import importlib.util, sys
+spec = importlib.util.spec_from_file_location("clf", sys.argv[1]); m = importlib.util.module_from_spec(spec); spec.loader.exec_module(m)
+cum = "你再叫一声呀姐姐我去你长得好帅呀你长得可像胡一天你知道吗"
+assert m.so_cum("你再叫一声啊", cum) == (False, True), "chi khac tro tu van bao KHAC"
+assert m.so_cum("姐姐", cum) == (False, False), "doan trung bi danh dau"
+assert m.so_cum("你长得可像胡二天", cum) == (True, False), "doan khac that khong bao KHAC"
+assert m.so_cum("哈哈", "我们") == (True, False), "chuoi chi co tro tu bi coi la khop"
+PY
+pass "chep_loi_firered.py nhan tro tu cuoi cau"
+else
+echo "[BO QUA] chep_loi_firered.py tro tu: thieu opencc hoac numpy"
+fi
+
 # 5c. phu_de_tung_tu.py (khong can ffmpeg khi khong --ghi), ap_sua_srt.py, canh bao timeline_ghep.json cu cua kiem_loi_doc.py
 V="$P/vct"; mkdir -p "$V"
 cat > "$V/scenes.json" <<'EOF'

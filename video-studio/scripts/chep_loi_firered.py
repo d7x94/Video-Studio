@@ -19,6 +19,10 @@ Mo hinh: scripts/lay_asr.py firered2 (GitHub Release, du phong HuggingFace, kiem
 So sanh KHAC: ca hai ben chuyen ve chu Han gian the bang OpenCC (t2s) truoc khi so, vi Whisper hay chep tieng
 pho thong bang phon the con FireRed ra gian the. Bang .md van giu nguyen chu cua tung mo hinh. Chua quy doi so
 (Whisper "3", FireRed "三" van bao KHAC).
+Tro tu cuoi cau (啊 呀 吧 呢 哦 嘛 啦 哈 呗 哟 嘿 诶): doan Whisper khac cum chi vi tro tu o cuoi (vd Whisper "好帅啊",
+FireRed "好帅呀") thi khong bao KHAC ma danh dau "chi_tro_tu" (cot Khac ghi "trợ từ"): khong doi nghia, khong can nghe
+lai. Chi bo tro tu o cuoi doan Whisper, khong bo giua cau (哈 trong 哈尔滨 van giu). Da gap tren mot clip 18,6 giay:
+ca 2 dong KHAC deu chi khac 啊 va 呀.
 Can: faster-whisper, sherpa-onnx, opencc (ban ghim trong setup.sh; bash setup.sh --firered cai ca ba, khong can chay --dich rieng). AED gioi han 60 giay moi lan
 doc; script dung cua so toi da 30 giay.
 """
@@ -35,6 +39,7 @@ SR = 16000
 DEM = 0.2        # giay them hai dau moi doan khi cat rieng
 CUA_SO = 30.0    # giay toi da cho mot cum
 HO_TRO = ["zh", "en"]
+TRO_TU = "啊呀吧呢哦嘛啦哈呗哟嘿诶"
 SCRIPTS = Path(__file__).resolve().parent
 
 
@@ -64,6 +69,22 @@ def chuan(s: str) -> str:
     return re.sub(r"[^\w]", "", _T2S.convert(s), flags=re.UNICODE).lower()
 
 
+def bo_tro_tu_cuoi(s: str) -> str:
+    """Bo tro tu o cuoi chuoi da chuan hoa (chi o cuoi, khong bo giua cau)."""
+    return s.rstrip(TRO_TU)
+
+
+def so_cum(whisper: str, cum: str):
+    """Tra ve (khac, chi_tro_tu): khac = loi Whisper khong nam trong cum; chi_tro_tu = khop sau khi bo tro tu cuoi."""
+    w, c = chuan(whisper), chuan(cum)
+    if w in c:
+        return False, False
+    w2 = bo_tro_tu_cuoi(w)
+    if w2 and w2 != w and w2 in c:
+        return False, True
+    return True, False
+
+
 def gom_cum(doan):
     cum, cur = [], []
     for d in doan:
@@ -82,10 +103,11 @@ def ghi_md(path: Path, kq):
              "- Cột FireRed (đoạn riêng) là đoạn cắt rời, hay lẫn chữ của đoạn bên cạnh và có thể nghe khác cụm; chỉ để tham khảo.",
              "- Cột Khác báo KHÁC khi lời Whisper không nằm trong bản chép FireRed của cả cụm (bỏ dấu câu, khoảng trắng, "
              "đổi cả hai bên về giản thể). Chưa quy đổi số: \"3\" và \"三\" vẫn báo KHÁC.",
+             "- Cột Khác ghi \"trợ từ\" khi hai bên chỉ khác trợ từ cuối câu (啊, 呀, 吧, 呢...): không đổi nghĩa, không cần nghe lại.",
              "", "| Mã | Giây | Whisper | FireRed (đoạn riêng) | Khác |", "|---|---|---|---|---|"]
     for d in kq["doan"]:
         lines.append(f"| {d['id']} | {d['start']:.1f}-{d['end']:.1f} | {d['whisper'].replace('|', '/')} | "
-                     f"{d['firered_doan'].replace('|', '/')} | {'KHÁC' if d['khac'] else ''} |")
+                     f"{d['firered_doan'].replace('|', '/')} | {'KHÁC' if d['khac'] else ('trợ từ' if d.get('chi_tro_tu') else '')} |")
     lines += ["", "Cụm (FireRed nghe liền nhau):", ""]
     for c in kq["cum"]:
         lines.append(f"- {c['start']:.1f}-{c['end']:.1f} ({', '.join(c['ids'])}): {c['text']}")
@@ -138,15 +160,18 @@ def main():
     doan_kq = []
     for d in goc["doan"]:
         t = chay(d["start"] - DEM, d["end"] + DEM)
+        khac, tro_tu = so_cum(d["goc"], cum_cua[d["id"]])
         doan_kq.append({"id": d["id"], "start": d["start"], "end": d["end"], "whisper": d["goc"],
-                        "firered_doan": t, "khac": chuan(d["goc"]) not in chuan(cum_cua[d["id"]])})
+                        "firered_doan": t, "khac": khac, "chi_tro_tu": tro_tu})
     kq = {"phien_ban": 1, "video": video.name, "mo_hinh": "FireRedASR2-AED int8 (sherpa-onnx)",
           "cum": cum_kq, "doan": doan_kq}
     (proj / "dich").mkdir(parents=True, exist_ok=True)
     (proj / "dich" / "chep-firered.json").write_text(json.dumps(kq, ensure_ascii=False, indent=1), encoding="utf-8")
     ghi_md(proj / "dich" / "chep-firered.md", kq)
     n = sum(d["khac"] for d in doan_kq)
-    print(f"[OK] dich/chep-firered.json: {len(cum_kq)} cum, {len(doan_kq)} doan, {n} doan khac Whisper (xem chep-firered.md)")
+    ntt = sum(d["chi_tro_tu"] for d in doan_kq)
+    print(f"[OK] dich/chep-firered.json: {len(cum_kq)} cum, {len(doan_kq)} doan, {n} doan khac Whisper, "
+          f"{ntt} doan chi khac tro tu (xem chep-firered.md)")
 
 
 if __name__ == "__main__":

@@ -2,6 +2,16 @@
 
 Quy ước số phiên bản `MAJOR.MINOR.PATCH`, ghi ở `video-studio/VERSION` và dòng "Phiên bản skill" trong `video-studio/SKILL.md` (hai nơi phải khớp, CI kiểm tra khi đóng gói). Thêm kiểu hình hoặc tính năng thì tăng MINOR; sửa lỗi thì tăng PATCH; đổi lớn làm hỏng cách dùng cũ thì tăng MAJOR. Mỗi lần gộp PR thay đổi skill: tăng số, sửa hai nơi trên và thêm mục mới ở đầu file này.
 
+## [1.19.1] - 2026-11-19
+
+Chế độ dịch: sửa theo bài học từ một job dịch video tiếng Trung 18,6 giây (hội thoại, một bé trai trên hình và một người nói ngoài khung hình). Không đổi quy tắc kiểm chứng, bản quyền, khóa nhân vật; lượt kiểm dịch độc lập được ghi rõ là bắt buộc, không nới lỏng.
+
+- `scripts/chep_loi_firered.py`: đoạn Whisper chỉ khác bản chép cả cụm của FireRed ở trợ từ cuối câu (啊, 呀, 吧, 呢, 哦, 嘛, 啦, 哈, 呗, 哟, 嘿, 诶) không còn báo `KHÁC`, mà ghi "trợ từ" (trường `chi_tro_tu`). Chỉ bỏ trợ từ ở cuối đoạn Whisper, không bỏ giữa câu. Trên job mẫu, cả 2 dòng `KHÁC` đều chỉ khác 啊 và 呀; sau khi sửa: 0 `KHÁC`, 2 "trợ từ".
+- `scripts/phu_de_dich.py`: `khoi` tạo sẵn trường `nguoi_noi` rỗng (trường này đã có trong mô tả định dạng nhưng chưa được tạo và chưa được kiểm); `kiem` cảnh báo khi chỉ gán người nói cho một phần số đoạn, và in một dòng nhắc khi chưa gán đoạn nào. Đoạn đọc nhanh hoặc dưới 1 giây nằm sát đoạn sau (cách dưới 0,2 giây, không còn chỗ kéo dài) có thêm cảnh báo gợi ý gộp vào đoạn sau, kèm cách sửa.
+- `references/che-do-dich.md`: giữ tên file gốc khi chép video vào dự án (tên file ra lấy theo tên này); luôn hỏi người nói ở cổng duyệt bản chép và ghi vào `nguoi_noi`; tên người Trung Quốc viết theo âm Hán Việt; lượt kiểm dịch độc lập không bỏ kể cả với clip ngắn (job mẫu đã bỏ lượt này); số đo của clip thứ hai (tên riêng hai mô hình chép trùng thì đáng tin hơn, cột đoạn riêng của FireRed còn chép tiếng cười).
+- `tools/smoke_test.sh`: ca gợi ý gộp và cảnh báo `nguoi_noi`; ca nhãn trợ từ của `chep_loi_firered.py` (bỏ qua khi thiếu opencc). Đã đạt; `ruff F,E9` sạch.
+- Đã chạy thử: `phu_de_dich.py khoi`, `kiem`, `ghi` và `chep_loi_firered.py` trên bản sao job mẫu (video thật 1080x1920, mô hình đã tải; `ghi` ra video 18,6 giây đúng kích thước). Chưa chạy: `setup.sh`, `tts.py`, `new_project.sh`, `inject.py`, `hyperframes check`, `render.sh`, `check_output.py` (không chạm các bước này).
+
 ## [1.19.0] - 2026-11-19
 
 Chế độ dịch: thêm hai mô hình chép lời bổ sung để đối chiếu khi bản chép `medium` không chắc (rút từ một job dịch video tiếng Trung 27,6 giây có tiếng lóng, người dùng không biết tiếng Trung nên không tự nghe kiểm được). Không đổi quy tắc kiểm chứng, bản quyền, khóa nhân vật.
