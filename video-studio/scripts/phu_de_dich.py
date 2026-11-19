@@ -22,6 +22,10 @@ Doan doc nhanh hon --cps duoc keo dai thoi gian hien vao khoang trong phia sau, 
 khong cham doan sau; chi ap khi xuat, khong sua ban-dich.json.
 Kiem (canh bao): toc do doc (sau khi keo dai) > --cps ky tu/giay (khong tinh khoang trang; mac dinh 15 theo doc_chu.py, chua do rieng cho
 phu de tieng Viet), doan hien duoi 1 giay, doan goc co co nghi-bia hay tin-thap ma van giu.
+Doan doc nhanh hoac duoi 1 giay ma sat doan sau (cach duoi 0,2 giay, khong con cho keo dai) thi canh bao kem goi y gop
+vao doan sau (hoi dap nhanh kieu "不知道" 0,5 giay ngay truoc cau tiep theo).
+Nguoi noi: khoi tao "nguoi_noi" rong cho moi doan. Gan cho doan nao thi phai gan cho moi doan hien (canh bao khi thieu);
+khong gan doan nao thi in mot dong nhac (video mot nguoi noi thi bo qua), vi xung ho trong ban dich phu thuoc ai noi voi ai.
 
 Video goc da co phu de cung (vd song ngu Trung Anh): xem dich/qa-phu-de.png sau lenh ghi; neu chu chong nhau thi
 --vi-tri tren, hoac --che-day 0.2 (lam mo dai day khung cao 20% roi ghi phu de dich len do).
@@ -138,7 +142,7 @@ def kiem(proj, cps, toi_da=None, dur=None, keo=1.5):
     loi, canh = [], []
     toi_da = toi_da or 42
     prev_end = 0.0
-    for d in doan:
+    for k, d in enumerate(doan):
         i, dich, goc = d["id"], (d.get("dich") or "").strip(), d.get("goc", "")
         if not dich:
             loi.append(f"{i}: thieu ban dich")
@@ -164,8 +168,16 @@ def kiem(proj, cps, toi_da=None, dur=None, keo=1.5):
                         + ": rut gon ban dich")
         if t < 1.0:
             canh.append(f"{i}: hien {t:.2f} giay < 1 giay")
+        sau = doan[k + 1] if k + 1 < len(doan) else None
+        if sau and sau["start"] - d["end"] < 0.2 and (t < 1.0 or (t > 0 and so_ky_tu(dich) / t > cps + 0.05)):
+            canh.append(f"{i}: sat {sau['id']}, khong con cho keo dai: goi y gop vao {sau['id']} (sua end cua {i} "
+                        f"thanh {sau['end']}, noi goc va dich, ghi \"bo\": true va \"gop_vao\": \"{i}\" cho {sau['id']})")
         if set(d.get("co", [])) & {"nghi-bia", "tin-thap"}:
             canh.append(f"{i}: doan goc co co {d['co']}, da duoc nguoi nghe lai chua?")
+    co_nn = [d for d in doan if (d.get("nguoi_noi") or "").strip()]
+    if co_nn and len(co_nn) < len(doan):
+        thieu_nn = [d["id"] for d in doan if not (d.get("nguoi_noi") or "").strip()]
+        canh.append(f"thieu nguoi_noi o {', '.join(thieu_nn)} (cac doan khac da gan)")
     bo = [d["id"] for d in bd["doan"] if d.get("bo")]
     return loi, canh, bo
 
@@ -258,7 +270,7 @@ def main():
             sys.exit(f"[LOI] {p} da co; xoa tay neu muon tao lai (tranh mat ban dich)")
         ghi_json(p, {"phien_ban": 1, "ngon_ngu_goc": cg["ngon_ngu"]["chon"],
                      "doan": [{"id": d["id"], "start": d["start"], "end": d["end"], "goc": d["goc"], "dich": "",
-                               "co": d["co"]} for d in cg["doan"]]})
+                               "nguoi_noi": "", "co": d["co"]} for d in cg["doan"]]})
         print(f"[OK] {p}: {len(cg['doan'])} doan, dien truong \"dich\"")
         return
 
@@ -277,6 +289,8 @@ def main():
         print(f"[LOI] {l}")
     if bo:
         print(f"Bo khong hien: {', '.join(bo)}")
+    if not any((d.get("nguoi_noi") or "").strip() for d in doan):
+        print("Chua gan nguoi_noi: video nhieu nguoi noi thi gan truoc khi dich (xung ho theo ai noi voi ai)")
     if loi:
         sys.exit(1)
     if a.lenh == "kiem":
