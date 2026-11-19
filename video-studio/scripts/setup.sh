@@ -3,7 +3,7 @@
 # Dung:  bash setup.sh            (cai dat day du)
 #        bash setup.sh --check    (chi kiem tra, khong cai)
 #        bash setup.sh --dich     (cai dat day du va them faster-whisper cho che do dich video)
-#        bash setup.sh --firered  (cai dat day du va them sherpa-onnx, opencc de chep loi bang FireRedASR2, chep_loi_firered.py)
+#        bash setup.sh --firered  (nhu --dich, them sherpa-onnx, opencc de chep loi bang FireRedASR2, chep_loi_firered.py)
 set -euo pipefail
 
 SKILL_DIR="$(cd "$(dirname "$0")/.." && pwd)"
@@ -92,8 +92,9 @@ if [ "$(cv_ver)" != "$OPENCV_VER" ]; then
 fi
 ok "opencv $(cv_ver)"
 
-# 4c. faster-whisper cho che do dich (chi khi --dich); mo hinh tai luc chay bang scripts/lay_whisper.py
-if [ "${1:-}" = "--dich" ]; then
+# 4c. faster-whisper cho che do dich (khi --dich hoac --firered: chep_loi_firered.py can chep-goc.json cua Whisper);
+#     mo hinh tai luc chay bang scripts/lay_whisper.py
+if [ "${1:-}" = "--dich" ] || [ "${1:-}" = "--firered" ]; then
   if [ "$(pyver faster-whisper)" != "$FWHISPER_VER" ] || [ "$(pyver ctranslate2)" != "$CT2_VER" ] || [ "$(pyver av)" != "$AV_VER" ]; then
     PIPLOG="$(mktemp)"
     pip install --break-system-packages -q "faster-whisper==$FWHISPER_VER" "ctranslate2==$CT2_VER" "av==$AV_VER" >"$PIPLOG" 2>&1 \
@@ -103,7 +104,7 @@ if [ "${1:-}" = "--dich" ]; then
   ok "faster-whisper $(pyver faster-whisper), ctranslate2 $(pyver ctranslate2), av $(pyver av) (che do dich)"
 fi
 
-# 4d. sherpa-onnx cho chep loi FireRedASR2 (chi khi --firered); mo hinh tai luc chay bang scripts/lay_asr.py
+# 4d. sherpa-onnx, opencc cho chep loi FireRedASR2 (chi khi --firered); mo hinh tai luc chay bang scripts/lay_asr.py
 if [ "${1:-}" = "--firered" ]; then
   if [ "$(pyver sherpa-onnx)" != "$SHERPA_VER" ] || [ "$(pyver opencc)" != "$OPENCC_VER" ]; then
     PIPLOG="$(mktemp)"

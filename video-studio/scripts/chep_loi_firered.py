@@ -19,7 +19,7 @@ Mo hinh: scripts/lay_asr.py firered2 (GitHub Release, du phong HuggingFace, kiem
 So sanh KHAC: ca hai ben chuyen ve chu Han gian the bang OpenCC (t2s) truoc khi so, vi Whisper hay chep tieng
 pho thong bang phon the con FireRed ra gian the. Bang .md van giu nguyen chu cua tung mo hinh. Chua quy doi so
 (Whisper "3", FireRed "三" van bao KHAC).
-Can: pip install sherpa-onnx opencc (ban ghim trong setup.sh, chay: bash setup.sh --firered). AED gioi han 60 giay moi lan
+Can: faster-whisper, sherpa-onnx, opencc (ban ghim trong setup.sh; bash setup.sh --firered cai ca ba, khong can chay --dich rieng). AED gioi han 60 giay moi lan
 doc; script dung cua so toi da 30 giay.
 """
 import argparse
