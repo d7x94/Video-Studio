@@ -292,7 +292,32 @@ mkdir -p "$V4/bin"
 printf '#!/usr/bin/env python3\nimport sys, wave\nw = wave.open(sys.argv[-1]); print(w.getnframes() / w.getframerate())\n' > "$V4/bin/ffprobe"
 chmod +x "$V4/bin/ffprobe"
 PATH="$V4/bin:$PATH" python3 "$S/kiem_loi_doc.py" "$V4" > "$V4/kq.txt" 2>&1 || { cat "$V4/kq.txt"; loi "kiem_loi_doc bao chong gia giua hai canh giu hinh lien tiep (chua co timeline_ghep.json)"; }
-pass "phu_de_tung_tu.py (moc ghep, kiem dinh dang), ap_sua_srt.py (xem truoc, ap, dong bo so khang dinh, srt lech, thu tu theo moc, cau doi chu), phu de khong chong, kiem_loi_doc timeline cu va giu hinh lien tiep"
+# kiem_loi_doc: cue tinh tren video goc phai cong phan keo dai cua giu_hinh dung truoc no; loi vuot cuoi video bi chan
+V5="$P/vct5"; mkdir -p "$V5/audio" "$V5/bin"
+cat > "$V5/scenes.json" <<'EOF'
+{"voice": "Hải Đăng", "scenes": [
+ {"id": "s01", "narration": "Ảnh giữ hình.", "visual": "x", "on_screen": {}},
+ {"id": "s02", "narration": "Cảnh cue sau.", "visual": "x", "on_screen": {}}]}
+EOF
+echo '{"video_goc": "v.mp4", "canh": {"s01": {"giu_hinh": {"hien_ro": 0.5, "dong_bang": 1.0}}, "s02": {"cue": 2.0}}}' > "$V5/job.json"
+: > "$V5/v.mp4"
+# ffprobe gia: wav in do dai tu header, file khac (video) in 5.0
+printf '#!/usr/bin/env python3\nimport sys, wave\nf = sys.argv[-1]\nif f.endswith(".wav"):\n    w = wave.open(f); print(w.getnframes() / w.getframerate())\nelse:\n    print(5.0)\n' > "$V5/bin/ffprobe"
+chmod +x "$V5/bin/ffprobe"
+vct5_audio() { python3 -I - "$V5" "$1" <<'PY'
+import sys, numpy as np, soundfile as sf
+for k, d in (("s01", 2.0), ("s02", float(sys.argv[2]))):
+    sf.write(f"{sys.argv[1]}/audio/{k}.wav", np.zeros(int(d * 48000), np.float32), 48000)
+PY
+}
+vct5_audio 1.0
+# s01 keo dai 2,0 s (ket thuc 2,65 s); neu cue s02 khong duoc dich thi s02 bat dau 2,0 s va bi bao chong gia
+PATH="$V5/bin:$PATH" python3 "$S/kiem_loi_doc.py" "$V5" > "$V5/kq.txt" 2>&1 || { cat "$V5/kq.txt"; loi "kiem_loi_doc khong dich cue theo phan keo dai giu_hinh (bao chong gia)"; }
+# video 5 s + keo dai 2 s = 7 s; s02 bat dau 4 s, dai 4 s thi ket thuc 8 s, vuot cuoi video
+vct5_audio 4.0
+if PATH="$V5/bin:$PATH" python3 "$S/kiem_loi_doc.py" "$V5" > "$V5/kq.txt" 2>&1; then loi "kiem_loi_doc khong chan loi vuot cuoi video"; fi
+grep -q "sau cuoi video" "$V5/kq.txt" || loi "kiem_loi_doc thieu thong bao loi vuot cuoi video"
+pass "phu_de_tung_tu.py (moc ghep, kiem dinh dang), ap_sua_srt.py (xem truoc, ap, dong bo so khang dinh, srt lech, thu tu theo moc, cau doi chu), phu de khong chong, kiem_loi_doc timeline cu, giu hinh lien tiep, cue sau giu_hinh va loi vuot cuoi video"
 
 # 6. Script shell: cu phap
 for f in "$S"/*.sh "$ROOT"/tools/*.sh; do bash -n "$f"; done

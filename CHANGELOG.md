@@ -2,6 +2,18 @@
 
 Quy ước số phiên bản `MAJOR.MINOR.PATCH`, ghi ở `video-studio/VERSION` và dòng "Phiên bản skill" trong `video-studio/SKILL.md` (hai nơi phải khớp, CI kiểm tra khi đóng gói). Thêm kiểu hình hoặc tính năng thì tăng MINOR; sửa lỗi thì tăng PATCH; đổi lớn làm hỏng cách dùng cũ thì tăng MAJOR. Mỗi lần gộp PR thay đổi skill: tăng số, sửa hai nơi trên và thêm mục mới ở đầu file này.
 
+## [1.15.1] - 2026-11-19
+
+Sửa hai lỗi ở bước ghép lời vào video có sẵn (tìm ra khi rà soát repo sau 1.15.0); không đổi quy tắc kiểm chứng, bản quyền, khóa nhân vật.
+
+- `scripts/ghep_loi_video_co_san.py`: mốc `cue` là giây trên video gốc, nhưng trước đây không được cộng phần kéo dài của các lần `giu_hinh` nằm trước nó, nên lời của cảnh `cue` đứng sau một cảnh giữ hình phát sớm hơn hình, `phu-de.srt` và `timeline_ghep.json` ghi mốc sai và script báo chồng lời giả. Nay mốc ghép = `cue` + tổng phần kéo dài của các lần giữ hình có `dong_bang` không lớn hơn `cue` (tính theo khung hình đã làm tròn như bước nhân khung). Thử: video 5 giây, `s01` giữ hình ở 1,0 giây (kéo thêm 2,0 giây), `s02` cue 2,0 giây: trước đây lời `s02` ở giây 2,0, nay ở giây 4,0 (video ghép 7,0 giây).
+- Cùng file: lời đọc kết thúc sau cuối video ghép (cảnh cuối có lời dài hơn phần hình còn lại) trước đây làm script dừng giữa chừng với `ValueError: operands could not be broadcast` (đã ghi xong `video_giu_hinh.mp4`, chưa có thành phẩm). Nay script chặn sớm theo thời lượng video và kiểm lại chính xác sau khi đếm khung hình, in `[LOI]` ghi cảnh và số giây vượt, không tự cắt lời.
+- `scripts/kiem_loi_doc.py`: khi chưa có `timeline_ghep.json`, cue cũng được cộng phần kéo dài giữ hình (hết báo chồng lời giả); báo `[LOI]` khi lời kết thúc sau cuối video (cuối video lấy từ `tong_giay` của `timeline_ghep.json`, hoặc video gốc cộng phần kéo dài khi chưa ghép).
+- `scripts/job.py kiem`: in `[CANH BAO]` cho cảnh `cue` có lời vượt cuối video ghép, trước khi chạy `dung`.
+- `tools/smoke_test.sh`: thêm ca cue sau giữ hình và ca lời vượt cuối video (đã xác nhận ca thứ nhất thất bại trên mã 1.15.0).
+- Đã chạy thử: `smoke_test.sh` đạt; `ruff F,E9` sạch; `job.py kiem` và `ghep_loi_video_co_san.py` với ffmpeg thật trên video mẫu 5 giây (ca lời vượt báo lỗi thoát mã 1; ca hợp lệ ghép 7,0 giây, `phu-de.srt` khối 2 ở 4,0 giây). Chưa chạy: `setup.sh`, `tts.py`, `new_project.sh`, `inject.py`, `hyperframes check`, `render.sh` (không chạm các bước này), `job.py dung` trọn chuỗi (cần `tts.py` và mô hình giọng).
+- Chưa sửa: hai mốc `dong_bang` làm tròn ra cùng một khung hình thì một lần giữ hình bị mất.
+
 ## [1.15.0] - 2026-11-19
 
 Chế độ lồng tiếng cho video có sẵn: phụ đề từng từ, áp lời sửa từ srt, kiểm lời bớt báo nhầm. Rút ra từ một job khui hàng khổ dọc 720x1280 (video quay 89,7 giây, 27 cảnh lời). Không đổi quy tắc kiểm chứng, bản quyền, khóa nhân vật.

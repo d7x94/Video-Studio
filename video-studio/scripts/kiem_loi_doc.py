@@ -77,9 +77,12 @@ def main():
 
     # moc bat dau
     start = {}
+    tong = None   # tong thoi luong video sau khi ghep (giay), None neu chua biet
     tg = proj / "timeline_ghep.json"
     if tg.exists():
-        start = {k: float(v) for k, v in json.loads(tg.read_text(encoding="utf-8")).get("start", {}).items()}
+        tgj = json.loads(tg.read_text(encoding="utf-8"))
+        start = {k: float(v) for k, v in tgj.get("start", {}).items()}
+        tong = tgj.get("tong_giay")
         moi_hon = [f for f in ("job.json", "scenes.json") if (proj / f).exists() and (proj / f).stat().st_mtime > tg.stat().st_mtime]
         moi_hon += [f"audio/{k}.wav" for k in dur if (proj / "audio" / f"{k}.wav").stat().st_mtime > tg.stat().st_mtime]
         if moi_hon:
@@ -88,20 +91,27 @@ def main():
     elif job.get("canh"):
         truoc = job.get("khoang_truoc", 0.15)
         sau = job.get("khoang_sau", 0.35)
-        for k, v in job["canh"].items():
-            if "cue" in v:
-                start[k] = float(v["cue"])
+        cue_goc = {k: float(v["cue"]) for k, v in job["canh"].items() if "cue" in v}
         # Chua co timeline_ghep.json: tinh moc giu_hinh bang cung cong thuc ghep_loi_video_co_san.py
         # (moi canh giu hinh keo dai khung hinh nen day cac canh giu hinh sau no); thieu tieng thi khong keo dai duoc.
         dich = 0.0
+        moc_giu = []   # (dong_bang tren video goc, giay keo dai): cue tinh tren video goc phai cong phan nay
         giu = sorted(((k, v["giu_hinh"]) for k, v in job["canh"].items() if "giu_hinh" in v), key=lambda x: float(x[1]["hien_ro"]))
         for k, g in giu:
             s = float(g["hien_ro"]) + dich + truoc
             start[k] = s
             if k in dur:
-                dich += max(0.0, s + dur[k] + sau - (float(g["dong_bang"]) + dich))
+                ext = max(0.0, s + dur[k] + sau - (float(g["dong_bang"]) + dich))
+                dich += ext
+                moc_giu.append((float(g["dong_bang"]), ext))
             else:
                 cb.append(f"{k}: chua co audio/{k}.wav, chua tinh duoc phan keo dai giu hinh nen moc cac canh giu hinh sau no co the lech")
+
+        for k, c in cue_goc.items():
+            start[k] = c + sum(e for db, e in moc_giu if db <= c)
+        gv = (Path(job["video_goc"]) if Path(job["video_goc"]).is_absolute() else proj / job["video_goc"]) if job.get("video_goc") else None
+        if gv is not None and gv.is_file() and (goc := thoi_luong(gv)) is not None and not any("chua co audio" in x for x in cb):
+            tong = goc + dich
 
     tong_xh = 0
     for sc in scenes:
@@ -138,6 +148,13 @@ def main():
             loi.append(f"loi {k1} (den {s1 + dur[k1]:.2f}s) chong len loi {k2} (bat dau {s2:.2f}s) {-gap:.2f}s")
         elif gap < 0.2:
             cb.append(f"loi {k1} va {k2} cach nhau {gap:.2f}s, duoi 0,2s")
+
+    # loi ket thuc sau cuoi video: buoc ghep se dung
+    if tong is not None:
+        for k, s in start.items():
+            if k in dur and s + dur[k] > float(tong) + 0.05:
+                loi.append(f"loi {k} ket thuc {s + dur[k]:.2f}s, sau cuoi video ({float(tong):.2f}s) {s + dur[k] - float(tong):.2f}s: "
+                           "rut loi, doi cue som hon hoac them giu_hinh")
 
     # loi dai hon anh tinh
     giu = {k for k, v in (job.get("canh") or {}).items() if "giu_hinh" in v}

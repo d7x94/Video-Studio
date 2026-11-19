@@ -10,7 +10,8 @@ tts.py ghep loi lien tuc nen khong khop hinh co san; script nay dat tung loi vao
 CAU_HINH.json:
 {
   "video": "video_nomau.mp4",             # hinh (da lam mo neu can), duong dan tuong doi PROJECT
-  "cue": {"s01": 0.3, "s02": 4.3},        # giay bat dau loi tren video goc (cac canh khong nam trong giu_hinh)
+  "cue": {"s01": 0.3, "s02": 4.3},        # giay bat dau loi tren video GOC (cac canh khong nam trong giu_hinh); script tu cong phan keo dai
+                                          # cua cac lan giu hinh nam truoc cue do (dong_bang <= cue) de loi van khop hinh
   "giu_hinh": [                           # tuy chon: keo dai anh tinh bang cach giu khung hinh
     {"id": "s11", "dong_bang": 78.64, "hien_ro": 76.13}
   ],
@@ -19,13 +20,14 @@ CAU_HINH.json:
 Voi moi muc giu_hinh (theo thu tu thoi gian): loi bat dau sau luc anh hien ro "hien_ro" mot
 khoang_truoc; neu loi doc dai hon thoi gian anh nam yen thi khung hinh o "dong_bang" (giay
 tren video goc, ngay truoc luc chuyen sang anh ke tiep) duoc nhan ra du lau de loi doc xong
-cach luc chuyen anh khoang_sau. Cac moc sau do tu dich theo. Dung freezedetect hoac so sanh
+cach luc chuyen anh khoang_sau. Cac moc sau do (ca giu_hinh lan cue) tu dich theo. Dung freezedetect hoac so sanh
 khung hinh de tim moc, khong doan.
 
 Ra: video mp4 (hinh libx264 crf 17, tieng AAC 192k), PROJECT/timeline_ghep.json va
 PROJECT/phu-de.srt (lay truong "subtitle" cua canh, khong co thi "narration").
 Gioi han: video co dinh khung hinh/giay; tieng 48 kHz (dung tts.py); khong phat hien loi chong lan
-ngoai viec in canh bao.
+ngoai viec in canh bao. Loi doc ket thuc sau cuoi video (sau khi giu hinh) thi dung va bao [LOI] ghi ro so giay vuot,
+khong cat loi: rut loi, doi cue som hon hoac them giu_hinh.
 Yeu cau: ffmpeg, ffprobe, python3 co numpy va soundfile.
 """
 import argparse
@@ -56,6 +58,14 @@ def srt_time(x):
     return f"{h:02d}:{m:02d}:{s:06.3f}".replace(".", ",")
 
 
+def kiem_het_video(start, dur, total, dung_sai):
+    """Dung neu co loi ket thuc sau cuoi video (mix tieng khong the dai hon hinh)."""
+    qua = [(k, start[k] + dur[k] - total) for k in start if start[k] + dur[k] - total > dung_sai]
+    if qua:
+        ct = ", ".join(f"{k} vuot {v:.2f}s" for k, v in sorted(qua, key=lambda x: -x[1])[:4])
+        sys.exit(f"[LOI] loi doc ket thuc sau cuoi video ({total:.2f}s): {ct}. Rut loi, doi cue som hon hoac them giu_hinh")
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("project")
@@ -81,8 +91,10 @@ def main():
             sys.exit(f"[LOI] {wav} la {sr} Hz, can {SR} Hz")
         dur[sid] = len(x) / sr
 
-    start = {k: float(v) for k, v in cfg.get("cue", {}).items()}
+    cue_goc = {k: float(v) for k, v in cfg.get("cue", {}).items()}   # moc tren video goc
+    start = dict(cue_goc)
     freeze = []   # (so khung hinh goc, so khung hinh them)
+    moc_giu = []  # (dong_bang tren video goc, giay them) de dich cac cue nam sau
     shift = 0.0
     for g in cfg.get("giu_hinh", []):
         sid = g["id"]
@@ -93,10 +105,24 @@ def main():
         cur = g["dong_bang"] + shift
         ext = max(0.0, need - cur)
         freeze.append((int(round(g["dong_bang"] * fps)), int(round(ext * fps))))
+        moc_giu.append((float(g["dong_bang"]), int(round(ext * fps)) / fps))
         shift += ext
+    # cue tinh tren video goc: cong phan keo dai cua cac lan giu hinh da xay ra truoc moc do
+    for sid, c in cue_goc.items():
+        start[sid] = c + sum(e for db, e in moc_giu if db <= c)
     thieu = [k for k in scenes if k not in start]
     if thieu:
         sys.exit(f"[LOI] canh chua co moc thoi gian: {', '.join(thieu)}")
+
+    # loi khong duoc vuot cuoi video: chan som (uoc theo thoi luong video) truoc khi ma hoa lau
+    dv = subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "default=nw=1:nk=1", video],
+                        capture_output=True, text=True).stdout.strip()
+    try:
+        uoc = float(dv) + sum(e for _, e in moc_giu)
+    except ValueError:
+        uoc = None
+    if uoc is not None:
+        kiem_het_video(start, dur, uoc, 0.1)
 
     # video: nhan khung hinh o cac moc dong bang
     tmp_video = proj / "video_giu_hinh.mp4"
@@ -123,6 +149,7 @@ def main():
     enc.wait()
     p.wait()
     total = n / fps
+    kiem_het_video(start, dur, total, 0.0)
 
     # tieng
     mix = np.zeros(int((total + 1) * SR), np.float32)

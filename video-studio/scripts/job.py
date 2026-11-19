@@ -141,7 +141,7 @@ def uoc_thoi_luong(proj, job):
     goc = thoi_luong_file(gv)
     truoc, sau = job.get("khoang_truoc", 0.15), job.get("khoang_sau", 0.35)
     giu = sorted(((k, v["giu_hinh"]) for k, v in job["canh"].items() if "giu_hinh" in v), key=lambda x: x[1]["hien_ro"])
-    chi_tiet, dich = [], 0.0
+    chi_tiet, dich, dai_giu, vuot = [], 0.0, [], []
     for sid, g in giu:
         w = proj / "audio" / f"{sid}.wav"
         d = thoi_luong_file(w) if w.exists() else None
@@ -150,7 +150,17 @@ def uoc_thoi_luong(proj, job):
         ext = max(0.0, g["hien_ro"] + dich + truoc + d + sau - (g["dong_bang"] + dich))
         chi_tiet.append((sid, ext))
         dich += ext
-    return goc, dich, chi_tiet
+        dai_giu.append((g["dong_bang"], ext))
+    # loi cac canh cue ket thuc sau cuoi video ghep: ghep_loi_video_co_san.py se dung
+    if goc is not None:
+        for sid, v in job["canh"].items():
+            w = proj / "audio" / f"{sid}.wav"
+            d = thoi_luong_file(w) if "cue" in v and w.exists() else None
+            if d is not None:
+                s0 = float(v["cue"]) + sum(e for db, e in dai_giu if db <= float(v["cue"]))
+                if s0 + d > goc + dich + 0.05:
+                    vuot.append((sid, s0 + d - goc - dich))
+    return goc, dich, chi_tiet, vuot
 
 
 def cmd_kiem(proj, job, im=False):
@@ -165,7 +175,9 @@ def cmd_kiem(proj, job, im=False):
         print("[OK] job.json hop le")
         u = uoc_thoi_luong(proj, job)
         if u and u[0] is not None:
-            goc, them, ct = u
+            goc, them, ct, vuot = u
+            for k, v in vuot:
+                print(f"[CANH BAO] loi {k} vuot cuoi video ghep {v:.2f}s: ghep se dung; rut loi, doi cue som hon hoac them giu_hinh", file=sys.stderr)
             dai = ", ".join(f"{k} +{e:.1f}s" for k, e in sorted(ct, key=lambda x: -x[1])[:3] if e >= 0.05)
             print(f"[THONG TIN] thoi luong du kien {goc + them:.1f}s (video goc {goc:.1f}s, giu hinh them {them:.1f}s"
                   + (f"; keo dai nhieu nhat: {dai}" if dai else "") + "). Muon ngan hon thi rut loi cac canh giu hinh")
