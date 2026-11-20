@@ -2,8 +2,9 @@
 # Dung moi truong studio trong workspace. Chay lai an toan (bo qua buoc da xong).
 # Dung:  bash setup.sh            (cai dat day du)
 #        bash setup.sh --check    (chi kiem tra, khong cai)
-#        bash setup.sh --dich     (cai dat day du va them faster-whisper cho che do dich video)
-#        bash setup.sh --firered  (nhu --dich, them sherpa-onnx, opencc de chep loi bang FireRedASR2, chep_loi_firered.py)
+#        bash setup.sh --dich     (cai dat day du, them faster-whisper va sherpa-onnx, opencc cho che do dich video:
+#                                  chep loi bang Whisper, kiem cheo bang FireRedASR2 voi tieng Trung, tieng Anh)
+#        bash setup.sh --firered  (giong --dich, giu lai cho tuong thich)
 #        bash setup.sh --lid      (nhu --dich, them torch, kaldiio, kaldi_native_fbank cho FireRedLID, chep_loi_goc.py --lid)
 set -euo pipefail
 
@@ -108,8 +109,9 @@ if [ "${1:-}" = "--dich" ] || [ "${1:-}" = "--firered" ] || [ "${1:-}" = "--lid"
   ok "faster-whisper $(pyver faster-whisper), ctranslate2 $(pyver ctranslate2), av $(pyver av) (che do dich)"
 fi
 
-# 4d. sherpa-onnx, opencc cho chep loi FireRedASR2 (chi khi --firered); mo hinh tai luc chay bang scripts/lay_asr.py
-if [ "${1:-}" = "--firered" ]; then
+# 4d. sherpa-onnx, opencc cho kiem cheo bang FireRedASR2 (chep_loi_firered.py, mac dinh voi tieng Trung, tieng Anh tu
+#     1.21.0); cai cung --dich, --firered, --lid. Mo hinh tai luc chay bang scripts/lay_asr.py firered2
+if [ "${1:-}" = "--dich" ] || [ "${1:-}" = "--firered" ] || [ "${1:-}" = "--lid" ]; then
   if [ "$(pyver sherpa-onnx)" != "$SHERPA_VER" ] || [ "$(pyver opencc)" != "$OPENCC_VER" ]; then
     PIPLOG="$(mktemp)"
     pip install --break-system-packages -q "sherpa-onnx==$SHERPA_VER" "opencc==$OPENCC_VER" >"$PIPLOG" 2>&1 \

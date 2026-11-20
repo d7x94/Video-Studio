@@ -2,6 +2,19 @@
 
 Quy ước số phiên bản `MAJOR.MINOR.PATCH`, ghi ở `video-studio/VERSION` và dòng "Phiên bản skill" trong `video-studio/SKILL.md` (hai nơi phải khớp, CI kiểm tra khi đóng gói). Thêm kiểu hình hoặc tính năng thì tăng MINOR; sửa lỗi thì tăng PATCH; đổi lớn làm hỏng cách dùng cũ thì tăng MAJOR. Mỗi lần gộp PR thay đổi skill: tăng số, sửa hai nơi trên và thêm mục mới ở đầu file này.
 
+## [1.21.0] - 2026-11-20
+
+Chế độ dịch: kiểm chéo bằng FireRedASR2 thành bước mặc định với tiếng Trung, tiếng Anh; so theo từ, ghi rõ chỗ khác; nghe lại khoảng Whisper không có lời; phân vai agent. Rút từ phép đo trên 3 clip (Trung 27,6 giây, Anh 143 giây có phụ đề cứng để đối chiếu, clip 16 giây chưa rõ ngôn ngữ). Không đổi quy tắc kiểm chứng, bản quyền, khóa nhân vật.
+
+- `scripts/chep_loi_firered.py`: so `KHÁC` bằng gióng hàng (difflib) lời Whisper của cả cụm với bản FireRed của cụm, tách từ (tiếng Anh theo từ, tiếng Trung theo chữ) thay cho kiểm chuỗi chữ liền. Trước đây "bend" lọt vì nằm trong chuỗi "spend". Chỗ khác vắt qua ranh giới hai đoạn được tách theo đoạn; FireRed nghe thêm từ ở ranh giới thì gán cho đoạn trước; chỉ khác cách tách từ ("beef balls" / "beefballs") coi là khớp. Nhãn "trợ từ" giữ như 1.19.1. Cột mới "Chỗ khác" (`Whisper / FireRed`), trường `cho_khac` trong JSON.
+- Cùng file: nghe lại khoảng trống (`khoang_trong` của `chep-goc.json`) theo cửa sổ 8 giây, ghi lời nghe được ở mục riêng (trường `khoang_trong`, `phien_ban` 2). Bỏ `<sil>`, tiếng đệm, trợ từ, lặp một hai từ từ 6 lần trở lên. Đo trên đoạn gõ phím của vlog: cửa sổ 30 giây chỉ ra `<sil>`, 14 giây ra câu đúng kèm "LA LA LA..." lặp, 6 đến 10 giây ra đúng "HERE'S SOME ASMR TYPING" (câu Whisper có VAD bỏ).
+- `scripts/setup.sh --dich` cài luôn `sherpa-onnx`, `opencc` (khoảng 50 MB); `--firered` giữ lại, giống `--dich`. `scripts/chep_loi_goc.py` in dòng `[TIEP]` kèm lệnh kiểm chéo khi ngôn ngữ là `zh` hoặc `en` và không phải hỏi lại.
+- `references/che-do-dich.md`: bước 1b kiểm chéo, cổng duyệt gửi kèm `chep-firered.md`, mục "Phân vai" (agent chép lời haiku chỉ chạy script, dịch sonnet, kiểm dịch và trọng tài sonnet, opus khi nội dung sức khỏe, thủ tục), số đo. `profiles/dich.md`, `SKILL.md`: như trên; `SKILL.md` ghi thêm ngoại lệ dùng opus cho kiểm dịch, trọng tài của chế độ dịch (người dùng đồng ý 2026-11-20). `large-v3` vẫn là tùy chọn.
+- `tools/smoke_test.sh`: ca `bend / spend`, tách từ, chỗ khác vắt qua hai đoạn, tiếng đệm FireRed nghe thêm, lọc khoảng trống. Đã đạt; `ruff F,E9` sạch.
+- Đã chạy thử: `setup.sh --dich`; `chep_loi_goc.py` rồi `chep_loi_firered.py` trên vlog tiếng Anh 143 giây: 5 đoạn `KHÁC`, mỗi chỗ có một bên sai so với phụ đề cứng (`vlog / blog`, `bend / spend`, `decided / decide`, `randomly / readily`, `napoli / naple`), 1 khoảng trống có lời ("here's some asmr typing"), không báo nhầm, chạy 139 giây; hội thoại tiếng Trung 27,6 giây: 6 đoạn `KHÁC`, chạy 39 giây; clip 16 giây: `[CAN HOI]`, `chep_loi_firered.py` dừng vì `jw` ngoài danh sách.
+- Giới hạn: lỗi cả hai mô hình cùng sai không bắt được ("port panini", phụ đề ghi "pork"); vẫn phải đối chiếu chữ trên hình. Clip tiếng Trung chưa có người biết tiếng Trung nghe kiểm.
+- Chưa chạy: `tts.py` câu dài, `new_project.sh`, `inject.py`, `hyperframes check`, `render.sh`, `check_output.py` (không chạm các bước này); `phu_de_dich.py` sau bước kiểm chéo (không đổi).
+
 ## [1.20.0] - 2026-11-20
 
 Chế độ dịch: thêm nhận dạng ngôn ngữ bằng FireRedLID (tùy chọn `--lid`) để đối chiếu với Whisper, rút từ phép đo kiểm chéo trên 3 clip (Trung 27,6 giây, Anh 143 giây, clip 16 giây chưa rõ ngôn ngữ). Không đổi quy tắc kiểm chứng, bản quyền, khóa nhân vật.

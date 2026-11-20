@@ -252,6 +252,8 @@ def main():
         print(f"[CANH BAO] {nn['canh_bao']}")
     if nn.get("can_hoi"):
         print(f"[CAN HOI] Ngon ngu chua chac chan: {nn['ly_do']}. Hoi nguoi dung, roi chay lai voi --ngon-ngu.")
+    elif lang in ("zh", "en"):
+        print(f"[TIEP] Kiem cheo (mac dinh voi zh, en): python3 {SCRIPTS / 'chep_loi_firered.py'} {video} {proj}")
 
 
 if __name__ == "__main__":
