@@ -199,8 +199,23 @@ assert m.so_cum("你再叫一声啊", cum) == (False, True), "chi khac tro tu va
 assert m.so_cum("姐姐", cum) == (False, False), "doan trung bi danh dau"
 assert m.so_cum("你长得可像胡二天", cum) == (True, False), "doan khac that khong bao KHAC"
 assert m.so_cum("哈哈", "我们") == (True, False), "chuoi chi co tro tu bi coi la khop"
+# tieng Anh so theo tu: "bend" nam trong chuoi "spend" nhung la tu khac
+c = "HEY GUYS WELCOME BACK TO ANOTHER ENGLISH BLOG SPEND THE DAY AT THE LIBRARY WITH ME"
+assert m.so_cum("Bend the day at the library with me.", c) == (True, False), "bend/spend khong bao KHAC"
+assert m.so_cum("Spend the day at the library with me.", c) == (False, False)
+assert m.so_cum("The beef balls literally", "THE BEEFBALLS LITERALLY JUST") == (False, False), "chi khac tach tu van bao KHAC"
+# ca cum: cho khac vat qua ranh gioi doan duoc tach dung doan, ghi chu tung ben
+d = [{"id": "a", "goc": "Hey guys, welcome back to another English vlog."},
+     {"id": "b", "goc": "Bend the day at the library with me."}]
+assert m.so_ca_cum(d, c) == {"a": (True, False, ["vlog / blog"]), "b": (True, False, ["bend / spend"])}, m.so_ca_cum(d, c)
+d = [{"id": "a", "goc": "你再叫一声啊"}, {"id": "b", "goc": "姐姐"}, {"id": "c", "goc": "走"}]
+r = m.so_ca_cum(d, "你再叫一声呀姐姐走嗯")
+assert r["a"][:2] == (False, True) and r["b"] == (False, False, []) and r["c"] == (True, False, ["(trống) / 嗯"]), r
+# khoang trong: bo tieng dem, lap chu
+assert m.co_loi_that(m.tach("HERE'S SOME ASMR TYPING")) and not m.co_loi_that(m.tach("嗯嗯嗯"))
+assert not m.co_loi_that(m.tach("LA LA LA LA LA LA LA")) and not m.co_loi_that(m.tach(""))
 PY
-pass "chep_loi_firered.py nhan tro tu cuoi cau"
+pass "chep_loi_firered.py nhan tro tu cuoi cau, so theo tu tieng Anh, tach cho khac theo doan, loc khoang trong"
 else
 echo "[BO QUA] chep_loi_firered.py tro tu: thieu opencc hoac numpy"
 fi

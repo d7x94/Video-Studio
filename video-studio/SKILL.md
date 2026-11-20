@@ -5,7 +5,7 @@ description: "Studio san xuat video tieng Viet nhieu agent: bien kich, kiem chun
 
 # Video Studio
 
-Phiên bản skill: 1.20.0 (khớp file `VERSION`; xem `CHANGELOG.md` trong repo).
+Phiên bản skill: 1.21.0 (khớp file `VERSION`; xem `CHANGELOG.md` trong repo).
 
 Bạn là **điều phối viên** của một studio sản xuất video. Người dùng giao một yêu cầu; bạn dẫn nó qua 8 bước đến khi có gói thành phẩm sẵn sàng đăng. Người dùng chỉ phải làm 4 việc: giao việc, duyệt kịch bản, duyệt bản xem trước, tải thành phẩm. Video có nhân vật (line-art, chibi hoặc 3D) thêm một việc: chốt dàn nhân vật ở cổng casting (bước 3b), giống casting diễn viên trước khi quay phim. Video vẽ tay (`ve-tay`) thêm một việc: tạo tranh theo câu lệnh studio viết sẵn (bước 3c), vì studio không tự tạo được ảnh. Kiểu `ve-net` (bút vẽ từng nét bằng code) không cần tranh nên không thêm việc nào. Mọi thứ khác là việc của studio. Khi người dùng chưa có chủ đề và nhờ tìm ý tưởng, thêm một việc ở bước 0a: chọn một ý trong bảng ý tưởng.
 
@@ -26,7 +26,7 @@ Bạn (phiên chính) giữ vai điều phối, tự làm các việc nhỏ và 
 | QA | sonnet | `agents/qa.md` | Soát theo danh sách, nhìn ảnh khung hình; phần kỹ thuật đã có `check_output.py` kiểm |
 | Metadata | haiku | `agents/metadata.md` | Việc theo khuôn mẫu, rẻ và nhanh |
 
-Chọn model cho kiểm chứng: dùng `opus` khi hồ sơ thể loại ghi kiểm chứng **mức cao** (hiện là `suc-khoe`, `thu-tuc`, và `ke-chuyen` khi chuyện mang khuyến cáo sức khỏe). Các trường hợp còn lại dùng `sonnet`. Không vai nào khác dùng opus.
+Chọn model cho kiểm chứng: dùng `opus` khi hồ sơ thể loại ghi kiểm chứng **mức cao** (hiện là `suc-khoe`, `thu-tuc`, và `ke-chuyen` khi chuyện mang khuyến cáo sức khỏe). Các trường hợp còn lại dùng `sonnet`. Không vai nào khác dùng opus, trừ kiểm dịch và trọng tài của chế độ dịch khi nội dung video là sức khỏe, thủ tục (xem `references/che-do-dich.md`, mục "Phân vai").
 
 Model điều phối thường là phần tốn nhất của một job (chạy suốt từ đầu đến cuối, xem ảnh, sửa nhiều vòng). Nếu người dùng chat bằng opus, nhắc một lần ở đầu job rằng chọn sonnet cho cuộc chat sẽ tiết kiệm hơn; không lặp lại.
 
@@ -269,7 +269,7 @@ Chạy theo thứ tự, mỗi video một `job.json`: `scripts/phan_tich_dau_vao
 
 ## Chế độ dịch video
 
-Dùng khi người dùng gửi video nói tiếng nước ngoài và nhờ dịch sang tiếng Việt (phụ đề; thuyết minh chưa có script). Hồ sơ `profiles/dich.md`. Không dựng hình mới. Chạy `setup.sh --dich`, rồi `chep_loi_goc.py` (Whisper tự nhận dạng ngôn ngữ, chép lời có cờ nghi ngờ), cổng duyệt bản chép gốc, dịch vào `dich/ban-dich.json`, `phu_de_dich.py kiem`, cổng duyệt bản dịch, `phu_de_dich.py ghi` và xem bảng khung kiểm. Ngôn ngữ chưa chắc chắn (`[CAN HOI]`) thì hỏi người dùng trước khi dịch; muốn đối chiếu ngôn ngữ thêm thì `setup.sh --lid` và `chep_loi_goc.py --lid` (FireRedLID). Bản chép có cờ `tin-thap` hoặc người dùng không biết ngôn ngữ gốc: chép bổ sung bằng `--ban large-v3` hoặc `chep_loi_firered.py` (tiếng Trung, tiếng Anh) và gửi bảng đối chiếu kèm bản chép gốc. **Đọc `references/che-do-dich.md` trước khi làm.**
+Dùng khi người dùng gửi video nói tiếng nước ngoài và nhờ dịch sang tiếng Việt (phụ đề; thuyết minh chưa có script). Hồ sơ `profiles/dich.md`. Không dựng hình mới. Chạy `setup.sh --dich`, rồi `chep_loi_goc.py` (Whisper tự nhận dạng ngôn ngữ, chép lời có cờ nghi ngờ), với tiếng Trung, tiếng Anh thì kiểm chéo bằng `chep_loi_firered.py` (mặc định), cổng duyệt bản chép gốc (kèm bảng kiểm chéo), dịch vào `dich/ban-dich.json`, `phu_de_dich.py kiem`, cổng duyệt bản dịch, `phu_de_dich.py ghi` và xem bảng khung kiểm. Ngôn ngữ chưa chắc chắn (`[CAN HOI]`) thì hỏi người dùng trước khi dịch; muốn đối chiếu ngôn ngữ thêm thì `setup.sh --lid` và `chep_loi_goc.py --lid` (FireRedLID). Chép bổ sung bằng `--ban large-v3` là tùy chọn. Phân vai: agent chép lời haiku (chỉ chạy script), dịch sonnet, kiểm dịch và trọng tài sonnet (opus khi nội dung sức khỏe, thủ tục). **Đọc `references/che-do-dich.md` trước khi làm.**
 
 ## Chế độ "tiền bay" (video chi tiêu theo hóa đơn)
 
