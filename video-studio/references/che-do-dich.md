@@ -12,7 +12,7 @@ Bản này (1.14.0) làm trọn được **phụ đề**. Thuyết minh (lồng 
 
 ## Môi trường
 
-`bash SKILL/scripts/setup.sh --dich`: dựng như thường lệ, cài thêm `faster-whisper`, `ctranslate2`, `av` (`av` mới hơn 17.0.0 làm `faster_whisper` lỗi `metadata_errors`), `sherpa-onnx` và `opencc` cho bước kiểm chéo bằng FireRedASR2 (ghim phiên bản trong `setup.sh`; `--firered` nay giống `--dich`). Mô hình Whisper tải lúc chạy bằng `scripts/lay_whisper.py` (GitHub Release của repo, dự phòng huggingface, kiểm sha256): bản `medium` khoảng 1,5 GB, tải một lần mỗi workspace. FireRedASR2 (khoảng 1,2 GB) tải bằng `scripts/lay_asr.py` khi chạy kiểm chéo lần đầu. Bản `large-v3` (`--ban large-v3`, khoảng 3,1 GB) là tùy chọn; FireRedLID (`setup.sh --lid`) là tùy chọn.
+`bash SKILL/scripts/setup.sh --dich`: dựng như thường lệ, cài thêm `faster-whisper`, `ctranslate2`, `av` (`av` mới hơn 17.0.0 làm `faster_whisper` lỗi `metadata_errors`), `sherpa-onnx` và `opencc` cho bước kiểm chéo bằng FireRedASR2, `rapidocr` cho bước đọc chữ trên hình (ghim phiên bản trong `setup.sh`; `--firered` nay giống `--dich`). Mô hình Whisper tải lúc chạy bằng `scripts/lay_whisper.py` (GitHub Release của repo, dự phòng huggingface, kiểm sha256): bản `medium` khoảng 1,5 GB, tải một lần mỗi workspace. FireRedASR2 (khoảng 1,2 GB) tải bằng `scripts/lay_asr.py` khi chạy kiểm chéo lần đầu. Bản `large-v3` (`--ban large-v3`, khoảng 3,1 GB) là tùy chọn; FireRedLID (`setup.sh --lid`) là tùy chọn.
 
 ## Quy trình
 
@@ -21,12 +21,13 @@ Bản này (1.14.0) làm trọn được **phụ đề**. Thuyết minh (lồng 
    - Ngôn ngữ: cắt khúc 30 giây, chỉ dùng khúc có ít nhất 3 giây tiếng nói, nhận dạng trên mọi ngôn ngữ. Script in `[CAN HOI]` khi các khúc không cùng ngôn ngữ, xác suất trung bình dưới 0,8, cách ngôn ngữ thứ hai dưới 0,3, hoặc ngôn ngữ ngoài danh sách đã thử (en, zh, vi). Khi đó dừng hỏi người dùng rồi chạy lại với `--ngon-ngu`.
    - Mốc đoạn lấy theo mốc từ đầu và từ cuối (cộng 0,4 giây), vì mốc đoạn gốc của Whisper có thể trùm cả khoảng nhạc sau câu.
 1b. **Kiểm chéo bằng FireRedASR2** (mặc định khi ngôn ngữ là `zh` hoặc `en`; `chep_loi_goc.py` in sẵn lệnh ở dòng `[TIEP]`): `python3 SKILL/scripts/chep_loi_firered.py goc.mp4 PROJECT`. Ra `dich/chep-firered.md`: dòng `KHÁC` kèm đúng chữ hai bên nghe khác nhau, và lời FireRed nghe được ở khoảng Whisper không có đoạn nào. Xem mục "Kiểm chéo bằng FireRedASR2". Ngôn ngữ khác thì bỏ bước này (FireRedASR2 chỉ chép tiếng Trung, tiếng Anh).
-2. **Cổng duyệt bản chép gốc** (dừng chờ người dùng): gửi `chep-goc.md`, kèm `chep-firered.md` khi có bước 1b (nêu từng chỗ `KHÁC` và lời trong khoảng trống; người dùng chọn bên nào, không tự sửa). Nêu rõ các cờ, các khoảng không có lời, và những từ nghi chép sai (tên riêng, món ăn, từ hiếm). Người dùng sửa lời gốc, gán người nói nếu có nhiều người.
+1c. **Đọc chữ trên hình** (mọi ngôn ngữ; sau bước 1b nếu có, để bảng ghi kèm chỗ `KHÁC` của FireRed): `python3 SKILL/scripts/chu_tren_hinh.py goc.mp4 PROJECT`. Ra `dich/chu-tren-hinh.md`: đoạn Whisper khác phụ đề cứng cùng ngôn ngữ, và các dòng chữ khác (thực đơn, biển hiệu, tên riêng). Bắt được lỗi hai mô hình cùng nghe sai mà kiểm chéo bỏ lọt. Video không có chữ thì script dừng sau 5 khung thăm dò. Xem mục "Đọc chữ trên hình".
+2. **Cổng duyệt bản chép gốc** (dừng chờ người dùng): gửi `chep-goc.md`, kèm `chep-firered.md` khi có bước 1b và `chu-tren-hinh.md` khi có chữ (nêu từng chỗ `KHÁC`, lời trong khoảng trống, chỗ khác chữ trên hình; người dùng chọn bên nào, không tự sửa). Nêu rõ các cờ, các khoảng không có lời, và những từ nghi chép sai (tên riêng, món ăn, từ hiếm). Người dùng sửa lời gốc, gán người nói nếu có nhiều người.
    - **Luôn hỏi người nói ở cổng này**, kể cả khi bước 0 đã bỏ qua câu hỏi của hồ sơ: video có mấy người, ai nói câu nào, ai nói với ai. Xưng hô trong bản dịch phụ thuộc vào đây, Whisper và FireRed đều không tách người nói. Người chỉ nghe tiếng ngoài khung hình (người quay) cũng là một người nói. Ghi câu trả lời vào trường `nguoi_noi` của `ban-dich.json` ở bước 3 để lượt kiểm dịch đọc được, không chỉ để trong chat.
    - `nghi-bia`: câu Whisper hay tự thêm ở đoạn không có lời ("Thanks for watching", lặp chữ, xác suất không có lời cao).
    - `tin-thap`: nghe chưa chắc (avg_logprob dưới -0,7).
    - Khoảng không có lời dài hơn 2 giây: VAD có thể đã bỏ câu nói nhỏ trên nền nhạc hay tiếng gõ phím; nhắc người dùng nghe lại.
-   - Đối chiếu hình khi có thể: chữ trên hình (thực đơn, biển, phụ đề sẵn có) giúp sửa từ chép sai.
+   - Đối chiếu hình: `chu-tren-hinh.md` (bước 1c) liệt kê chữ trên hình (thực đơn, biển, phụ đề sẵn có) giúp sửa từ chép sai; vẫn nhìn khung hình khi một chỗ còn ngờ.
 3. **Dịch**: `python3 SKILL/scripts/phu_de_dich.py khoi PROJECT` tạo `dich/ban-dich.json`, rồi điền trường `dich` từng đoạn (điều phối tự dịch, hoặc agent biên kịch, model sonnet).
    - Dịch ý, giữ đúng số, tên riêng, phủ định, ai nói với ai. Xưng hô theo quan hệ người nói (vlog một người: "mình"; cha mẹ nói với con: "bố/mẹ" và "con").
    - Đoạn bị Whisper cắt giữa câu thì gộp: sửa `end` của đoạn đầu, nối `goc`, ghi `"bo": true` và `"gop_vao"` cho đoạn sau. Không để đoạn chồng nhau.
@@ -78,11 +79,29 @@ Dùng khi Whisper báo `[CAN HOI]` về ngôn ngữ, hoặc video có thể là 
 
 - Giới hạn: clip 16 giây chưa có người nghe xác nhận là tiếng gì, nên chưa biết Whisper (`jw`) hay FireRedLID (`su`) đúng. Theo tác giả, FireRedLID đạt 97,18% trên FLEURS (82 ngôn ngữ), Whisper 79,41% ([thẻ model](https://huggingface.co/FireRedTeam/FireRedLID)); chưa đo trên nhiều video của mình.
 
+## Đọc chữ trên hình (bước 1c)
+
+Kiểm chéo hai mô hình không bắt được chỗ cả hai cùng nghe sai (vlog thử: cả Whisper lẫn FireRed nghe "port panini", phụ đề cứng ghi "pork panini"). Chữ trên hình là nguồn độc lập thứ ba.
+
+- `chu_tren_hinh.py` dùng [RapidOCR](https://github.com/RapidAI/RapidOCR) 3.10.0 (gói pip `rapidocr`, Apache-2.0), mô hình PP-OCRv6 small của PaddleOCR (Apache-2.0) đi kèm gói, không tải thêm. Nhận được chữ Latin và chữ Hán. Đã thử Tesseract 5.3.4 có sẵn trong workspace trên cùng khung: ra chữ vụn, không dùng được.
+- Cách làm: thăm dò 5 khung rải đều trong các đoạn có lời, không thấy dòng chữ nào độ tin từ 0,8 thì dừng. Có chữ thì đọc khung giữa mỗi đoạn Whisper (đoạn dài hơn 4 giây đọc thêm khung 1/4 và 3/4). Mỗi dòng chữ so với lời Whisper của đoạn trước, đoạn này và đoạn sau nối lại, vì phụ đề và đoạn Whisper không cắt cùng chỗ (vlog thử: dòng "...the Naples sauce it just tastes even better" hiện ở khung của đoạn sau, đoạn đó chỉ chứa 5/13 từ của dòng); chỗ khác gán cho đoạn chứa từ Whisper bị thay. Dòng chữ khớp khi trùng ít nhất 3 từ (tiếng Trung 4 chữ) và trùng ít nhất 60% số từ của dòng. Chỉ so phần trùng, chỉ báo chỗ thay thế ngắn (mỗi bên tối đa 3 từ), bỏ chỗ chỉ khác cách tách từ. Cùng cách tách từ với `chep_loi_firered.py`.
+- `chu-tren-hinh.md`: bảng đoạn khác chữ (`Whisper / chữ trên hình`, kèm chỗ `KHÁC` của FireRed nếu có), rồi danh sách dòng chữ không khớp đoạn nào (thực đơn, biển hiệu, phụ đề ngôn ngữ khác) để đọc lướt khi sửa tên riêng, món ăn.
+- Phụ đề cứng của chính video cũng có thể viết sai hoặc viết khác lời nói (vlog thử: phụ đề ghi "decide", Whisper "decided"; người nói nói gì thì vẫn phải nghe). Chỉ là gợi ý ở cổng duyệt, không tự sửa bản chép.
+- Số đo (2026-11-20, 2 lõi CPU, thời gian gồm nạp mô hình):
+
+| Clip | Khung đọc | Kết quả | Thời gian |
+|---|---|---|---|
+| Vlog tiếng Anh 143 giây, 1280x720, phụ đề cứng Anh và Trung | 31 | 25/29 đoạn có dòng phụ đề khớp; 3 đoạn khác chữ: `port / pork` (cả hai mô hình cùng sai), `decided / decide`, `napoli / naples` (hai chỗ sau FireRed cũng báo). Danh sách chữ có thực đơn quán ("Avocado On Toast", "Beef meatballs, napoli sauce..."): thực đơn ghi "napoli", phụ đề ghi "Naples", nên người duyệt vẫn phải chọn | 37 giây |
+| Hội thoại tiếng Trung 27,6 giây, 1080x1920, không phụ đề | 19 | 0 đoạn khớp, 0 báo nhầm (thăm dò thấy 1 chữ lẻ nên vẫn đọc hết) | 37 giây |
+| Clip 16 giây ngoài trời, không chữ | 5 | Dừng sau thăm dò | 12 giây |
+
+- Chưa bắt được: chữ chỉ hiện ở khung không đọc (phụ đề đổi nhanh hơn một đoạn Whisper; vlog thử: không có phụ đề cho "Spend the day...", nên `bend` chỉ có kiểm chéo FireRed bắt). Chưa thử chữ viết tay, phụ đề chạy chữ, video tối.
+
 ## Phân vai (agent và model)
 
 | Việc | Ai làm | Model |
 |---|---|---|
-| Chạy `chep_loi_goc.py`, `chep_loi_firered.py`, báo số đoạn có cờ, số chỗ `KHÁC` | agent chép lời | haiku |
+| Chạy `chep_loi_goc.py`, `chep_loi_firered.py`, `chu_tren_hinh.py`, báo số đoạn có cờ, số chỗ `KHÁC`, số chỗ khác chữ trên hình | agent chép lời | haiku |
 | Dịch (`ban-dich.json`) | điều phối hoặc agent biên kịch | sonnet |
 | Kiểm dịch độc lập (bước 4) | agent khác người dịch | sonnet; opus khi nội dung sức khỏe, thủ tục |
 | Trọng tài: chỉ những câu người dịch và người kiểm dịch không thống nhất | agent thứ ba, chỉ nhận các câu đó | sonnet; opus khi nội dung sức khỏe, thủ tục |

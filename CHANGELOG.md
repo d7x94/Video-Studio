@@ -2,6 +2,18 @@
 
 Quy ước số phiên bản `MAJOR.MINOR.PATCH`, ghi ở `video-studio/VERSION` và dòng "Phiên bản skill" trong `video-studio/SKILL.md` (hai nơi phải khớp, CI kiểm tra khi đóng gói). Thêm kiểu hình hoặc tính năng thì tăng MINOR; sửa lỗi thì tăng PATCH; đổi lớn làm hỏng cách dùng cũ thì tăng MAJOR. Mỗi lần gộp PR thay đổi skill: tăng số, sửa hai nơi trên và thêm mục mới ở đầu file này.
 
+## [1.22.0] - 2026-11-20
+
+Chế độ dịch: đọc chữ trên hình (phụ đề cứng, thực đơn, biển hiệu) để đối chiếu bản chép, bắt lỗi hai mô hình cùng nghe sai mà kiểm chéo bỏ lọt (vlog thử: Whisper và FireRed cùng nghe "port panini", phụ đề cứng ghi "pork panini"). Không đổi quy tắc kiểm chứng, bản quyền, khóa nhân vật.
+
+- `scripts/chu_tren_hinh.py` (mới): RapidOCR 3.10.0, mô hình PP-OCRv6 small đi kèm gói. Thăm dò 5 khung, không có chữ thì dừng. Có chữ thì đọc khung giữa mỗi đoạn Whisper (đoạn dài hơn 4 giây thêm khung 1/4, 3/4). Mỗi dòng chữ so với lời đoạn trước, đoạn này, đoạn sau nối lại; khớp khi trùng ít nhất 3 từ (tiếng Trung 4 chữ) và 60% số từ của dòng; chỉ báo chỗ thay thế ngắn. Cùng cách tách từ với `chep_loi_firered.py`; ghi kèm chỗ `KHÁC` của FireRed nếu có. Ra `dich/chu-tren-hinh.md` và `.json`, gồm danh sách dòng chữ không khớp đoạn nào (thực đơn, biển hiệu).
+- Đã thử Tesseract 5.3.4 có sẵn trong workspace trên cùng khung: ra chữ vụn ở cả phụ đề Anh lẫn Trung, không dùng. `rapidocr_onnxruntime` 1.4.4 không cài được trên Python 3.13.
+- `scripts/setup.sh --dich` cài thêm `rapidocr==3.10.0`. `chep_loi_firered.py` in dòng `[TIEP]` kèm lệnh đọc chữ; `chep_loi_goc.py` in lệnh đó khi ngôn ngữ không phải zh, en.
+- `references/che-do-dich.md` (bước 1c, mục "Đọc chữ trên hình", phân vai), `profiles/dich.md`, `SKILL.md`, `README.md` (mục Ghi công: RapidOCR, PaddleOCR, Apache-2.0 theo `LICENSE`, `MODEL_LICENSES.md` trong gói). `tools/smoke_test.sh`: ca `so_dong` (port/pork, thực đơn trùng ít, ngưỡng tiếng Trung), `moc_doc`. Đã đạt; `ruff F,E9` sạch.
+- Đã chạy thử: `setup.sh --dich`; chuỗi `chep_loi_goc.py`, `chep_loi_firered.py`, `chu_tren_hinh.py` trên vlog tiếng Anh 143 giây 1280x720: 31 khung, 25/29 đoạn có dòng phụ đề khớp, 3 đoạn khác chữ (`port / pork`, `decided / decide`, `napoli / naples`), 36 giây. Hội thoại tiếng Trung 27,6 giây 1080x1920 không phụ đề: 0 báo nhầm, 37 giây. Clip 16 giây không chữ: dừng sau thăm dò, 12 giây.
+- Giới hạn: phụ đề cứng có thể viết khác lời nói (thực đơn vlog thử ghi "napoli", phụ đề ghi "Naples"); chữ chỉ hiện ở khung không đọc thì lọt; chưa thử chữ viết tay, phụ đề chạy chữ, video tối.
+- Chưa chạy: `tts.py` câu dài, `new_project.sh`, `inject.py`, `hyperframes check`, `render.sh`, `check_output.py` (không chạm các bước này).
+
 ## [1.21.0] - 2026-11-20
 
 Chế độ dịch: kiểm chéo bằng FireRedASR2 thành bước mặc định với tiếng Trung, tiếng Anh; so theo từ, ghi rõ chỗ khác; nghe lại khoảng Whisper không có lời; phân vai agent. Rút từ phép đo trên 3 clip (Trung 27,6 giây, Anh 143 giây có phụ đề cứng để đối chiếu, clip 16 giây chưa rõ ngôn ngữ). Không đổi quy tắc kiểm chứng, bản quyền, khóa nhân vật.

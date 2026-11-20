@@ -2,8 +2,9 @@
 # Dung moi truong studio trong workspace. Chay lai an toan (bo qua buoc da xong).
 # Dung:  bash setup.sh            (cai dat day du)
 #        bash setup.sh --check    (chi kiem tra, khong cai)
-#        bash setup.sh --dich     (cai dat day du, them faster-whisper va sherpa-onnx, opencc cho che do dich video:
-#                                  chep loi bang Whisper, kiem cheo bang FireRedASR2 voi tieng Trung, tieng Anh)
+#        bash setup.sh --dich     (cai dat day du, them faster-whisper, sherpa-onnx, opencc, rapidocr cho che do dich
+#                                  video: chep loi bang Whisper, kiem cheo bang FireRedASR2 voi tieng Trung, tieng Anh,
+#                                  doc chu tren hinh)
 #        bash setup.sh --firered  (giong --dich, giu lai cho tuong thich)
 #        bash setup.sh --lid      (nhu --dich, them torch, kaldiio, kaldi_native_fbank cho FireRedLID, chep_loi_goc.py --lid)
 set -euo pipefail
@@ -24,6 +25,7 @@ OPENCV_VER="5.0.0.93"   # che do video co san (lam mo, kiem khung); kiem chung 2
 FWHISPER_VER="1.2.1"    # che do dich (setup.sh --dich): chep loi goc bang Whisper; kiem chung 2026-11-18
 CT2_VER="4.9.0"         # ctranslate2: ban da do toc do Whisper (CHANGELOG 1.13.0)
 SHERPA_VER="2.0.2"      # sherpa-onnx: chay FireRedASR2 (ONNX) cho chep_loi_firered.py; kiem chung 2026-11-19 (from_fire_red_asr, 2 loi CPU)
+RAPIDOCR_VER="3.10.0"   # rapidocr: doc chu tren hinh (chu_tren_hinh.py), mo hinh PP-OCRv6 small di kem goi; kiem chung 2026-11-20 (Python 3.13, onnxruntime 1.29.0)
 OPENCC_VER="1.4.2"      # opencc: doi phon the sang gian the khi so Whisper voi FireRed (chep_loi_firered.py); kiem chung 2026-11-19 (t2s, Python 3.13)
 TORCH_VER="2.15.0"      # torch cho FireRedLID (setup.sh --lid); ban pypi kem goi CUDA (khoang 4 GB) vi download.pytorch.org bi chan; kiem chung 2026-11-20 (CPU, Python 3.13)
 KALDIIO_VER="2.18.1"    # kaldiio: doc cmvn.ark cua FireRedLID; kiem chung 2026-11-20
@@ -112,13 +114,13 @@ fi
 # 4d. sherpa-onnx, opencc cho kiem cheo bang FireRedASR2 (chep_loi_firered.py, mac dinh voi tieng Trung, tieng Anh tu
 #     1.21.0); cai cung --dich, --firered, --lid. Mo hinh tai luc chay bang scripts/lay_asr.py firered2
 if [ "${1:-}" = "--dich" ] || [ "${1:-}" = "--firered" ] || [ "${1:-}" = "--lid" ]; then
-  if [ "$(pyver sherpa-onnx)" != "$SHERPA_VER" ] || [ "$(pyver opencc)" != "$OPENCC_VER" ]; then
+  if [ "$(pyver sherpa-onnx)" != "$SHERPA_VER" ] || [ "$(pyver opencc)" != "$OPENCC_VER" ] || [ "$(pyver rapidocr)" != "$RAPIDOCR_VER" ]; then
     PIPLOG="$(mktemp)"
-    pip install --break-system-packages -q "sherpa-onnx==$SHERPA_VER" "opencc==$OPENCC_VER" >"$PIPLOG" 2>&1 \
-      || { tail -n 15 "$PIPLOG"; rm -f "$PIPLOG"; fail "pip install sherpa-onnx, opencc that bai"; }
+    pip install --break-system-packages -q "sherpa-onnx==$SHERPA_VER" "opencc==$OPENCC_VER" "rapidocr==$RAPIDOCR_VER" >"$PIPLOG" 2>&1 \
+      || { tail -n 15 "$PIPLOG"; rm -f "$PIPLOG"; fail "pip install sherpa-onnx, opencc, rapidocr that bai"; }
     rm -f "$PIPLOG"
   fi
-  ok "sherpa-onnx $(pyver sherpa-onnx), opencc $(pyver opencc) (chep loi FireRedASR2)"
+  ok "sherpa-onnx $(pyver sherpa-onnx), opencc $(pyver opencc) (chep loi FireRedASR2), rapidocr $(pyver rapidocr) (chu tren hinh)"
 fi
 
 # 4e. torch, kaldiio, kaldi_native_fbank cho FireRedLID (chi khi --lid); mo hinh tai luc chay bang scripts/lay_asr.py lid,
