@@ -216,8 +216,21 @@ assert m.co_loi_that(m.tach("HERE'S SOME ASMR TYPING")) and not m.co_loi_that(m.
 assert not m.co_loi_that(m.tach("LA LA LA LA LA LA LA")) and not m.co_loi_that(m.tach(""))
 PY
 pass "chep_loi_firered.py nhan tro tu cuoi cau, so theo tu tieng Anh, tach cho khac theo doan, loc khoang trong"
+python3 -I - "$S/chu_tren_hinh.py" <<'PY'
+import importlib.util, sys
+spec = importlib.util.spec_from_file_location("cth", sys.argv[1]); m = importlib.util.module_from_spec(spec); spec.loader.exec_module(m)
+t = m.tach
+w = t("so I'll grab something. And my friend ordered a port panini. The beef balls")
+assert m.so_dong(w, t("anà my friend ordered a pork panini"), False) == (True, [(9, 10, "port", "pork")])
+assert m.so_dong(w, t("Beef Meatballs & Pork Panini"), False)[0] is False      # thuc don: trung it, khong coi la phu de
+assert m.so_dong(w, t("my friend ordered a port panini"), False) == (True, [])
+assert m.so_dong(t("美女吹个兜巴吧"), t("美女吹个头发吧"), True) == (True, [(4, 6, "兜巴", "头发")])
+assert m.so_dong(t("你好"), t("你好"), True)[0] is False                         # tieng Trung can it nhat 4 chu trung
+assert m.moc_doc({"start": 0, "end": 2}) == [1.0] and len(m.moc_doc({"start": 0, "end": 8})) == 3
+PY
+pass "chu_tren_hinh.py (so dong chu voi loi Whisper, bo thuc don trung it, nguong tieng Trung, khung doc)"
 else
-echo "[BO QUA] chep_loi_firered.py tro tu: thieu opencc hoac numpy"
+echo "[BO QUA] chep_loi_firered.py, chu_tren_hinh.py: thieu opencc hoac numpy"
 fi
 
 # 5c. phu_de_tung_tu.py (khong can ffmpeg khi khong --ghi), ap_sua_srt.py, canh bao timeline_ghep.json cu cua kiem_loi_doc.py

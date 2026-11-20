@@ -286,6 +286,7 @@ def main():
     ntt = sum(d["chi_tro_tu"] for d in doan_kq)
     print(f"[OK] dich/chep-firered.json: {len(cum_kq)} cum, {len(doan_kq)} doan, {n} doan khac Whisper, "
           f"{ntt} doan chi khac tro tu, {len(trong)} khoang trong co loi (xem chep-firered.md)")
+    print(f"[TIEP] Doc chu tren hinh: python3 {SCRIPTS / 'chu_tren_hinh.py'} {video} {proj}")
 
 
 if __name__ == "__main__":
