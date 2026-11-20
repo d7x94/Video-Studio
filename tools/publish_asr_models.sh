@@ -1,13 +1,15 @@
 #!/usr/bin/env bash
 # Dang mo hinh nhan dang giong noi bo sung (Whisper large-v3, FireRedASR2-AED int8 ONNX) len GitHub Release theo
-# video-studio/assets/asr-models.json. Tai tung file tu HuggingFace dung revision da ghim, kiem kich thuoc va sha256,
+# video-studio/assets/asr-models.json, hoac theo danh muc khac cung dinh dang (vd lid-models.json cho FireRedLID). Tai tung file tu HuggingFace dung revision da ghim, kiem kich thuoc va sha256,
 # cat file lon hon 2 GiB thanh parts (split -b 1500M -d -a 2) va kiem sha256 tung phan, roi tao release (neu chua co)
 # va tai len nhung file con thieu. Khong ghi de file da co.
 # Chay trong GitHub Actions (workflow asr-models.yml), can GH_TOKEN co quyen contents:write.
-# Dung:  bash tools/publish_asr_models.sh [THU_MUC_TAM]   (mac dinh: dist/asr-models)
+# Dung:  bash tools/publish_asr_models.sh [THU_MUC_TAM] [DANH_MUC]
+#        (mac dinh: dist/asr-models, video-studio/assets/asr-models.json)
+# Danh muc co "release_title", "release_notes" thi dung cho release moi; khong co thi dung loi ghi cua bo ASR.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-MANIFEST="$ROOT/video-studio/assets/asr-models.json"
+MANIFEST="$(realpath -m "${2:-$ROOT/video-studio/assets/asr-models.json}")"
 OUT="$(realpath -m "${1:-$ROOT/dist/asr-models}")"
 mkdir -p "$OUT/work" "$OUT/assets"
 
@@ -61,6 +63,8 @@ if ! gh release view "$TAG" >/dev/null 2>&1; then
   NOTES="$(python3 - "$MANIFEST" <<'PY'
 import json, sys
 m = json.load(open(sys.argv[1]))
+if m.get("release_notes"):
+    print(m["release_notes"]); sys.exit()
 print("Mo hinh nhan dang giong noi bo sung cho che do dich cua skill video-studio, chep nguyen ban (khong sua) tu HuggingFace de tai nhanh va khong phu thuoc huggingface.co.\n")
 for repo, s in m["sources"].items():
     print(f"- {repo} @ {s['revision']} ({s['license']})")
@@ -69,7 +73,9 @@ print("Giay phep: LICENSE-whisper.txt (OpenAI Whisper, MIT), LICENSE-firered.txt
 print("Khong xoa hay tao lai release nay: scripts/lay_asr.py tro thang vao ten tag.")
 PY
 )"
-  gh release create "$TAG" --title "Mo hinh ASR bo sung: Whisper large-v3, FireRedASR2 ($TAG)" --notes "$NOTES" --latest=false
+  TITLE="$(python3 -c "import json,sys; print(json.load(open(sys.argv[1])).get('release_title') or '')" "$MANIFEST")"
+  [ -n "$TITLE" ] || TITLE="Mo hinh ASR bo sung: Whisper large-v3, FireRedASR2 ($TAG)"
+  gh release create "$TAG" --title "$TITLE" --notes "$NOTES" --latest=false
 fi
 HAVE="$(gh release view "$TAG" --json assets --jq '.assets[].name')"
 for f in "$OUT"/assets/*; do

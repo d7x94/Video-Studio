@@ -7,6 +7,7 @@ Dung:
   python3 chep_loi_goc.py VIDEO PROJECT --ban small         # nhanh hon, de bia cau hon (xem references/che-do-dich.md)
   python3 chep_loi_goc.py VIDEO PROJECT --ban large-v3      # lon nhat (khoang 3,1 GB), cham hon medium
   python3 chep_loi_goc.py VIDEO PROJECT --khong-vad         # khong loc khoang lang (de bia cau o doan nhac, go phim)
+  python3 chep_loi_goc.py VIDEO PROJECT --lid               # doi chieu ngon ngu voi FireRedLID (can setup.sh --lid)
 
 Dau ra trong PROJECT/dich/:
   chep-goc.json   ngon ngu (chon, xac suat tung khuc, chac chan hay khong), cac doan (id, start, end, goc,
@@ -17,6 +18,9 @@ Nhan dang ngon ngu: cat khuc 30 giay, chi dung khuc co it nhat 3 giay tieng noi 
 phim cho ket qua sai), nhan dang tren moi ngon ngu (khong ep vao danh sach), cong xac suat cac khuc. Chac chan khi
 moi khuc cung mot ngon ngu, trung binh >= 0,8 va cach ngon ngu thu hai >= 0,3. Khong chac chan, hoac ngon ngu ngoai
 danh sach ho tro (en, zh, vi) thi "can_hoi": true: dieu phoi dung lai hoi nguoi dung truoc khi dich.
+--lid: chay them FireRedLID (scripts/nhan_dang_lid.py, tien trinh rieng, truoc khi nap Whisper de khong giu hai mo
+hinh trong RAM) tren cac khuc co tieng noi; ket qua ghi o "ngon_ngu"."lid". FireRedLID chon ngon ngu khac Whisper,
+hoac khong co khuc nao do tin >= 0,8, thi "can_hoi": true. Bo qua khi da chi dinh --ngon-ngu.
 
 Co tung doan (chi la goi y de nguoi nghe lai, khong tu sua):
   nghi-bia     no_speech_prob > 0,6, compression_ratio > 2,4 (lap chu) hoac trung cau ket quen thuoc
@@ -109,6 +113,33 @@ def nhan_dang(model, audio, noi):
             "can_hoi": bool(ly_do), "ly_do": "; ".join(ly_do), "khuc": khuc}
 
 
+def chay_lid(video: Path, out: Path, noi, luong: int) -> dict:
+    """Chay nhan_dang_lid.py o tien trinh rieng; tra ve ket qua JSON."""
+    vao, ra = out / "lid-khuc-noi.json", out / "lid.json"
+    vao.write_text(json.dumps([[round(s, 2), round(e, 2)] for s, e in noi]), encoding="utf-8")
+    r = subprocess.run([sys.executable, str(SCRIPTS / "nhan_dang_lid.py"), str(video), "--doan", str(vao),
+                        "--ra", str(ra), "--luong", str(luong)], capture_output=True, text=True)
+    sys.stderr.write(r.stderr)
+    vao.unlink(missing_ok=True)
+    if r.returncode != 0:
+        sys.exit(r.returncode)
+    return json.loads(ra.read_text(encoding="utf-8"))
+
+
+def doi_chieu_lid(nn: dict, lid: dict):
+    """Ghi ket qua FireRedLID vao nn; khac Whisper hoac khong co khuc tin cay thi can_hoi."""
+    nn["lid"] = {k: lid[k] for k in ("chon", "ty_le", "giay_tin_cay", "giay_tieng_noi", "tong")}
+    ly_do = []
+    if lid["chon"] is None:
+        ly_do.append("FireRedLID khong co khuc nao do tin >= 0,8")
+    elif lid["chon"] != nn["chon"]:
+        ly_do.append(f"FireRedLID chon {lid['chon']} ({lid['giay_tin_cay']} giay tin cay), Whisper chon {nn['chon']}")
+    if ly_do:
+        nn["chac_chan"] = False
+        nn["can_hoi"] = True
+        nn["ly_do"] = "; ".join([x for x in [nn.get("ly_do")] if x] + ly_do)
+
+
 def co_doan(s):
     co = []
     t = s.text.strip().lower()
@@ -139,6 +170,9 @@ def ghi_md(path: Path, kq):
              f"- Ngôn ngữ: **{nn.get('chon')}**" + (f" ({nn['xac_suat']})" if nn.get("xac_suat") is not None else "")
              + (" (người dùng chọn)" if nn.get("nguoi_chon") else "")
              + ("" if not nn.get("can_hoi") else f". **CẦN HỎI**: {nn.get('ly_do')}"), ""]
+    if nn.get("lid"):
+        lines += [f"- FireRedLID: {nn['lid']['chon']} ({nn['lid']['giay_tin_cay']}/{nn['lid']['giay_tieng_noi']} giây "
+                  f"tin cậy; {', '.join(f'{k} {v}' for k, v in nn['lid']['tong'].items()) or 'không có'}).", ""]
     if nn.get("canh_bao"):
         lines += [f"- **CẢNH BÁO**: {nn['canh_bao']}", ""]
     lines += ["| Mã | Giây | Lời gốc | Cờ |", "|---|---|---|---|"]
@@ -160,6 +194,7 @@ def main():
     ap.add_argument("--ngon-ngu", default="auto", help="auto hoac ma ngon ngu Whisper (en, zh, vi...)")
     ap.add_argument("--khong-vad", action="store_true")
     ap.add_argument("--luong", type=int, default=os.cpu_count() or 2, help="so luong CPU")
+    ap.add_argument("--lid", action="store_true", help="doi chieu ngon ngu voi FireRedLID (setup.sh --lid)")
     a = ap.parse_args()
 
     video, proj = Path(a.video), Path(a.project)
@@ -174,12 +209,15 @@ def main():
     dur = len(audio) / SR
     if dur < 1:
         sys.exit("[LOI] Video khong co tieng hoac qua ngan")
-    model = WhisperModel(thu_muc_mo_hinh(a.ban), device="cpu", compute_type="int8", cpu_threads=a.luong)
     noi = tieng_noi(audio)
     print(f"Tieng noi theo VAD: {sum(e - s for s, e in noi):.1f}/{dur:.1f} giay", file=sys.stderr)
+    lid = chay_lid(video, out, noi, a.luong) if a.lid and a.ngon_ngu == "auto" else None
+    model = WhisperModel(thu_muc_mo_hinh(a.ban), device="cpu", compute_type="int8", cpu_threads=a.luong)
 
     if a.ngon_ngu == "auto":
         nn = nhan_dang(model, audio, noi)
+        if lid is not None:
+            doi_chieu_lid(nn, lid)
     else:
         nn = {"chon": a.ngon_ngu, "nguoi_chon": True, "chac_chan": True, "can_hoi": False, "ly_do": ""}
         if a.ngon_ngu not in HO_TRO:

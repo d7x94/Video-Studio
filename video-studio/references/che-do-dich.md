@@ -55,6 +55,24 @@ Dùng khi bản chép `medium` có cờ `tin-thap` hoặc người dùng không 
 - Giới hạn đã thấy trên clip đó: ba lần chạy Whisper (medium, large-v3 có VAD, large-v3 không VAD) ra ba bản khác nhau ở cùng một cụm ba chữ, và `large-v3` không chắc đúng hơn `medium`. FireRedASR2 ra bản mạch lạc hơn khi nghe cả cụm, nhưng cắt rời từng đoạn lại cho chữ khác (một cụm "头发" khi nghe liền, "豆腐" khi cắt rời). Chưa có người biết tiếng Trung nghe kiểm lại: coi chỗ `KHÁC` là chỗ cần nghe lại, không phải đáp án.
 - Clip thứ hai (2026-11-19, hội thoại 18,6 giây tiếng Trung, một bé trai và một người nói ngoài khung hình): 2 trong 6 đoạn báo `KHÁC` chỉ vì 啊 và 呀, nên đã thêm nhãn "trợ từ". Tên riêng 胡一天 được cả Whisper `medium` và FireRed chép giống nhau: tên riêng mà hai mô hình chép trùng thì đáng tin hơn, nên FireRed vẫn đáng chạy khi video có tên riêng dù không có cờ `tin-thap`. Cột đoạn riêng còn chép cả tiếng cười (嘿嘿嘿, 哈哈) mà bản nghe cả cụm bỏ đi: không đưa vào phụ đề, nhưng là gợi ý ai đang cười khi gán người nói. Chưa đo trên nhiều video, chưa thử tiếng Anh, tiếng Quảng Đông hay video dài trên 5 phút.
 
+## Nhận dạng ngôn ngữ bằng FireRedLID (tùy chọn `--lid`)
+
+Dùng khi Whisper báo `[CAN HOI]` về ngôn ngữ, hoặc video có thể là ngôn ngữ ngoài danh sách đã thử (tránh đưa nhầm vào `chep_loi_firered.py`, vốn chỉ chép tiếng Trung và tiếng Anh). Không bật mặc định vì phải cài torch.
+
+- `bash setup.sh --lid` (cài mọi thứ của `--dich`, thêm `torch`, `kaldiio`, `kaldi_native_fbank` bản ghim; torch từ pypi kèm các gói CUDA, khoảng 4 GB, dù chỉ chạy CPU), rồi `python3 chep_loi_goc.py VIDEO PROJECT --lid`. Bỏ qua khi đã chỉ định `--ngon-ngu`.
+- Mô hình FireRedLID (Apache-2.0) chép nguyên bản lên Release riêng `lid-firered-1bb4d28` (danh mục ở `assets/lid-models.json`; `model.pth.tar` 3,55 GB chia ba phần, `lay_asr.py lid` ghép lại và kiểm sha256). Mã suy luận chép nguyên bản ở `scripts/vendor/fireredlid` (nguồn, commit, sha256 trong `NGUON.md`). Checkpoint nạp bằng `mmap`: nạp theo cách gốc làm tràn RAM ở workspace 7 GB.
+- Cách chạy: `nhan_dang_lid.py` chạy tiến trình riêng, trước khi nạp Whisper, trên các khúc có tiếng nói theo VAD (khúc dài cắt tối đa 30 giây, bỏ phần dưới 1 giây). Chỉ tính khúc có độ tin từ 0,8 (khúc gõ phím, nhạc cho kết quả bừa với độ tin thấp), cộng thời lượng theo ngôn ngữ. Ra `dich/lid.json`; tóm tắt ghi ở `chep-goc.json` (`ngon_ngu.lid`) và một dòng trong `chep-goc.md`.
+- FireRedLID chọn khác Whisper, hoặc không có khúc nào độ tin từ 0,8, thì `[CAN HOI]`: hỏi người dùng rồi chạy lại với `--ngon-ngu`. Không tự chọn bên nào.
+- Số đo (2026-11-20, 2 lõi CPU, mô hình đã có trên đĩa; thời gian chạy LID không gồm nạp mô hình khoảng 7 giây):
+
+| Clip | Whisper medium | FireRedLID | LID chạy |
+|---|---|---|---|
+| Hội thoại tiếng Trung 27,6 giây | `zh` | `zh` (19,11/26,05 giây tin cậy; khúc 22,5 đến 24,0 giây đoán `en` độ tin 0,21, bị loại) | 8,6 giây |
+| Vlog tiếng Anh 143 giây | `en` | `en` (73,83/73,83 giây) | 19,0 giây |
+| Clip 16 giây ngoài trời | `jw` 0,67, `[CAN HOI]` | `su` (11,7/11,7 giây) | 2,9 giây |
+
+- Giới hạn: clip 16 giây chưa có người nghe xác nhận là tiếng gì, nên chưa biết Whisper (`jw`) hay FireRedLID (`su`) đúng. Theo tác giả, FireRedLID đạt 97,18% trên FLEURS (82 ngôn ngữ), Whisper 79,41% ([thẻ model](https://huggingface.co/FireRedTeam/FireRedLID)); chưa đo trên nhiều video của mình.
+
 ## Số đo (2026-11-18, workspace 2 lõi CPU, không GPU)
 
 | Clip | Ngôn ngữ nhận dạng | Ghi chú |

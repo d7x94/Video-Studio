@@ -9,6 +9,8 @@ __pycache__/
 *.env
 studio/
 models/
+# ma nguon FireRedLID (khong phai mo hinh tai ve), xem video-studio/scripts/vendor/fireredlid/NGUON.md
+!video-studio/scripts/vendor/fireredlid/models/
 *.onnx
 *.data
 *.npz
