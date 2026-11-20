@@ -1,0 +1,19 @@
+# Dang mo hinh nhan dang ngon ngu FireRedLID len Release rieng (ten tag trong lid-models.json) moi khi danh muc doi
+# tren main. Dung chung tools/publish_asr_models.sh voi bo ASR. Khong dung Release "latest" vi workflow kia xoa va tao lai no.
+name: Dang mo hinh nhan dang ngon ngu
+on:
+  push:
+    branches: [main]
+    paths: ['video-studio/assets/lid-models.json', '.github/workflows/lid-models.yml']
+  workflow_dispatch:
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Tai tu HuggingFace, kiem sha256, cat parts, dang release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: bash tools/publish_asr_models.sh dist/lid-models video-studio/assets/lid-models.json

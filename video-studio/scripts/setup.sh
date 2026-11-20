@@ -4,6 +4,7 @@
 #        bash setup.sh --check    (chi kiem tra, khong cai)
 #        bash setup.sh --dich     (cai dat day du va them faster-whisper cho che do dich video)
 #        bash setup.sh --firered  (nhu --dich, them sherpa-onnx, opencc de chep loi bang FireRedASR2, chep_loi_firered.py)
+#        bash setup.sh --lid      (nhu --dich, them torch, kaldiio, kaldi_native_fbank cho FireRedLID, chep_loi_goc.py --lid)
 set -euo pipefail
 
 SKILL_DIR="$(cd "$(dirname "$0")/.." && pwd)"
@@ -23,6 +24,9 @@ FWHISPER_VER="1.2.1"    # che do dich (setup.sh --dich): chep loi goc bang Whisp
 CT2_VER="4.9.0"         # ctranslate2: ban da do toc do Whisper (CHANGELOG 1.13.0)
 SHERPA_VER="2.0.2"      # sherpa-onnx: chay FireRedASR2 (ONNX) cho chep_loi_firered.py; kiem chung 2026-11-19 (from_fire_red_asr, 2 loi CPU)
 OPENCC_VER="1.4.2"      # opencc: doi phon the sang gian the khi so Whisper voi FireRed (chep_loi_firered.py); kiem chung 2026-11-19 (t2s, Python 3.13)
+TORCH_VER="2.15.0"      # torch cho FireRedLID (setup.sh --lid); ban pypi kem goi CUDA (khoang 4 GB) vi download.pytorch.org bi chan; kiem chung 2026-11-20 (CPU, Python 3.13)
+KALDIIO_VER="2.18.1"    # kaldiio: doc cmvn.ark cua FireRedLID; kiem chung 2026-11-20
+KNF_VER="1.23.3"        # kaldi_native_fbank: dac trung fbank cua FireRedLID; kiem chung 2026-11-20
 AV_VER="17.0.0"         # PyAV: ban moi nhat (19.0.2) lam faster_whisper.decode_audio loi metadata_errors; 15.1.0, 16.1.0, 17.0.0 chay duoc (thu 2026-11-18)
 
 ok()   { echo "[OK]   $*"; }
@@ -94,7 +98,7 @@ ok "opencv $(cv_ver)"
 
 # 4c. faster-whisper cho che do dich (khi --dich hoac --firered: chep_loi_firered.py can chep-goc.json cua Whisper);
 #     mo hinh tai luc chay bang scripts/lay_whisper.py
-if [ "${1:-}" = "--dich" ] || [ "${1:-}" = "--firered" ]; then
+if [ "${1:-}" = "--dich" ] || [ "${1:-}" = "--firered" ] || [ "${1:-}" = "--lid" ]; then
   if [ "$(pyver faster-whisper)" != "$FWHISPER_VER" ] || [ "$(pyver ctranslate2)" != "$CT2_VER" ] || [ "$(pyver av)" != "$AV_VER" ]; then
     PIPLOG="$(mktemp)"
     pip install --break-system-packages -q "faster-whisper==$FWHISPER_VER" "ctranslate2==$CT2_VER" "av==$AV_VER" >"$PIPLOG" 2>&1 \
@@ -113,6 +117,18 @@ if [ "${1:-}" = "--firered" ]; then
     rm -f "$PIPLOG"
   fi
   ok "sherpa-onnx $(pyver sherpa-onnx), opencc $(pyver opencc) (chep loi FireRedASR2)"
+fi
+
+# 4e. torch, kaldiio, kaldi_native_fbank cho FireRedLID (chi khi --lid); mo hinh tai luc chay bang scripts/lay_asr.py lid,
+#     ma suy luan o scripts/vendor/fireredlid
+if [ "${1:-}" = "--lid" ]; then
+  if [ "$(pyver torch)" != "$TORCH_VER" ] || [ "$(pyver kaldiio)" != "$KALDIIO_VER" ] || [ "$(pyver kaldi_native_fbank)" != "$KNF_VER" ]; then
+    PIPLOG="$(mktemp)"
+    pip install --break-system-packages -q "torch==$TORCH_VER" "kaldiio==$KALDIIO_VER" "kaldi_native_fbank==$KNF_VER" >"$PIPLOG" 2>&1 \
+      || { tail -n 15 "$PIPLOG"; rm -f "$PIPLOG"; fail "pip install torch, kaldiio, kaldi_native_fbank that bai"; }
+    rm -f "$PIPLOG"
+  fi
+  ok "torch $(pyver torch), kaldiio $(pyver kaldiio), kaldi_native_fbank $(pyver kaldi_native_fbank) (FireRedLID)"
 fi
 
 # 5. File moi truong cho cac script khac

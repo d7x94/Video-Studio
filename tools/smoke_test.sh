@@ -511,11 +511,13 @@ else
   echo "[BO QUA] may_tinh_tien.py: may thieu ffmpeg, fc-match hoac Pillow"
 fi
 
-# 5d. Danh muc mo hinh ASR bo sung (asr-models.json): kich thuoc, sha256, parts, tep giay phep (khong can mang)
-python3 -I - "$ROOT" <<'PY'
+# 5d. Danh muc mo hinh ASR bo sung (asr-models.json) va nhan dang ngon ngu (lid-models.json): kich thuoc, sha256,
+#     parts, tep giay phep, ten ban khong trung giua hai danh muc (khong can mang)
+for DM in asr-models.json lid-models.json; do
+python3 -I - "$ROOT" "$DM" <<'PY'
 import json, re, sys
 from pathlib import Path
-root = Path(sys.argv[1]); m = json.load(open(root / "video-studio/assets/asr-models.json"))
+root = Path(sys.argv[1]); m = json.load(open(root / "video-studio/assets" / sys.argv[2]))
 bans = {s["dir"] for s in m["sources"].values()}
 assert m["release_tag"] and "{tag}" in m["release_url"] and "{asset}" in m["release_url"]
 for s in m["sources"].values():
@@ -531,7 +533,32 @@ for f in m["files"]:
         assert all(p["size"] < 2 << 30 and re.fullmatch(r"[0-9a-f]{64}", p["sha256"]) for p in f["parts"]), f["path"]
 assert len({f["asset"] for f in m["files"]}) == len(m["files"])
 PY
-pass "asr-models.json (kich thuoc, sha256, parts duoi 2 GiB, revision 40 ky tu, tep giay phep)"
+pass "$DM (kich thuoc, sha256, parts duoi 2 GiB, revision 40 ky tu, tep giay phep)"
+done
+python3 -I - "$ROOT" <<'PY'
+import json, sys
+from pathlib import Path
+a = Path(sys.argv[1]) / "video-studio/assets"
+ban = [{s["dir"] for s in json.load(open(a / t))["sources"].values()} for t in ("asr-models.json", "lid-models.json")]
+tag = [json.load(open(a / t))["release_tag"] for t in ("asr-models.json", "lid-models.json")]
+assert not (ban[0] & ban[1]) and tag[0] != tag[1], (ban, tag)
+PY
+pass "asr-models.json va lid-models.json khong trung ban, khong trung release"
+
+# 5e. nhan_dang_lid.py: cat khuc va bau ngon ngu (khong can torch, mo hinh)
+python3 -I - "$S" <<'PY'
+import sys
+sys.path.insert(0, sys.argv[1])
+from nhan_dang_lid import bau, chia_khuc
+assert chia_khuc([(0, 0.5), (1, 71)]) == [(1, 31), (31, 61), (61, 71)]
+assert chia_khuc([(0, 30.5)]) == [(0, 30.0)]          # phan du duoi 1 giay bi bo
+k = [{"tu": 0, "den": 10, "ngon_ngu": "zh", "tin": 0.95}, {"tu": 10, "den": 12, "ngon_ngu": "en", "tin": 0.2},
+     {"tu": 12, "den": 15, "ngon_ngu": "en", "tin": 0.9}]
+r = bau(k)
+assert r["chon"] == "zh" and r["giay_tin_cay"] == 13 and r["tong"] == {"zh": 10, "en": 3}, r
+assert bau([{"tu": 0, "den": 5, "ngon_ngu": "ja", "tin": 0.3}])["chon"] is None
+PY
+pass "nhan_dang_lid.py (cat khuc toi da 30 giay, bo khuc do tin thap khi bau)"
 
 # 6. Script shell: cu phap
 for f in "$S"/*.sh "$ROOT"/tools/*.sh; do bash -n "$f"; done

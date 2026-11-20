@@ -1,21 +1,25 @@
 #!/usr/bin/env python3
-"""Tai mo hinh nhan dang giong noi bo sung: Whisper large-v3 (CTranslate2) hoac FireRedASR2-AED int8 (ONNX).
+"""Tai mo hinh nhan dang giong noi bo sung: Whisper large-v3 (CTranslate2), FireRedASR2-AED int8 (ONNX)
+hoac FireRedLID (nhan dang ngon ngu, PyTorch).
 
 Dung:
   python3 lay_asr.py large-v3            # tai (neu chua co) va in duong dan thu muc mo hinh
   python3 lay_asr.py firered2
+  python3 lay_asr.py lid
   python3 lay_asr.py firered2 --kiem     # chi kiem file da tai co dung kich thuoc va sha256 khong (thoat 1 neu thieu)
 
 Dong cuoi in ra la duong dan thu muc mo hinh.
 Mo hinh nam o $STUDIO_HOME/.tools/asr/<ban> (mac dinh ~/studio/.tools/asr/<ban>), khong dua vao git hay zip skill.
 
-Danh muc: assets/asr-models.json (ten file, kich thuoc, sha256, revision HuggingFace da ghim).
+Danh muc: assets/asr-models.json (large-v3, firered2) va assets/lid-models.json (lid): ten file, kich thuoc,
+sha256, revision HuggingFace da ghim; moi danh muc mot release rieng.
 Tai tu GitHub Release cua repo truoc, khong duoc thi tu HuggingFace dung revision da ghim; file nao cung phai
-khop kich thuoc va sha256 moi dung. File lon hon 2 GiB (model.bin cua large-v3) tren release nam o dang parts:
+khop kich thuoc va sha256 moi dung. File lon hon 2 GiB (model.bin cua large-v3, model.pth.tar cua lid) tren release
+nam o dang parts:
 tai tung phan, kiem sha256 tung phan, ghep lai, kiem sha256 file day du.
 
 Dung cho: large-v3 -> chep_loi_goc.py --ban large-v3 (khoang 3,1 GB); firered2 ->
-chep_loi_firered.py (khoang 1,2 GB). Chi tai ban can dung.
+chep_loi_firered.py (khoang 1,2 GB); lid -> chep_loi_goc.py --lid (khoang 3,6 GB). Chi tai ban can dung.
 """
 import argparse
 import hashlib
@@ -27,9 +31,9 @@ from pathlib import Path
 
 STUDIO_HOME = Path(os.environ.get("STUDIO_HOME", Path.home() / "studio"))
 ROOT = STUDIO_HOME / ".tools" / "asr"
-MANIFEST = json.loads((Path(__file__).resolve().parent.parent / "assets/asr-models.json")
-                      .read_text(encoding="utf-8"))
-BANS = sorted({s["dir"] for s in MANIFEST["sources"].values()})
+ASSETS = Path(__file__).resolve().parent.parent / "assets"
+MANIFESTS = [json.loads((ASSETS / ten).read_text(encoding="utf-8")) for ten in ("asr-models.json", "lid-models.json")]
+BANS = sorted({s["dir"] for m in MANIFESTS for s in m["sources"].values()})
 
 
 def sha256(path: Path) -> str:
@@ -46,8 +50,12 @@ def curl(url: str, out: Path) -> bool:
     return r.returncode == 0 and out.exists()
 
 
-def release_url(asset: str) -> str:
-    return MANIFEST["release_url"].format(tag=MANIFEST["release_tag"], asset=asset)
+def danh_muc(ban: str) -> dict:
+    return next(m for m in MANIFESTS if any(s["dir"] == ban for s in m["sources"].values()))
+
+
+def release_url(m: dict, asset: str) -> str:
+    return m["release_url"].format(tag=m["release_tag"], asset=asset)
 
 
 def da_dung(dest: Path, f: dict) -> bool:
@@ -65,16 +73,16 @@ def da_dung(dest: Path, f: dict) -> bool:
     return False
 
 
-def tai_tu_release(f: dict, tmp: Path) -> bool:
+def tai_tu_release(m: dict, f: dict, tmp: Path) -> bool:
     """Tai file tu release. Co parts thi tai tung phan, kiem tung phan roi noi vao tmp. Kiem file day du o noi goi."""
     if not f.get("parts"):
-        return curl(release_url(f["asset"]), tmp) and tmp.stat().st_size == f["size"] and sha256(tmp) == f["sha256"]
+        return curl(release_url(m, f["asset"]), tmp) and tmp.stat().st_size == f["size"] and sha256(tmp) == f["sha256"]
     tmp.unlink(missing_ok=True)
     phan = tmp.with_name(tmp.name + ".phan")
     with open(tmp, "wb") as out:
         for p in f["parts"]:
             phan.unlink(missing_ok=True)
-            if not (curl(release_url(p["asset"]), phan) and phan.stat().st_size == p["size"]
+            if not (curl(release_url(m, p["asset"]), phan) and phan.stat().st_size == p["size"]
                     and sha256(phan) == p["sha256"]):
                 phan.unlink(missing_ok=True)
                 return False
@@ -91,7 +99,8 @@ def main():
     ap.add_argument("--kiem", action="store_true", help="chi kiem, khong tai")
     a = ap.parse_args()
 
-    need = [f for f in MANIFEST["files"] if f["path"].startswith(a.ban + "/")]
+    m = danh_muc(a.ban)
+    need = [f for f in m["files"] if f["path"].startswith(a.ban + "/")]
     if a.kiem:
         thieu = [f["path"] for f in need if not da_dung(ROOT / f["path"], f)]
         if thieu:
@@ -107,9 +116,9 @@ def main():
         dest.with_name(dest.name + ".sha256").unlink(missing_ok=True)
         dest.parent.mkdir(parents=True, exist_ok=True)
         tmp = dest.with_name(dest.name + ".part")
-        rev = MANIFEST["sources"][f["repo"]]["revision"]
+        rev = m["sources"][f["repo"]]["revision"]
         hf_url = f"https://huggingface.co/{f['repo']}/resolve/{rev}/{f['hf_path']}"
-        nguon = [("GitHub Release", lambda: tai_tu_release(f, tmp)),
+        nguon = [("GitHub Release", lambda: tai_tu_release(m, f, tmp)),
                  ("HuggingFace", lambda: curl(hf_url, tmp) and tmp.stat().st_size == f["size"]
                   and sha256(tmp) == f["sha256"])]
         for name, chay in nguon:

@@ -1,0 +1,59 @@
+{
+ "_ghi_chu": "Mo hinh nhan dang ngon ngu FireRedLID (PyTorch, can torch) cho che do dich (chep_loi_goc.py --lid), chep nguyen ban tu HuggingFace len GitHub Release rieng (workflow lid-models.yml dang, dung chung tools/publish_asr_models.sh). scripts/lay_asr.py lid tai tu release truoc, HuggingFace o dung revision duoi la du phong; ca hai deu kiem sha256. model.pth.tar lon hon 2 GiB nen chia parts (split -b 1500M -d -a 2), lay_asr.py ghep lai roi kiem sha256 file day du. Ma suy luan o scripts/vendor/fireredlid (chep nguyen ban tu FireRedTeam/FireRedASR2S, commit ghi trong vendor/fireredlid/NGUON.md). Doi revision: dat release_tag moi, cap nhat revision, size, sha256 tung file theo API HuggingFace, chay thu dau cuoi. Khong xoa hay tao lai release da dang.",
+ "checked": "2026-11-20",
+ "release_tag": "lid-firered-1bb4d28",
+ "release_url": "https://github.com/d7x94/video-studio/releases/download/{tag}/{asset}",
+ "release_title": "Mo hinh nhan dang ngon ngu FireRedLID (lid-firered-1bb4d28)",
+ "release_notes": "Mo hinh nhan dang ngon ngu FireRedLID cho che do dich cua skill video-studio (chep_loi_goc.py --lid), chep nguyen ban (khong sua) tu HuggingFace de tai nhanh va khong phu thuoc huggingface.co.\n\n- FireRedTeam/FireRedLID @ 1bb4d285c8456429385d9c0810300df4297bc11b (Apache-2.0)\n\nTen file: ban (lid) va ten file goc, noi bang \"--\". model.pth.tar lon hon 2 GiB (gioi han moi file cua release) nen chia thanh .part00, .part01, .part02; scripts/lay_asr.py ghep lai va kiem sha256 file day du. Ma kiem tra trong SHA256SUMS, khop video-studio/assets/lid-models.json.\nGiay phep: LICENSE-firered.txt (FireRedASR2S, Apache-2.0). Thong tin goc: README-FireRedLID.md (the mo hinh nguyen ban).\nKhong xoa hay tao lai release nay: scripts/lay_asr.py tro thang vao ten tag.",
+ "sources": {
+  "FireRedTeam/FireRedLID": {
+   "revision": "1bb4d285c8456429385d9c0810300df4297bc11b",
+   "dir": "lid",
+   "license": "Apache-2.0",
+   "license_file": "LICENSE-firered.txt"
+  }
+ },
+ "files": [
+  {
+   "path": "lid/cmvn.ark",
+   "asset": "firered-lid--cmvn.ark",
+   "repo": "FireRedTeam/FireRedLID",
+   "hf_path": "cmvn.ark",
+   "size": 1311,
+   "sha256": "6efba6105429d1630c05d818d956bfe4edfad37a04b3b27bb5a029b9adb37945"
+  },
+  {
+   "path": "lid/dict.txt",
+   "asset": "firered-lid--dict.txt",
+   "repo": "FireRedTeam/FireRedLID",
+   "hf_path": "dict.txt",
+   "size": 779,
+   "sha256": "23ef00941731a24c0b547ab3db69387be2a9d203e4f84a61008a6ab20df1f78b"
+  },
+  {
+   "path": "lid/model.pth.tar",
+   "asset": "firered-lid--model.pth.tar",
+   "repo": "FireRedTeam/FireRedLID",
+   "hf_path": "model.pth.tar",
+   "size": 3550103418,
+   "sha256": "7dee2a280e9b11d5241a0e3d4fa60ee1520a036a2e8385f17960371cfea10093",
+   "parts": [
+    {
+     "asset": "firered-lid--model.pth.tar.part00",
+     "size": 1572864000,
+     "sha256": "6d3c819dd71498528d78e4b1f63b52815105c8d341d7f4bde391318b5acc2057"
+    },
+    {
+     "asset": "firered-lid--model.pth.tar.part01",
+     "size": 1572864000,
+     "sha256": "eaba15fa75974abf23b6c48fde58266dded1844aef2c5ece9268fb161e76b977"
+    },
+    {
+     "asset": "firered-lid--model.pth.tar.part02",
+     "size": 404375418,
+     "sha256": "a9ba815eae6f2d9baaeb809632004bfd883635c7d9cc74225de78365aad70614"
+    }
+   ]
+  }
+ ]
+}
