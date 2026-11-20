@@ -1,25 +1,27 @@
 #!/usr/bin/env python3
-"""Tai mo hinh nhan dang giong noi bo sung: Whisper large-v3 (CTranslate2), FireRedASR2-AED int8 (ONNX)
-hoac FireRedLID (nhan dang ngon ngu, PyTorch).
+"""Tai mo hinh nhan dang giong noi bo sung: Whisper large-v3 (CTranslate2), FireRedASR2-AED int8 (ONNX),
+FireRedLID (nhan dang ngon ngu, PyTorch) hoac Qwen3-ASR-1.7B (nguoi phan xu chep loi, PyTorch).
 
 Dung:
   python3 lay_asr.py large-v3            # tai (neu chua co) va in duong dan thu muc mo hinh
   python3 lay_asr.py firered2
   python3 lay_asr.py lid
+  python3 lay_asr.py qwen3-asr-1.7b
   python3 lay_asr.py firered2 --kiem     # chi kiem file da tai co dung kich thuoc va sha256 khong (thoat 1 neu thieu)
 
 Dong cuoi in ra la duong dan thu muc mo hinh.
 Mo hinh nam o $STUDIO_HOME/.tools/asr/<ban> (mac dinh ~/studio/.tools/asr/<ban>), khong dua vao git hay zip skill.
 
-Danh muc: assets/asr-models.json (large-v3, firered2) va assets/lid-models.json (lid): ten file, kich thuoc,
+Danh muc: assets/asr-models.json (large-v3, firered2), assets/lid-models.json (lid) va assets/qwen-models.json
+(qwen3-asr-1.7b): ten file, kich thuoc,
 sha256, revision HuggingFace da ghim; moi danh muc mot release rieng.
 Tai tu GitHub Release cua repo truoc, khong duoc thi tu HuggingFace dung revision da ghim; file nao cung phai
-khop kich thuoc va sha256 moi dung. File lon hon 2 GiB (model.bin cua large-v3, model.pth.tar cua lid) tren release
+khop kich thuoc va sha256 moi dung. File lon hon 2 GiB (model.bin cua large-v3, model.pth.tar cua lid, model-00001-of-00002.safetensors cua qwen) tren release
 nam o dang parts:
 tai tung phan, kiem sha256 tung phan, ghep lai, kiem sha256 file day du.
 
 Dung cho: large-v3 -> chep_loi_goc.py --ban large-v3 (khoang 3,1 GB); firered2 ->
-chep_loi_firered.py (khoang 1,2 GB); lid -> chep_loi_goc.py --lid (khoang 3,6 GB). Chi tai ban can dung.
+chep_loi_firered.py (khoang 1,2 GB); lid -> chep_loi_goc.py --lid (khoang 3,6 GB); qwen3-asr-1.7b -> phan_xu.py (khoang 4,7 GB). Chi tai ban can dung.
 """
 import argparse
 import hashlib
@@ -32,7 +34,7 @@ from pathlib import Path
 STUDIO_HOME = Path(os.environ.get("STUDIO_HOME", Path.home() / "studio"))
 ROOT = STUDIO_HOME / ".tools" / "asr"
 ASSETS = Path(__file__).resolve().parent.parent / "assets"
-MANIFESTS = [json.loads((ASSETS / ten).read_text(encoding="utf-8")) for ten in ("asr-models.json", "lid-models.json")]
+MANIFESTS = [json.loads((ASSETS / ten).read_text(encoding="utf-8")) for ten in ("asr-models.json", "lid-models.json", "qwen-models.json")]
 BANS = sorted({s["dir"] for m in MANIFESTS for s in m["sources"].values()})
 
 

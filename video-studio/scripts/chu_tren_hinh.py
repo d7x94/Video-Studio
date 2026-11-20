@@ -113,6 +113,13 @@ def ghi_md(path: Path, kq: dict):
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
+def goi_y_phan_xu(video: Path, proj: Path, co_cho: bool):
+    """Co cho khac (KHAC cua FireRed hoac khac chu tren hinh) thi goi y buoc phan xu bang Qwen3-ASR (tuy chon)."""
+    if co_cho:
+        print(f"[TIEP] Phan xu cac cho khac bang Qwen3-ASR (tuy chon, can bash {SCRIPTS / 'setup.sh'} --phan-xu, tai khoang 4,7 GB): "
+              f"python3 {SCRIPTS / 'phan_xu.py'} {video} {proj}")
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("video")
@@ -159,6 +166,7 @@ def main():
             (out / "chu-tren-hinh.json").write_text(json.dumps(kq, ensure_ascii=False, indent=1), encoding="utf-8")
             ghi_md(out / "chu-tren-hinh.md", kq)
             print(f"[OK] dich/chu-tren-hinh.md: khong thay chu tren hinh ({len(cache)} khung tham do)")
+            goi_y_phan_xu(video, proj, bool(fr))
             return
         tu = [tach(d["goc"]) for d in doan]
         dong_khop = [[] for _ in doan]
@@ -198,6 +206,7 @@ def main():
     m = sum(1 for d in kq["doan"] if d["cho_khac"])
     print(f"[OK] dich/chu-tren-hinh.md: {kq['so_khung']} khung, {n}/{len(doan)} doan co dong chu khop, "
           f"{m} doan khac chu tren hinh, {len(kq['chu'])} dong chu khong khop doan nao")
+    goi_y_phan_xu(video, proj, bool(m or fr))
 
 
 if __name__ == "__main__":

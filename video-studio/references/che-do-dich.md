@@ -22,7 +22,8 @@ Bản này (1.14.0) làm trọn được **phụ đề**. Thuyết minh (lồng 
    - Mốc đoạn lấy theo mốc từ đầu và từ cuối (cộng 0,4 giây), vì mốc đoạn gốc của Whisper có thể trùm cả khoảng nhạc sau câu.
 1b. **Kiểm chéo bằng FireRedASR2** (mặc định khi ngôn ngữ là `zh` hoặc `en`; `chep_loi_goc.py` in sẵn lệnh ở dòng `[TIEP]`): `python3 SKILL/scripts/chep_loi_firered.py goc.mp4 PROJECT`. Ra `dich/chep-firered.md`: dòng `KHÁC` kèm đúng chữ hai bên nghe khác nhau, và lời FireRed nghe được ở khoảng Whisper không có đoạn nào. Xem mục "Kiểm chéo bằng FireRedASR2". Ngôn ngữ khác thì bỏ bước này (FireRedASR2 chỉ chép tiếng Trung, tiếng Anh).
 1c. **Đọc chữ trên hình** (mọi ngôn ngữ; sau bước 1b nếu có, để bảng ghi kèm chỗ `KHÁC` của FireRed): `python3 SKILL/scripts/chu_tren_hinh.py goc.mp4 PROJECT`. Ra `dich/chu-tren-hinh.md`: đoạn Whisper khác phụ đề cứng cùng ngôn ngữ, và các dòng chữ khác (thực đơn, biển hiệu, tên riêng). Bắt được lỗi hai mô hình cùng nghe sai mà kiểm chéo bỏ lọt. Video không có chữ thì script dừng sau 5 khung thăm dò. Xem mục "Đọc chữ trên hình".
-2. **Cổng duyệt bản chép gốc** (dừng chờ người dùng): gửi `chep-goc.md`, kèm `chep-firered.md` khi có bước 1b và `chu-tren-hinh.md` khi có chữ (nêu từng chỗ `KHÁC`, lời trong khoảng trống, chỗ khác chữ trên hình; người dùng chọn bên nào, không tự sửa). Nêu rõ các cờ, các khoảng không có lời, và những từ nghi chép sai (tên riêng, món ăn, từ hiếm). Người dùng sửa lời gốc, gán người nói nếu có nhiều người.
+1d. **Phân xử bằng Qwen3-ASR** (tùy chọn; cần `bash SKILL/scripts/setup.sh --phan-xu`, tải thêm khoảng 4,7 GB; chạy khi bảng KHÁC hoặc chữ trên hình còn chỗ khác và người dùng cần thêm một phiếu; `chu_tren_hinh.py` in sẵn lệnh ở dòng `[TIEP]`): `python3 SKILL/scripts/phan_xu.py goc.mp4 PROJECT`. Chỉ nghe lại các đoạn có chỗ khác, ra `dich/phan-xu.md`: mỗi chỗ ghi Qwen theo Whisper, FireRed, chữ trên hình hay chưa rõ. Xem mục "Phân xử bằng Qwen3-ASR".
+2. **Cổng duyệt bản chép gốc** (dừng chờ người dùng): gửi `chep-goc.md`, kèm `chep-firered.md` khi có bước 1b, `chu-tren-hinh.md` khi có chữ và `phan-xu.md` khi có bước 1d (nêu từng chỗ `KHÁC`, lời trong khoảng trống, chỗ khác chữ trên hình, Qwen theo bên nào; người dùng chọn bên nào, không tự sửa). Nêu rõ các cờ, các khoảng không có lời, và những từ nghi chép sai (tên riêng, món ăn, từ hiếm). Người dùng sửa lời gốc, gán người nói nếu có nhiều người.
    - **Luôn hỏi người nói ở cổng này**, kể cả khi bước 0 đã bỏ qua câu hỏi của hồ sơ: video có mấy người, ai nói câu nào, ai nói với ai. Xưng hô trong bản dịch phụ thuộc vào đây, Whisper và FireRed đều không tách người nói. Người chỉ nghe tiếng ngoài khung hình (người quay) cũng là một người nói. Ghi câu trả lời vào trường `nguoi_noi` của `ban-dich.json` ở bước 3 để lượt kiểm dịch đọc được, không chỉ để trong chat.
    - `nghi-bia`: câu Whisper hay tự thêm ở đoạn không có lời ("Thanks for watching", lặp chữ, xác suất không có lời cao).
    - `tin-thap`: nghe chưa chắc (avg_logprob dưới -0,7).
@@ -97,11 +98,31 @@ Kiểm chéo hai mô hình không bắt được chỗ cả hai cùng nghe sai (
 
 - Chưa bắt được: chữ chỉ hiện ở khung không đọc (phụ đề đổi nhanh hơn một đoạn Whisper; vlog thử: không có phụ đề cho "Spend the day...", nên `bend` chỉ có kiểm chéo FireRed bắt). Chưa thử chữ viết tay, phụ đề chạy chữ, video tối.
 
+## Phân xử bằng Qwen3-ASR (bước 1d)
+
+Một phiếu thứ ba cho các chỗ Whisper, FireRed và chữ trên hình không đồng ý. Không chạy Qwen trên cả video.
+
+- Mô hình: [Qwen3-ASR-1.7B](https://github.com/QwenLM/Qwen3-ASR) của Alibaba Qwen, Apache-2.0 (trang GitHub và trang HuggingFace đều ghi vậy), hỗ trợ cả tiếng Việt, Trung, Anh. Gói `qwen-asr` 0.0.6 (ghim transformers 4.57.6, accelerate 1.12.0), torch 2.15.0 từ pypi (kèm gói CUDA khoảng 4 GB). Trọng số tải bằng `scripts/lay_asr.py qwen3-asr-1.7b` từ Release `qwen3-asr-7278e1e` (rev `7278e1e7`, khoảng 4,7 GB, file lớn nhất chia 3 phần vì vượt 2 GiB), dự phòng HuggingFace, kiểm sha256. Trang gốc chỉ có ví dụ GPU và không có bản ONNX, GGUF chính thức; chạy CPU bằng `device_map="cpu"`, bfloat16 (fp32 sẽ vượt 7 GB RAM).
+- Cách làm: gom các chỗ khác (dòng `KHÁC` của `chep-firered.json`, chỗ khác của `chu-tren-hinh.json`, bỏ "chỉ trợ từ"), cắt từng đoạn có chỗ khác từ giây đầu trừ 0,5 đến giây cuối cộng 0,5, ép ngôn ngữ theo `chep-goc.json`, nghe lại. Phương án (lời Whisper, lời FireRed, chữ trên hình) nằm nguyên, liền nhau trong lời Qwen thì Qwen theo bên đó; không phương án nào mà một bên là "(trống)" thì Qwen theo bên "(trống)"; còn lại "chưa rõ". Không nghe khoảng trống: Qwen không có VAD và bịa câu trên tiếng gõ phím.
+- Chỉ nhận zh, en (như FireRed). Mô hình chạy tiến trình riêng, không chung với Whisper hay FireRed; RAM đỉnh 5,9 GB, sát mức 7 GB.
+- `phan-xu.md`: bảng `Chỗ khác | Qwen nghe lại cả đoạn | Qwen theo`. Chỉ là phiếu: Qwen cũng "sửa ngữ pháp" như Whisper, nên chỗ Qwen theo Whisper không có nghĩa là Whisper đúng. Người dùng quyết ở cổng duyệt; không tự sửa bản chép.
+- Cửa sổ nghe: mỗi đoạn lấy thêm 15 giây ngữ cảnh hai đầu, cửa sổ chồng nhau thì gộp (tối đa 120 giây). Qwen không có mốc thời gian, nên vùng lời Qwen của đoạn được định vị bằng cách tìm đoạn có nhiều từ trùng nhất với lời Whisper của đoạn. Phương án giống hệt nhau (FireRed và chữ trên hình cùng "decide") gộp thành một nhóm.
+- Số đo (2026-11-20, 2 lõi CPU, bản `phan_xu.py` của 1.23.0, chạy qua cả chuỗi bước 1, 1b, 1c, 1d):
+
+| Clip | Chỗ phân xử | Qwen theo | Thời gian `phan_xu.py`, RAM đỉnh |
+|---|---|---|---|
+| Vlog tiếng Anh 143 giây | 6 chỗ (6 đoạn, 2 cửa sổ) | FireRed 1 (`spend`, đúng); Whisper 5: `vlog`, `randomly` (đúng), `decided`, `port` (sai), `napoli` (thực đơn ghi napoli, phụ đề ghi Naples) | 57 giây (chưa tính tải 4,7 GB); lần đầu tải từ HuggingFace dự phòng, cả bước 137 giây |
+| Hội thoại tiếng Trung 27,6 giây | 7 chỗ (6 đoạn, 1 cửa sổ) | FireRed 4 (头发 hai lần, 跟人家, 也 không có); Whisper 1 (tiếng đệm 嗯); chưa rõ 2 (伺候 / 吹: Qwen nghe 伺我; 和 / 合 cùng nằm trong lời Qwen) | 31 giây, 5,1 GB |
+
+- Điểm yếu đã gặp: lỗi cả Whisper lẫn FireRed cùng sai ("port", phụ đề cứng ghi "pork") Qwen cũng ra "port" ở bản dùng thật. Chạy thử riêng trên 10 cửa sổ khác nhau của clip, "pork" chỉ ra ở 2 (cả clip, và 0 đến 95 giây), 8 cửa sổ còn lại ra "port": kết quả phụ thuộc ranh giới cửa sổ. Đừng coi Qwen là cách bắt lỗi hai mô hình cùng sai; chữ trên hình (bước 1c) mới bắt được.
+- Qwen cũng "sửa ngữ pháp" như Whisper (`decided` thay vì `decide`). Bịa câu trên tiếng gõ phím không lời ("ideas and more time" thay vì "asmr typing" khi chạy trên cả clip), nên bước này bỏ khoảng trống.
+- Kết luận khi đo: ở tiếng Trung Qwen đồng ý với FireRed (mô hình đã biết tốt hơn Whisper medium ở tiếng Trung), nên thêm được một phiếu khi Whisper và FireRed lệch; ở tiếng Anh gần như lặp lại Whisper. Lợi ích thêm nhỏ so với 4,7 GB tải và 5 đến 6 GB RAM, nên là tùy chọn, không mặc định.
+
 ## Phân vai (agent và model)
 
 | Việc | Ai làm | Model |
 |---|---|---|
-| Chạy `chep_loi_goc.py`, `chep_loi_firered.py`, `chu_tren_hinh.py`, báo số đoạn có cờ, số chỗ `KHÁC`, số chỗ khác chữ trên hình | agent chép lời | haiku |
+| Chạy `chep_loi_goc.py`, `chep_loi_firered.py`, `chu_tren_hinh.py`, `phan_xu.py` (khi chạy), báo số đoạn có cờ, số chỗ `KHÁC`, số chỗ khác chữ trên hình, Qwen theo bên nào | agent chép lời | haiku |
 | Dịch (`ban-dich.json`) | điều phối hoặc agent biên kịch | sonnet |
 | Kiểm dịch độc lập (bước 4) | agent khác người dịch | sonnet; opus khi nội dung sức khỏe, thủ tục |
 | Trọng tài: chỉ những câu người dịch và người kiểm dịch không thống nhất | agent thứ ba, chỉ nhận các câu đó | sonnet; opus khi nội dung sức khỏe, thủ tục |

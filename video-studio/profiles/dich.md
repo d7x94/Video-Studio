@@ -9,7 +9,7 @@
 | Khổ hình | Giữ nguyên video gốc |
 | Đầu ra | Phụ đề cứng tiếng Việt và `phu-de-vi.srt` (thuyết minh chưa có script ở bản này) |
 | Ngôn ngữ gốc | Tự nhận dạng; người dùng biết trước thì ghi rõ |
-| Mô hình chép lời | Whisper `medium`, bật VAD; kiểm chéo bằng FireRedASR2 với tiếng Trung, tiếng Anh (`chep_loi_firered.py`); đọc chữ trên hình (`chu_tren_hinh.py`) |
+| Mô hình chép lời | Whisper `medium`, bật VAD; kiểm chéo bằng FireRedASR2 với tiếng Trung, tiếng Anh (`chep_loi_firered.py`); đọc chữ trên hình (`chu_tren_hinh.py`); tùy chọn nghe lại chỗ khác bằng Qwen3-ASR-1.7B (`phan_xu.py`) |
 | Tiếng gốc | Giữ nguyên khi chỉ làm phụ đề |
 | Nhạc nền | Không thêm |
 | Kiểm chứng | **Mức theo nội dung**: mặc định kiểm dịch trung thực với lời gốc, ghi "theo lời người nói" khi có số liệu; nội dung sức khỏe, thủ tục thì số liệu, khuyến cáo vẫn kiểm chứng nguồn ngoài như `suc-khoe.md`, `thu-tuc.md` |

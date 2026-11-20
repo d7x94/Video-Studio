@@ -7,6 +7,8 @@
 #                                  doc chu tren hinh)
 #        bash setup.sh --firered  (giong --dich, giu lai cho tuong thich)
 #        bash setup.sh --lid      (nhu --dich, them torch, kaldiio, kaldi_native_fbank cho FireRedLID, chep_loi_goc.py --lid)
+#        bash setup.sh --phan-xu  (nhu --dich, them torch, qwen-asr cho Qwen3-ASR-1.7B, phan_xu.py: nghe lai cac cho
+#                                  Whisper, FireRed va chu tren hinh khong dong y)
 set -euo pipefail
 
 SKILL_DIR="$(cd "$(dirname "$0")/.." && pwd)"
@@ -28,6 +30,7 @@ SHERPA_VER="2.0.2"      # sherpa-onnx: chay FireRedASR2 (ONNX) cho chep_loi_fire
 RAPIDOCR_VER="3.10.0"   # rapidocr: doc chu tren hinh (chu_tren_hinh.py), mo hinh PP-OCRv6 small di kem goi; kiem chung 2026-11-20 (Python 3.13, onnxruntime 1.29.0)
 OPENCC_VER="1.4.2"      # opencc: doi phon the sang gian the khi so Whisper voi FireRed (chep_loi_firered.py); kiem chung 2026-11-19 (t2s, Python 3.13)
 TORCH_VER="2.15.0"      # torch cho FireRedLID (setup.sh --lid); ban pypi kem goi CUDA (khoang 4 GB) vi download.pytorch.org bi chan; kiem chung 2026-11-20 (CPU, Python 3.13)
+QWEN_ASR_VER="0.0.6"    # qwen-asr: chay Qwen3-ASR-1.7B cho phan_xu.py (ghim transformers 4.57.6, accelerate 1.12.0); kiem chung 2026-11-20 (CPU, bfloat16, Python 3.13, torch 2.15.0)
 KALDIIO_VER="2.18.1"    # kaldiio: doc cmvn.ark cua FireRedLID; kiem chung 2026-11-20
 KNF_VER="1.23.3"        # kaldi_native_fbank: dac trung fbank cua FireRedLID; kiem chung 2026-11-20
 AV_VER="17.0.0"         # PyAV: ban moi nhat (19.0.2) lam faster_whisper.decode_audio loi metadata_errors; 15.1.0, 16.1.0, 17.0.0 chay duoc (thu 2026-11-18)
@@ -101,7 +104,7 @@ ok "opencv $(cv_ver)"
 
 # 4c. faster-whisper cho che do dich (khi --dich hoac --firered: chep_loi_firered.py can chep-goc.json cua Whisper);
 #     mo hinh tai luc chay bang scripts/lay_whisper.py
-if [ "${1:-}" = "--dich" ] || [ "${1:-}" = "--firered" ] || [ "${1:-}" = "--lid" ]; then
+if [ "${1:-}" = "--dich" ] || [ "${1:-}" = "--firered" ] || [ "${1:-}" = "--lid" ] || [ "${1:-}" = "--phan-xu" ]; then
   if [ "$(pyver faster-whisper)" != "$FWHISPER_VER" ] || [ "$(pyver ctranslate2)" != "$CT2_VER" ] || [ "$(pyver av)" != "$AV_VER" ]; then
     PIPLOG="$(mktemp)"
     pip install --break-system-packages -q "faster-whisper==$FWHISPER_VER" "ctranslate2==$CT2_VER" "av==$AV_VER" >"$PIPLOG" 2>&1 \
@@ -113,7 +116,7 @@ fi
 
 # 4d. sherpa-onnx, opencc cho kiem cheo bang FireRedASR2 (chep_loi_firered.py, mac dinh voi tieng Trung, tieng Anh tu
 #     1.21.0); cai cung --dich, --firered, --lid. Mo hinh tai luc chay bang scripts/lay_asr.py firered2
-if [ "${1:-}" = "--dich" ] || [ "${1:-}" = "--firered" ] || [ "${1:-}" = "--lid" ]; then
+if [ "${1:-}" = "--dich" ] || [ "${1:-}" = "--firered" ] || [ "${1:-}" = "--lid" ] || [ "${1:-}" = "--phan-xu" ]; then
   if [ "$(pyver sherpa-onnx)" != "$SHERPA_VER" ] || [ "$(pyver opencc)" != "$OPENCC_VER" ] || [ "$(pyver rapidocr)" != "$RAPIDOCR_VER" ]; then
     PIPLOG="$(mktemp)"
     pip install --break-system-packages -q "sherpa-onnx==$SHERPA_VER" "opencc==$OPENCC_VER" "rapidocr==$RAPIDOCR_VER" >"$PIPLOG" 2>&1 \
@@ -133,6 +136,18 @@ if [ "${1:-}" = "--lid" ]; then
     rm -f "$PIPLOG"
   fi
   ok "torch $(pyver torch), kaldiio $(pyver kaldiio), kaldi_native_fbank $(pyver kaldi_native_fbank) (FireRedLID)"
+fi
+
+# 4f. torch, qwen-asr cho Qwen3-ASR-1.7B (chi khi --phan-xu); mo hinh tai luc chay bang scripts/lay_asr.py qwen3-asr-1.7b.
+#     qwen-asr ghim transformers va accelerate; torch tu pypi kem goi CUDA (khoang 4 GB) vi download.pytorch.org bi chan
+if [ "${1:-}" = "--phan-xu" ]; then
+  if [ "$(pyver torch)" != "$TORCH_VER" ] || [ "$(pyver qwen-asr)" != "$QWEN_ASR_VER" ]; then
+    PIPLOG="$(mktemp)"
+    pip install --break-system-packages -q "torch==$TORCH_VER" "qwen-asr==$QWEN_ASR_VER" >"$PIPLOG" 2>&1 \
+      || { tail -n 15 "$PIPLOG"; rm -f "$PIPLOG"; fail "pip install torch, qwen-asr that bai"; }
+    rm -f "$PIPLOG"
+  fi
+  ok "torch $(pyver torch), qwen-asr $(pyver qwen-asr), transformers $(pyver transformers) (Qwen3-ASR phan xu)"
 fi
 
 # 5. File moi truong cho cac script khac

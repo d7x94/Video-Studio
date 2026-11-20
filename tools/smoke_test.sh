@@ -229,8 +229,39 @@ assert m.so_dong(t("你好"), t("你好"), True)[0] is False                    
 assert m.moc_doc({"start": 0, "end": 2}) == [1.0] and len(m.moc_doc({"start": 0, "end": 8})) == 3
 PY
 pass "chu_tren_hinh.py (so dong chu voi loi Whisper, bo thuc don trung it, nguong tieng Trung, khung doc)"
+python3 -I - "$S/phan_xu.py" <<'PY'
+import importlib.util, sys
+spec = importlib.util.spec_from_file_location("px", sys.argv[1]); m = importlib.util.module_from_spec(spec); spec.loader.exec_module(m)
+t = m.tach
+# Qwen nghe "pork": theo chu tren hinh, khong theo Whisper va FireRed cung "port"
+q = t("and my friend ordered a pork panini")
+assert m.chon_ben(q, {"whisper": t("port"), "firered": t("port"), "chu": t("pork")}) == (("chu",), "")
+# nhom phuong an giong het nhau gop lai: decided / decide, FireRed va chu tren hinh cung "decide"
+assert m.chon_ben(t("we decided to grab"), {"whisper": t("decided"), "firered": t("decide"), "chu": t("decide")}) == (("whisper",), "")
+assert m.chon_ben(t("we decide to grab"), {"whisper": t("decided"), "firered": t("decide"), "chu": t("decide")}) == (("firered", "chu"), "")
+assert m.chon_ben(t("美女吹个头发吧"), {"whisper": t("豆巴"), "firered": t("头发"), "chu": None})[0] == ("firered",)
+# mot ben "(trong)": Qwen khong nghe tu FireRed nghe them thi theo ben trong
+assert m.chon_ben(t("here we go"), {"whisper": [], "firered": t("asmr typing"), "chu": None})[0] == ("whisper",)
+assert m.chon_ben(t("here we go asmr typing"), {"whisper": [], "firered": t("asmr typing"), "chu": None})[0] == ("firered",)
+# khong khop gi, loi Qwen trong hoac lap chu, nhieu nhom cung nam trong: chua ro (tuple rong), kem ghi chu
+for qq in ("totally else", "", "la la la la la la la", "port and pork"):
+    r = m.chon_ben(t(qq), {"whisper": t("port"), "firered": t("pork"), "chu": None})
+    assert r[0] == () and r[1], (qq, r)
+# gop cho khac tu FireRed va chu tren hinh theo tu Whisper
+g = m.gom_cho(["port / pork", "(trống) / asmr typing"], [("port", "pork")])
+assert g == [{"whisper": "port", "firered": "pork", "chu": "pork"}, {"whisper": "", "firered": "asmr typing", "chu": None}], g
+assert m.chua(t("a b c d"), t("b c")) and not m.chua(t("a b c d"), t("b d")) and not m.chua(t("a"), [])
+# vung loi Qwen cua doan: tim noi nhieu tu trung nhat, khong bi tu pho bien o xa keo di
+qd = t("we went in the library and my friend ordered a pork panini and it was great and then we left the cafe and walked home")
+i, j, diem = m.vung(qd, t("and my friend ordered a port panini"))
+assert "pork" in qd[i:j] and diem == 6 and "walked" not in qd[i:j], (i, j, diem)
+# cua so nghe: gop cua so chong nhau, tach khi qua 120 giay hoac cach xa
+cs = m.gom_cua_so([{"start": 0, "end": 3}, {"start": 20, "end": 22}, {"start": 90, "end": 92}, {"start": 200, "end": 201}], 300)
+assert [(a, b, len(d)) for a, b, d in cs] == [(0, 37.0, 2), (75.0, 107.0, 1), (185.0, 216.0, 1)], cs
+PY
+pass "phan_xu.py (Qwen theo ben nao, nhom phuong an, ben trong, khong khop, lap chu, vung loi Qwen, cua so nghe)"
 else
-echo "[BO QUA] chep_loi_firered.py, chu_tren_hinh.py: thieu opencc hoac numpy"
+echo "[BO QUA] chep_loi_firered.py, chu_tren_hinh.py, phan_xu.py: thieu opencc hoac numpy"
 fi
 
 # 5c. phu_de_tung_tu.py (khong can ffmpeg khi khong --ghi), ap_sua_srt.py, canh bao timeline_ghep.json cu cua kiem_loi_doc.py
@@ -539,9 +570,9 @@ else
   echo "[BO QUA] may_tinh_tien.py: may thieu ffmpeg, fc-match hoac Pillow"
 fi
 
-# 5d. Danh muc mo hinh ASR bo sung (asr-models.json) va nhan dang ngon ngu (lid-models.json): kich thuoc, sha256,
+# 5d. Danh muc mo hinh ASR bo sung (asr-models.json), nhan dang ngon ngu (lid-models.json), phan xu (qwen-models.json): kich thuoc, sha256,
 #     parts, tep giay phep, ten ban khong trung giua hai danh muc (khong can mang)
-for DM in asr-models.json lid-models.json; do
+for DM in asr-models.json lid-models.json qwen-models.json; do
 python3 -I - "$ROOT" "$DM" <<'PY'
 import json, re, sys
 from pathlib import Path
@@ -567,11 +598,12 @@ python3 -I - "$ROOT" <<'PY'
 import json, sys
 from pathlib import Path
 a = Path(sys.argv[1]) / "video-studio/assets"
-ban = [{s["dir"] for s in json.load(open(a / t))["sources"].values()} for t in ("asr-models.json", "lid-models.json")]
-tag = [json.load(open(a / t))["release_tag"] for t in ("asr-models.json", "lid-models.json")]
-assert not (ban[0] & ban[1]) and tag[0] != tag[1], (ban, tag)
+ten = ("asr-models.json", "lid-models.json", "qwen-models.json")
+ban = [{s["dir"] for s in json.load(open(a / t))["sources"].values()} for t in ten]
+tag = [json.load(open(a / t))["release_tag"] for t in ten]
+assert sum(len(b) for b in ban) == len(set().union(*ban)) and len(set(tag)) == len(tag), (ban, tag)
 PY
-pass "asr-models.json va lid-models.json khong trung ban, khong trung release"
+pass "asr-models.json, lid-models.json, qwen-models.json khong trung ban, khong trung release"
 
 # 5e. nhan_dang_lid.py: cat khuc va bau ngon ngu (khong can torch, mo hinh)
 python3 -I - "$S" <<'PY'

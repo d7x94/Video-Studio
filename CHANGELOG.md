@@ -2,6 +2,19 @@
 
 Quy ước số phiên bản `MAJOR.MINOR.PATCH`, ghi ở `video-studio/VERSION` và dòng "Phiên bản skill" trong `video-studio/SKILL.md` (hai nơi phải khớp, CI kiểm tra khi đóng gói). Thêm kiểu hình hoặc tính năng thì tăng MINOR; sửa lỗi thì tăng PATCH; đổi lớn làm hỏng cách dùng cũ thì tăng MAJOR. Mỗi lần gộp PR thay đổi skill: tăng số, sửa hai nơi trên và thêm mục mới ở đầu file này.
 
+## [1.23.0] - 2026-11-20
+
+Chế độ dịch: tùy chọn phân xử bằng Qwen3-ASR-1.7B, phiếu thứ ba cho các chỗ Whisper, FireRed và chữ trên hình không đồng ý. Không mặc định, không đổi quy tắc kiểm chứng, bản quyền, khóa nhân vật. Bằng chứng về lợi ích còn yếu (xem Giới hạn): PR để ở dạng bản nháp.
+
+- `scripts/phan_xu.py` (mới): gom các chỗ khác (dòng `KHÁC` của FireRed, chỗ khác chữ trên hình), nghe lại từng đoạn đó với 15 giây ngữ cảnh hai đầu (cửa sổ chồng nhau thì gộp, tối đa 120 giây), ép ngôn ngữ zh hoặc en, định vị vùng lời Qwen của đoạn, rồi ghi Qwen theo nhóm phương án nào nằm nguyên trong vùng đó (phương án giống nhau gộp nhóm; một bên "(trống)"; chưa rõ). Ra `dich/phan-xu.md` và `.json`. Không nghe khoảng trống.
+- Mô hình: Qwen3-ASR-1.7B (Apache-2.0, `Qwen/Qwen3-ASR-1.7B` rev `7278e1e7`), release riêng `qwen3-asr-7278e1e` do workflow `qwen-models.yml` đăng khi gộp vào main; `assets/qwen-models.json` ghi size và sha256 từng file (đối chiếu với oid LFS của HuggingFace), file 4,2 GB chia 3 phần dưới 2 GiB; `references/LICENSE-qwen.txt`; `scripts/lay_asr.py qwen3-asr-1.7b` tải từ release, dự phòng HuggingFace, kiểm sha256. Gói `qwen-asr==0.0.6` (ghim transformers 4.57.6, accelerate 1.12.0), torch 2.15.0.
+- `scripts/setup.sh --phan-xu`: như `--dich`, thêm torch và qwen-asr. `chu_tren_hinh.py` in dòng `[TIEP]` kèm lệnh khi có chỗ khác.
+- `references/che-do-dich.md` (bước 1d, mục "Phân xử bằng Qwen3-ASR", phân vai), `profiles/dich.md`, `SKILL.md`, `README.md` (mục Ghi công). `tools/smoke_test.sh`: ca `chon_ben`, `gom_cho`, `vung`, `gom_cua_so`, danh mục `qwen-models.json`. Đã đạt; `ruff F,E9` sạch.
+- Số đo (2026-11-20, 2 lõi CPU): vlog Anh 143 giây, 6 đoạn, 2 cửa sổ: 57 giây, Qwen theo FireRed 1 chỗ (`spend`, đúng), theo Whisper 5 chỗ. Hội thoại Trung 27,6 giây, 6 đoạn, 1 cửa sổ: 31 giây, RAM đỉnh 5,1 GB, theo FireRed 4 chỗ, Whisper 1, chưa rõ 2. Tải 4,7 GB từ HuggingFace dự phòng, đủ sha256: lần đầu cả bước 137 giây.
+- Đã chạy thử: `setup.sh --phan-xu`; chuỗi `chep_loi_goc.py`, `chep_loi_firered.py`, `chu_tren_hinh.py`, `phan_xu.py` trên hai clip trên. Release `qwen3-asr-7278e1e` chưa tồn tại trước khi gộp (workflow đăng sau khi gộp vào main), nên đường tải từ GitHub Release chưa chạy thật, chỉ đường dự phòng HuggingFace và `--kiem`.
+- Giới hạn: Qwen không bắt được lỗi hai mô hình cùng sai: "port" (phụ đề cứng ghi "pork") ra "port" ở bản dùng thật; chạy riêng 10 cửa sổ khác nhau của vlog thì "pork" chỉ ra ở 2 (cả clip và 0 đến 95 giây), nên kết quả phụ thuộc ranh giới cửa sổ. Cũng "sửa ngữ pháp" như Whisper (decided). Ở tiếng Trung chỉ lặp lại FireRed, ở tiếng Anh gần như lặp lại Whisper. Chỉ hai clip. Bịa câu trên tiếng gõ phím nên bỏ khoảng trống. 4,7 GB tải và 5 đến 6 GB RAM (sát mức 7 GB).
+- Chưa chạy: `tts.py`, `new_project.sh`, `inject.py`, `hyperframes check`, `render.sh`, `check_output.py` (không chạm các bước này).
+
 ## [1.22.0] - 2026-11-20
 
 Chế độ dịch: đọc chữ trên hình (phụ đề cứng, thực đơn, biển hiệu) để đối chiếu bản chép, bắt lỗi hai mô hình cùng nghe sai mà kiểm chéo bỏ lọt (vlog thử: Whisper và FireRed cùng nghe "port panini", phụ đề cứng ghi "pork panini"). Không đổi quy tắc kiểm chứng, bản quyền, khóa nhân vật.
