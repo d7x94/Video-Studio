@@ -650,6 +650,42 @@ assert bau([{"tu": 0, "den": 5, "ngon_ngu": "ja", "tin": 0.3}])["chon"] is None
 PY
 pass "nhan_dang_lid.py (cat khuc toi da 30 giay, bo khuc do tin thap khi bau)"
 
+# 5d. doc_van_ban.py tach: muc luc bi bo, ***, ky hieu, doan van, cach doc, canh, doc thieu nguon
+python3 -I - "$S/doc_van_ban.py" "$P" <<'PY'
+import json, subprocess, sys
+from pathlib import Path
+script, p = sys.argv[1], Path(sys.argv[2]) / "dv"
+p.mkdir()
+body1 = ("Y mở mắt ra, thấy trần nhà trắng.\nMột mình y nằm đó.\n“Ngươi là ai?”\nY hỏi nhỏ.\n"
+         "Đồ *** này, ta ★ tới đây.\n" + "Câu dài để đủ nội dung cho chương một. " * 8)
+body2 = "Sáng hôm sau, VieNeu lên đường.\n" + "Chương hai có đủ chữ để không bị coi là mục lục. " * 8
+(p / "n.txt").write_text(
+    "TRUYỆN THỬ\nDTV-EBOOK.COM\nMục Lục\nChương 1: Mở đầu\nChương 2: Lên đường\n\n\fChương 1: Mở đầu\n" + body1 +
+    "\n\fChương 2: Lên đường\n" + body2 + "\n", encoding="utf-8")
+(p / "cd.txt").write_text("VieNeu => viu niu\n", encoding="utf-8")
+out = p / "du-an"
+subprocess.run([sys.executable, script, "tach", str(p / "n.txt"), str(out), "--cach-doc", str(p / "cd.txt"),
+                "--giong", "Mai Anh"], check=True, capture_output=True)
+muc = json.loads((out / "muc-luc.json").read_text(encoding="utf-8"))
+assert [m["so"] for m in muc] == [1, 2], muc                     # muc luc khong thanh chuong
+sc = json.loads((out / "chuong-0001" / "scenes.json").read_text(encoding="utf-8"))
+assert sc["voice"] == "Mai Anh" and sc["scenes"][0]["narration"] == "Chương 1. Mở đầu."
+n1 = sc["scenes"][1]["narration"]
+assert "***" not in n1 and "★" not in n1, n1
+assert "\n\n“Ngươi là ai?”" in n1 or n1.startswith("Y mở mắt"), n1     # doan van duoc dung lai
+assert "Một mình y nằm đó." in n1.replace("\n", " ")
+sc2 = json.loads((out / "chuong-0002" / "scenes.json").read_text(encoding="utf-8"))
+assert "viu niu" in sc2["scenes"][1]["narration"] and "VieNeu" not in sc2["scenes"][1]["narration"]
+assert "VieNeu" in (out / "chuong-0002" / "van-ban.txt").read_text(encoding="utf-8")    # van ban goc giu nguyen
+bc = (out / "cach-doc.md").read_text(encoding="utf-8")
+assert "DTV-EBOOK.COM" in bc and "***" in bc, bc                  # da bo gi duoc ghi lai
+r = subprocess.run([sys.executable, script, "tach", str(p / "khong-co.txt"), str(out)], capture_output=True)
+assert r.returncode != 0
+r = subprocess.run([sys.executable, script, "doc", str(p / "chua-tach")], capture_output=True)
+assert r.returncode != 0
+PY
+pass "doc_van_ban.py tach (muc luc, ***, ky hieu, doan van, cach doc chi ap vao scenes.json, bao cao, thieu nguon)"
+
 # 6. Script shell: cu phap
 for f in "$S"/*.sh "$ROOT"/tools/*.sh; do bash -n "$f"; done
 pass "cu phap script shell"
