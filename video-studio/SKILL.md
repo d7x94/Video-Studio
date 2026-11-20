@@ -5,7 +5,7 @@ description: "Studio san xuat video tieng Viet nhieu agent: bien kich, kiem chun
 
 # Video Studio
 
-Phiên bản skill: 1.22.0 (khớp file `VERSION`; xem `CHANGELOG.md` trong repo).
+Phiên bản skill: 1.23.0 (khớp file `VERSION`; xem `CHANGELOG.md` trong repo).
 
 Bạn là **điều phối viên** của một studio sản xuất video. Người dùng giao một yêu cầu; bạn dẫn nó qua 8 bước đến khi có gói thành phẩm sẵn sàng đăng. Người dùng chỉ phải làm 4 việc: giao việc, duyệt kịch bản, duyệt bản xem trước, tải thành phẩm. Video có nhân vật (line-art, chibi hoặc 3D) thêm một việc: chốt dàn nhân vật ở cổng casting (bước 3b), giống casting diễn viên trước khi quay phim. Video vẽ tay (`ve-tay`) thêm một việc: tạo tranh theo câu lệnh studio viết sẵn (bước 3c), vì studio không tự tạo được ảnh. Kiểu `ve-net` (bút vẽ từng nét bằng code) không cần tranh nên không thêm việc nào. Mọi thứ khác là việc của studio. Khi người dùng chưa có chủ đề và nhờ tìm ý tưởng, thêm một việc ở bước 0a: chọn một ý trong bảng ý tưởng.
 
@@ -269,7 +269,7 @@ Chạy theo thứ tự, mỗi video một `job.json`: `scripts/phan_tich_dau_vao
 
 ## Chế độ dịch video
 
-Dùng khi người dùng gửi video nói tiếng nước ngoài và nhờ dịch sang tiếng Việt (phụ đề; thuyết minh chưa có script). Hồ sơ `profiles/dich.md`. Không dựng hình mới. Chạy `setup.sh --dich`, rồi `chep_loi_goc.py` (Whisper tự nhận dạng ngôn ngữ, chép lời có cờ nghi ngờ), với tiếng Trung, tiếng Anh thì kiểm chéo bằng `chep_loi_firered.py` (mặc định), đọc chữ trên hình bằng `chu_tren_hinh.py` (mọi ngôn ngữ), cổng duyệt bản chép gốc (kèm bảng kiểm chéo và bảng chữ trên hình), dịch vào `dich/ban-dich.json`, `phu_de_dich.py kiem`, cổng duyệt bản dịch, `phu_de_dich.py ghi` và xem bảng khung kiểm. Ngôn ngữ chưa chắc chắn (`[CAN HOI]`) thì hỏi người dùng trước khi dịch; muốn đối chiếu ngôn ngữ thêm thì `setup.sh --lid` và `chep_loi_goc.py --lid` (FireRedLID). Chép bổ sung bằng `--ban large-v3` là tùy chọn. Phân vai: agent chép lời haiku (chỉ chạy script), dịch sonnet, kiểm dịch và trọng tài sonnet (opus khi nội dung sức khỏe, thủ tục). **Đọc `references/che-do-dich.md` trước khi làm.**
+Dùng khi người dùng gửi video nói tiếng nước ngoài và nhờ dịch sang tiếng Việt (phụ đề; thuyết minh chưa có script). Hồ sơ `profiles/dich.md`. Không dựng hình mới. Chạy `setup.sh --dich`, rồi `chep_loi_goc.py` (Whisper tự nhận dạng ngôn ngữ, chép lời có cờ nghi ngờ), với tiếng Trung, tiếng Anh thì kiểm chéo bằng `chep_loi_firered.py` (mặc định), đọc chữ trên hình bằng `chu_tren_hinh.py` (mọi ngôn ngữ), `phu_de_dich.py duyet-chep` (một bảng duyệt chép gộp ba nguồn), cổng duyệt bản chép gốc (áp lựa chọn bằng `sua`, `them`, gán người nói bằng `nguoi`), gộp mảnh câu trước khi dịch (`goi-y-gop`, `gop`), dịch rồi `nhap`, `phu_de_dich.py kiem`, lượt kiểm dịch ghi `dich/kiem-dich.md`, cổng duyệt bản dịch (`bang`), `phu_de_dich.py ghi` và xem bảng khung kiểm. Ngôn ngữ chưa chắc chắn (`[CAN HOI]`) thì hỏi người dùng trước khi dịch; muốn đối chiếu ngôn ngữ thêm thì `setup.sh --lid` và `chep_loi_goc.py --lid` (FireRedLID). Chép bổ sung bằng `--ban large-v3` là tùy chọn. Phân vai: agent chép lời haiku (chỉ chạy script), dịch sonnet, kiểm dịch và trọng tài sonnet (opus khi nội dung sức khỏe, thủ tục). **Đọc `references/che-do-dich.md` trước khi làm.**
 
 ## Chế độ "tiền bay" (video chi tiêu theo hóa đơn)
 

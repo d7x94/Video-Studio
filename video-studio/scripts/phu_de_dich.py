@@ -1,7 +1,17 @@
 #!/usr/bin/env python3
 """Che do dich: ban dich theo doan, kiem ban dich, xuat phu de .srt va ghi phu de cung vao video.
 
-Dung:
+Dung (theo thu tu cua quy trinh, xem references/che-do-dich.md):
+  python3 phu_de_dich.py duyet-chep PROJECT           # gop chep-goc, chep-firered, chu-tren-hinh thanh mot bang
+                                                      # dich/duyet-chep.md (chi cho can xem) va tao ban-dich.json neu chua co
+  python3 phu_de_dich.py sua PROJECT d002 --thay "Bend=Spend"    # sua loi goc theo quyet dinh o cong duyet
+  python3 phu_de_dich.py sua PROJECT d002 --goc "Spend the day at the library with me."
+  python3 phu_de_dich.py them PROJECT 112.9 114.6 "Here's some ASMR typing."   # them doan Whisper bo sot
+  python3 phu_de_dich.py nguoi PROJECT d001-d003=be d004-d007=me                  # gan nguoi noi theo khoang ma
+  python3 phu_de_dich.py goi-y-gop PROJECT [VIDEO]    # in lenh gop cac manh cau ngan, cung nguoi noi (truoc khi dich)
+  python3 phu_de_dich.py gop PROJECT d003 d004        # gop doan lien nhau vao doan dau (khong gop khac nguoi noi)
+  python3 phu_de_dich.py nhap PROJECT dich.tsv        # nap ban dich: moi dong "ID<TAB>dich" (hoac "ID | dich")
+  python3 phu_de_dich.py bang PROJECT [VIDEO]         # bang duyet ban dich dich/ban-dich.md (goc, dich, canh bao)
   python3 phu_de_dich.py khoi PROJECT                 # tao dich/ban-dich.json tu dich/chep-goc.json (truong "dich" de trong)
   python3 phu_de_dich.py kiem PROJECT [--cps 15]      # kiem ban dich; thoat 1 khi co loi chan
   python3 phu_de_dich.py srt PROJECT [--song-ngu]     # ghi output/phu-de-vi.srt (song ngu: them dong goc phia duoi)
@@ -9,8 +19,15 @@ Dung:
                                                       # kiem, ghi .srt, roi ghi phu de cung vao hinh (giu nguyen tieng)
 
 dich/ban-dich.json: {"phien_ban": 1, "ngon_ngu_goc": "en", "doan": [{"id", "start", "end", "goc", "dich",
-  "nguoi_noi" (tuy chon), "bo" (tuy chon, true = khong hien phu de doan nay)}]}
-Nguoi dich (dieu phoi hoac agent) dien "dich"; duoc gop hoac tach doan, sua start/end, mien la khong chong nhau.
+  "nguoi_noi" (tuy chon), "bo" (tuy chon, true = khong hien phu de doan nay), "goc_whisper" (loi Whisper truoc khi
+  sua), "them" (doan them tay), "gop_tu" / "gop_vao" (doan da gop)}]}
+Nguoi dich (dieu phoi hoac agent) dien "dich" bang lenh nhap (hoac sua JSON); sua goc, them, gop bang cac lenh tren de
+khong sua JSON tay. chep-goc.json giu nguyen (ban Whisper goc); moi sua deu nam o ban-dich.json.
+Gop truoc khi dich: Whisper hay cat cau thanh manh ngan (clip Trung 27,6 giay: 19 doan, 9 doan duoi 1 giay); dich tung
+manh roi moi gop thi phai dich lai. goi-y-gop goi y gop chuoi manh lien nhau (cach duoi 0,3 giay, cung nguoi noi) khi
+manh duoi 1,2 giay hoac cau chua ket thuc (tieng co dau cau: khong ket bang . ? !), tong toi da 6 giay va (khi co VIDEO)
+khong qua thoi gian doc het hai dong phu de (khung doc 1080 rong: khoang 3,6 giay; da gap: gop 4 manh 3,7 giay cua clip
+Trung thi ban dich qua 2 dong).
 
 Kiem (loi chan):
   - doan thieu "dich", start >= end, doan chong nhau, vuot thoi luong video
@@ -170,8 +187,10 @@ def kiem(proj, cps, toi_da=None, dur=None, keo=1.5):
             canh.append(f"{i}: hien {t:.2f} giay < 1 giay")
         sau = doan[k + 1] if k + 1 < len(doan) else None
         if sau and sau["start"] - d["end"] < 0.2 and (t < 1.0 or (t > 0 and so_ky_tu(dich) / t > cps + 0.05)):
-            canh.append(f"{i}: sat {sau['id']}, khong con cho keo dai: goi y gop vao {sau['id']} (sua end cua {i} "
-                        f"thanh {sau['end']}, noi goc va dich, ghi \"bo\": true va \"gop_vao\": \"{i}\" cho {sau['id']})")
+            if cung_nguoi(d, sau):
+                canh.append(f"{i}: sat {sau['id']}, khong con cho keo dai: goi y gop: phu_de_dich.py gop PROJECT {i} {sau['id']}")
+            else:
+                canh.append(f"{i}: sat {sau['id']} (khac nguoi noi, khong gop): rut gon ban dich")
         if set(d.get("co", [])) & {"nghi-bia", "tin-thap"}:
             canh.append(f"{i}: doan goc co co {d['co']}, da duoc nguoi nghe lai chua?")
     co_nn = [d for d in doan if (d.get("nguoi_noi") or "").strip()]
@@ -180,6 +199,340 @@ def kiem(proj, cps, toi_da=None, dur=None, keo=1.5):
         canh.append(f"thieu nguoi_noi o {', '.join(thieu_nn)} (cac doan khac da gan)")
     bo = [d["id"] for d in bd["doan"] if d.get("bo")]
     return loi, canh, bo
+
+
+def cung_nguoi(a, b):
+    """Hai doan co the cung nguoi noi: cung ma, hoac mot ben chua gan (chua biet thi khong chan)."""
+    x, y = (a.get("nguoi_noi") or "").strip(), (b.get("nguoi_noi") or "").strip()
+    return not x or not y or x == y
+
+
+def noi_loi(a, b):
+    """Noi hai loi: chu Han (va dau cau Han) viet lien, con lai cach mot khoang trang."""
+    a, b = (a or "").strip(), (b or "").strip()
+    if not a or not b:
+        return a or b
+    han = re.compile(r"[\u3000-\u303f\u3400-\u9fff\uff00-\uffef]")
+    return a + b if han.match(a[-1]) and han.match(b[0]) else a + " " + b
+
+
+def luu(proj, bd):
+    ghi_json(proj / "dich" / "ban-dich.json", bd)
+
+
+def nap_bd(proj):
+    p = proj / "dich" / "ban-dich.json"
+    if not p.exists():
+        sys.exit(f"[LOI] Chua co {p}: chay phu_de_dich.py duyet-chep (hoac khoi) truoc.")
+    return nap(p)
+
+
+def tim(bd, i):
+    for d in bd["doan"]:
+        if d["id"] == i:
+            return d
+    sys.exit(f"[LOI] Khong co doan {i}")
+
+
+def thay_tu(goc, cu, moi):
+    """Thay cu bang moi trong goc mot lan: tieng co dau cach thi theo ca tu, khong phan biet hoa thuong, giu chu hoa dau
+    tu; chu Han thi thay chuoi. Tra ve goc moi hoac None khi khong tim thay."""
+    if re.search(r"[\u3400-\u9fff]", cu):
+        return goc.replace(cu, moi, 1) if cu in goc else None
+    m = re.search(r"(?<![\w'])" + re.escape(cu) + r"(?![\w'])", goc, re.I)
+    if not m:
+        return None
+    if m.group(0)[:1].isupper() and moi[:1].islower():
+        moi = moi[:1].upper() + moi[1:]
+    return goc[:m.start()] + moi + goc[m.end():]
+
+
+def lenh_sua(proj, a):
+    bd = nap_bd(proj)
+    d = tim(bd, a.id)
+    goc = d["goc"]
+    if a.goc is not None:
+        goc = a.goc.strip()
+    for t in a.thay or []:
+        if "=" not in t:
+            sys.exit(f"[LOI] --thay can dang CU=MOI: {t}")
+        cu, moi = t.split("=", 1)
+        g = thay_tu(goc, cu.strip(), moi.strip())
+        if g is None:
+            sys.exit(f"[LOI] {a.id}: khong thay \"{cu.strip()}\" trong loi goc: {goc}")
+        goc = g
+    goc = re.sub(r"\s{2,}", " ", unicodedata.normalize("NFC", goc)).strip()
+    if goc == d["goc"]:
+        print(f"[OK] {a.id}: khong doi")
+        return
+    d.setdefault("goc_whisper", d["goc"])
+    d["goc"] = goc
+    luu(proj, bd)
+    print(f"[OK] {a.id}: {d['goc_whisper']}  ->  {goc}")
+    if (d.get("dich") or "").strip():
+        print(f"[CANH BAO] {a.id} da co ban dich, xem lai cho khop loi goc moi: {d['dich']}")
+
+
+def lenh_them(proj, a):
+    bd = nap_bd(proj)
+    if a.start >= a.end:
+        sys.exit("[LOI] start phai nho hon end")
+    for d in bd["doan"]:
+        if not d.get("bo") and d["start"] < a.end - 0.01 and a.start < d["end"] - 0.01:
+            sys.exit(f"[LOI] {a.start}-{a.end} chong voi {d['id']} ({d['start']}-{d['end']}); sua moc hoac dung lenh sua")
+    so_id = [int(m.group(1)) for d in bd["doan"] for m in [re.fullmatch(r"d(\d+)", d["id"])] if m]
+    i = f"d{(max(so_id) if so_id else 0) + 1:03d}"
+    moi = {"id": i, "start": round(a.start, 2), "end": round(a.end, 2), "goc": unicodedata.normalize("NFC", a.goc.strip()),
+           "dich": "", "nguoi_noi": a.nguoi_noi or "", "co": [], "them": True}
+    bd["doan"].append(moi)
+    bd["doan"].sort(key=lambda d: d["start"])
+    luu(proj, bd)
+    print(f"[OK] them {i} ({a.start}-{a.end}): {moi['goc']}")
+
+
+def khoang_ma(bd, k):
+    """"d001-d003" hoac "d004": danh sach ma theo thu tu trong ban-dich.json."""
+    ids = [d["id"] for d in bd["doan"]]
+    a, _, b = k.partition("-")
+    b = b or a
+    if a not in ids or b not in ids or ids.index(a) > ids.index(b):
+        sys.exit(f"[LOI] Khoang ma khong hop le: {k}")
+    return ids[ids.index(a):ids.index(b) + 1]
+
+
+def lenh_nguoi(proj, a):
+    bd = nap_bd(proj)
+    n = 0
+    for gan in a.gan:
+        if "=" not in gan:
+            sys.exit(f"[LOI] Can dang d001-d003=ma_nguoi_noi: {gan}")
+        k, ten = gan.split("=", 1)
+        for i in khoang_ma(bd, k.strip()):
+            tim(bd, i)["nguoi_noi"] = ten.strip()
+            n += 1
+    luu(proj, bd)
+    print(f"[OK] gan nguoi_noi cho {n} doan")
+
+
+def gop_doan(bd, ids, khac_nguoi=False):
+    """Gop cac doan lien nhau (theo thu tu, khong tinh doan bo) vao doan dau. Tra ve doan dau."""
+    hien = [d for d in bd["doan"] if not d.get("bo")]
+    vt = [next((k for k, d in enumerate(hien) if d["id"] == i), None) for i in ids]
+    if None in vt:
+        raise ValueError(f"doan khong ton tai hoac da bo: {ids}")
+    if vt != list(range(vt[0], vt[0] + len(vt))):
+        raise ValueError(f"doan phai lien nhau theo thu tu: {ids}")
+    ds = [hien[k] for k in vt]
+    if not khac_nguoi and any(not cung_nguoi(ds[0], d) for d in ds[1:]):
+        raise ValueError("khac nguoi noi; gop van muon thi them --khac-nguoi-noi (phu de se lan loi hai nguoi)")
+    dau = ds[0]
+    for d in ds[1:]:
+        dau["goc"] = noi_loi(dau["goc"], d["goc"])
+        dau["dich"] = noi_loi(dau.get("dich"), d.get("dich"))
+        if "goc_whisper" in d or "goc_whisper" in dau:
+            dau["goc_whisper"] = noi_loi(dau.get("goc_whisper", ""), d.get("goc_whisper", d["goc"]))
+        dau["co"] = sorted(set(dau.get("co", [])) | set(d.get("co", [])))
+        dau["end"] = d["end"]
+        d["bo"] = True
+        d["gop_vao"] = dau["id"]
+    dau["gop_tu"] = dau.get("gop_tu", [dau["id"]]) + [i for d in ds[1:] for i in d.get("gop_tu", [d["id"]])]
+    return dau
+
+
+def lenh_gop(proj, a):
+    bd = nap_bd(proj)
+    if len(a.ids) < 2:
+        sys.exit("[LOI] Can it nhat hai ma doan")
+    try:
+        dau = gop_doan(bd, a.ids, a.khac_nguoi_noi)
+    except ValueError as e:
+        sys.exit(f"[LOI] {e}")
+    luu(proj, bd)
+    print(f"[OK] gop {', '.join(a.ids)} vao {dau['id']} ({dau['start']}-{dau['end']}): {dau['goc']}")
+
+
+KET_CAU = re.compile(r"[.?!。？！…]$")
+
+
+def goi_y_gop(doan, ngan=1.2, ke=0.3, toi_da=6.0):
+    """Chuoi doan nen gop truoc khi dich: lien nhau (cach duoi ke giay), cung nguoi noi, tong toi da toi_da giay; doan
+    trong chuoi ngan hon ngan giay, hoac (loi co dau cau) chua ket thuc cau."""
+    hien = [d for d in doan if not d.get("bo")]
+    co_dau = any(re.search(r"[.?!,。？！，]", d.get("goc", "")) for d in hien)
+    out, cur = [], []
+
+    def can_noi(a):
+        return (a["end"] - a["start"] < ngan) or (co_dau and not KET_CAU.search(a.get("goc", "").strip()))
+
+    for d in hien:
+        if (cur and d["start"] - cur[-1]["end"] < ke and cung_nguoi(cur[-1], d) and d["end"] - cur[0]["start"] <= toi_da
+                and (can_noi(cur[-1]) or d["end"] - d["start"] < ngan)):
+            cur.append(d)
+            continue
+        if len(cur) > 1:
+            out.append([x["id"] for x in cur])
+        cur = [d]
+    if len(cur) > 1:
+        out.append([x["id"] for x in cur])
+    return out
+
+
+def lenh_goi_y_gop(proj, a):
+    bd = nap_bd(proj)
+    # tong thoi luong toi da: 6 giay, va khong qua thoi gian doc het hai dong phu de o --cps (khung doc 1080 rong:
+    # 27 ky tu moi dong, 15 ky tu/giay -> 3,6 giay; gop dai hon thi ban dich de qua 2 dong)
+    toi_da = 6.0
+    if a.video:
+        w, h, _ = kich_thuoc(a.video)
+        toi_da = min(toi_da, 2 * bo_cuc(w, h)[1] / a.cps)
+    gy = goi_y_gop(bd["doan"], toi_da=toi_da)
+    if not gy:
+        print("[OK] Khong co manh cau nao nen gop")
+        return
+    if not any((d.get("nguoi_noi") or "").strip() for d in bd["doan"]):
+        print("[CANH BAO] Chua gan nguoi_noi: video nhieu nguoi noi thi gan truoc (lenh nguoi), neu khong se gop lan loi hai nguoi")
+    by = {d["id"]: d for d in bd["doan"]}
+    for g in gy:
+        loi = noi_loi("", "")
+        for i in g:
+            loi = noi_loi(loi, by[i]["goc"])
+        print(f"python3 {Path(__file__).resolve()} gop {proj} {' '.join(g)}   # {by[g[0]]['start']}-{by[g[-1]]['end']}: {loi}")
+    print(f"[OK] {len(gy)} goi y gop. Doc lai truoc khi chay: chi gop khi la cung mot cau hoac mot y")
+
+
+def lenh_nhap(proj, a):
+    bd = nap_bd(proj)
+    by = {d["id"]: d for d in bd["doan"]}
+    n = 0
+    for so_dong, dong in enumerate(Path(a.tep).read_text(encoding="utf-8").splitlines(), 1):
+        if not dong.strip() or dong.lstrip().startswith("#"):
+            continue
+        cot = [c.strip() for c in (dong.split("\t") if "\t" in dong else dong.split("|"))]
+        cot = [c for c in cot if c != ""] if "|" in dong and "\t" not in dong else cot
+        if len(cot) < 2:
+            sys.exit(f"[LOI] dong {so_dong}: can \"ID<TAB>dich\" hoac \"ID<TAB>nguoi_noi<TAB>dich\": {dong}")
+        i = cot[0]
+        if i not in by:
+            sys.exit(f"[LOI] dong {so_dong}: khong co doan {i}")
+        if by[i].get("bo"):
+            sys.exit(f"[LOI] dong {so_dong}: {i} da gop vao {by[i].get('gop_vao')} hoac bi bo, dich vao doan do")
+        if len(cot) >= 3:
+            by[i]["nguoi_noi"] = cot[1]
+        by[i]["dich"] = unicodedata.normalize("NFC", cot[-1])
+        n += 1
+    luu(proj, bd)
+    thieu = [d["id"] for d in bd["doan"] if not d.get("bo") and not (d.get("dich") or "").strip()]
+    print(f"[OK] nap {n} dong dich" + (f"; con thieu: {', '.join(thieu)}" if thieu else "; da du"))
+
+
+def o(x):
+    return (x or "").replace("|", "/").replace("\n", " ")
+
+
+def lenh_bang(proj, a, canh_bao):
+    bd = nap_bd(proj)
+    theo = {}
+    for c in canh_bao:
+        m = re.match(r"(d\d+\w*): (.*)", c)
+        if m:
+            theo.setdefault(m.group(1), []).append(m.group(2))
+    lines = [f"# Bản dịch: duyệt gốc và dịch ({bd.get('ngon_ngu_goc', '')} sang tiếng Việt)", "",
+             "Cột Ghi chú: lời gốc đã sửa ở cổng duyệt bản chép (kèm lời Whisper cũ), đoạn thêm tay, đoạn đã gộp, cảnh báo "
+             "của lệnh kiem (đọc nhanh, hiện ngắn).", "",
+             "| Mã | Giây | Người nói | Gốc | Dịch | Ghi chú |", "|---|---|---|---|---|---|"]
+    for d in bd["doan"]:
+        if d.get("bo"):
+            continue
+        gc = []
+        if "goc_whisper" in d:
+            gc.append(f"đã sửa gốc (Whisper: {o(d['goc_whisper'])})")
+        if d.get("them"):
+            gc.append("đoạn thêm tay")
+        if len(d.get("gop_tu", [])) > 1:
+            gc.append("gộp " + ", ".join(d["gop_tu"]))
+        gc += theo.get(d["id"], [])
+        lines.append(f"| {d['id']} | {d['start']:.1f}-{d['end']:.1f} | {o(d.get('nguoi_noi'))} | {o(d['goc'])} | "
+                     f"{o(d.get('dich'))} | {o('; '.join(gc))} |")
+    p = proj / "dich" / "ban-dich.md"
+    p.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    print(f"[OK] {p}: gửi bảng này ở cổng duyệt bản dịch, kèm kết quả lượt kiểm dịch (dich/kiem-dich.md)")
+
+
+def lenh_duyet_chep(proj):
+    d0 = proj / "dich"
+    goc = nap(d0 / "chep-goc.json")
+    fr = nap(d0 / "chep-firered.json") if (d0 / "chep-firered.json").exists() else None
+    oc = nap(d0 / "chu-tren-hinh.json") if (d0 / "chu-tren-hinh.json").exists() else None
+    frd = {d["id"]: d for d in fr["doan"]} if fr else {}
+    ocd = {d["id"]: d for d in oc.get("doan", [])} if oc else {}
+    nn = goc["ngon_ngu"]
+    lines = [f"# Duyệt bản chép gốc: {goc.get('video', '')}", "",
+             f"- Ngôn ngữ: `{nn.get('chon')}`" + (" (**chưa chắc chắn, hỏi người dùng**)" if nn.get("can_hoi") else "")
+             + f"; {len(goc['doan'])} đoạn Whisper `{goc.get('ban', '')}`."
+             + (" Kiểm chéo FireRedASR2: có." if fr else " Kiểm chéo FireRedASR2: không chạy.")
+             + (" Chữ trên hình: " + ("có chữ." if oc.get("co_chu") else "không có chữ.") if oc else " Chữ trên hình: không chạy."),
+             "- Bảng chỉ có đoạn cần xem. Mỗi chỗ ghi các bên nghe khác nhau; người dùng chọn bên nào (hoặc nghe lại), "
+             "điều phối áp bằng lệnh ở cột cuối. Không tự chọn.", ""]
+    rows = []
+    for d in goc["doan"]:
+        ly, lenh = [], {}
+        if d.get("co"):
+            ly.append("cờ " + ", ".join(d["co"]))
+        f = frd.get(d["id"])
+        pa = []
+        if f and f.get("khac"):
+            pa += [("FireRed",) + tuple(c.partition(" / ")[::2]) for c in f.get("cho_khac", [])]
+        pa += [("chữ trên hình", w, x) for w, x in (ocd.get(d["id"]) or {}).get("cho_khac", [])]
+        for ben, w, x in pa:
+            ly.append(f"{ben}: {w} / {x}")
+            if w != "(trống)" and x != "(trống)":
+                lenh.setdefault(f"--thay \"{w}={x}\"", []).append(ben)
+        if ly:
+            cmd = "; ".join(f"{', '.join(b)}: `sua {d['id']} {k}`" for k, b in lenh.items()) or f"`sua {d['id']} --goc \"...\"`"
+            rows.append(f"| {d['id']} | {d['start']:.1f}-{d['end']:.1f} | {o(d['goc'])} | {o('; '.join(ly))} | {o(cmd)} |")
+    if rows:
+        lines += ["## Chỗ cần chọn", "", "Cột Khác ghi `Whisper / bên kia`. Lệnh gợi ý lấy theo bên kia; chọn giữ Whisper "
+                  "thì bỏ qua. Lệnh đầy đủ: `python3 SKILL/scripts/phu_de_dich.py sua PROJECT ...`.", "",
+                  "| Mã | Giây | Whisper | Khác | Lệnh áp (nếu chọn bên kia) |", "|---|---|---|---|---|"] + rows + [""]
+    else:
+        lines += ["Không có chỗ nào các bên nghe khác nhau, không có cờ.", ""]
+    them = (fr or {}).get("khoang_trong", [])
+    if them:
+        lines += ["## Lời trong khoảng trống (FireRed nghe được, Whisper không có đoạn)", "",
+                  "Nghe lại; có lời thật thì thêm đoạn (sửa mốc cho sát câu nếu cần):", ""]
+        for k in them:
+            lines.append(f"- {k['start']:.1f}-{k['end']:.1f}: {k['text']}  `them {k['start']} {k['end']} \"...\"`")
+        lines.append("")
+    kt = goc.get("khoang_trong", [])
+    if kt:
+        lines += ["## Khoảng không có lời từ 2 giây", "", "VAD có thể bỏ câu nói nhỏ trên nền nhạc: "
+                  + ", ".join(f"{a:.1f}-{b:.1f}" for a, b in kt) + ".", ""]
+    chu = (oc or {}).get("chu", [])
+    if nn.get("chon") not in ("zh", "yue", "ja", "ko"):   # bo phu de dich san co bang chu Han khi loi goc khong phai chu Han
+        chu = [c for c in chu if not re.search(r"[\u3400-\u9fff]", c["text"])]
+    if chu:
+        lines += [f"## Chữ khác trên hình ({len(chu)} dòng, đọc lướt để sửa tên riêng, món ăn)", "",
+                  "; ".join(c["text"] for c in chu[:40]) + (" ..." if len(chu) > 40 else ""), ""]
+    lines += ["## Hỏi người dùng", "",
+              "- Video có mấy người nói, ai nói câu nào, ai nói với ai (gán bằng lệnh `nguoi`, ví dụ `nguoi PROJECT "
+              "d001-d003=be d004-d007=me`). Một người nói thì bỏ qua.",
+              "- Chọn bên nào ở từng chỗ trên; tên riêng, từ hiếm có đúng không.", ""]
+    (d0 / "duyet-chep.md").write_text("\n".join(lines), encoding="utf-8")
+    if not (d0 / "ban-dich.json").exists():
+        khoi(proj)
+    print(f"[OK] {d0 / 'duyet-chep.md'}: {len(rows)} doan can chon, {len(them)} khoang trong co loi, "
+          f"{len(chu)} dong chu khac. Gui bang nay o cong duyet ban chep.")
+
+
+def khoi(proj):
+    cg = nap(proj / "dich" / "chep-goc.json")
+    p = proj / "dich" / "ban-dich.json"
+    if p.exists():
+        sys.exit(f"[LOI] {p} da co; xoa tay neu muon tao lai (tranh mat ban dich)")
+    ghi_json(p, {"phien_ban": 1, "ngon_ngu_goc": cg["ngon_ngu"]["chon"],
+                 "doan": [{"id": d["id"], "start": d["start"], "end": d["end"], "goc": d["goc"], "dich": "",
+                           "nguoi_noi": "", "co": d["co"]} for d in cg["doan"]]})
+    print(f"[OK] {p}: {len(cg['doan'])} doan")
 
 
 def srt_t(x):
@@ -246,7 +599,10 @@ def ghi_ass(doan, proj, w, h, font, song_ngu, tren=False):
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("lenh", choices=["khoi", "kiem", "srt", "ghi"])
+    lenh_phu = ["duyet-chep", "sua", "them", "nguoi", "goi-y-gop", "gop", "nhap", "bang"]
+    if len(sys.argv) > 1 and sys.argv[1] in lenh_phu:
+        return phu(sys.argv[1], sys.argv[2:])
+    ap.add_argument("lenh", choices=["khoi", "kiem", "srt", "ghi"] + lenh_phu)
     ap.add_argument("project")
     ap.add_argument("video", nargs="?")
     ap.add_argument("--ra")
@@ -264,14 +620,7 @@ def main():
     proj = Path(a.project)
 
     if a.lenh == "khoi":
-        cg = nap(proj / "dich" / "chep-goc.json")
-        p = proj / "dich" / "ban-dich.json"
-        if p.exists():
-            sys.exit(f"[LOI] {p} da co; xoa tay neu muon tao lai (tranh mat ban dich)")
-        ghi_json(p, {"phien_ban": 1, "ngon_ngu_goc": cg["ngon_ngu"]["chon"],
-                     "doan": [{"id": d["id"], "start": d["start"], "end": d["end"], "goc": d["goc"], "dich": "",
-                               "nguoi_noi": "", "co": d["co"]} for d in cg["doan"]]})
-        print(f"[OK] {p}: {len(cg['doan'])} doan, dien truong \"dich\"")
+        khoi(proj)
         return
 
     w = h = dur = None
@@ -337,6 +686,58 @@ def main():
     subprocess.check_call(["ffmpeg", "-v", "error", "-y", *vao, "-filter_complex", loc2, "-map", "[o]",
                            "-frames:v", "1", str(anh)])
     print(f"[OK] {anh}: khung kiem phu de (xem chu dich co de len phu de san co, logo, mat nguoi khong)")
+
+
+def phu(lenh, argv):
+    """Cac lenh sua ban-dich.json va tao bang duyet (moi lenh co tham so rieng)."""
+    ap = argparse.ArgumentParser(prog=f"phu_de_dich.py {lenh}")
+    ap.add_argument("project")
+    if lenh == "sua":
+        ap.add_argument("id")
+        ap.add_argument("--goc", help="thay ca loi goc")
+        ap.add_argument("--thay", action="append", help="CU=MOI, thay mot tu hoac cum (lap lai duoc)")
+    elif lenh == "them":
+        ap.add_argument("start", type=float)
+        ap.add_argument("end", type=float)
+        ap.add_argument("goc")
+        ap.add_argument("--nguoi-noi", default="")
+    elif lenh == "nguoi":
+        ap.add_argument("gan", nargs="+", help="d001-d003=ma_nguoi_noi")
+    elif lenh == "gop":
+        ap.add_argument("ids", nargs="+")
+        ap.add_argument("--khac-nguoi-noi", action="store_true")
+    elif lenh == "nhap":
+        ap.add_argument("tep")
+    elif lenh == "goi-y-gop":
+        ap.add_argument("video", nargs="?", help="co video thi gioi han thoi luong gop theo do rong khung")
+        ap.add_argument("--cps", type=float, default=15.0)
+    elif lenh == "bang":
+        ap.add_argument("video", nargs="?")
+        ap.add_argument("--cps", type=float, default=15.0)
+    a = ap.parse_args(argv)
+    proj = Path(a.project)
+    if lenh == "duyet-chep":
+        lenh_duyet_chep(proj)
+    elif lenh == "sua":
+        if a.goc is None and not a.thay:
+            sys.exit("[LOI] Can --goc hoac --thay")
+        lenh_sua(proj, a)
+    elif lenh == "them":
+        lenh_them(proj, a)
+    elif lenh == "nguoi":
+        lenh_nguoi(proj, a)
+    elif lenh == "goi-y-gop":
+        lenh_goi_y_gop(proj, a)
+    elif lenh == "gop":
+        lenh_gop(proj, a)
+    elif lenh == "nhap":
+        lenh_nhap(proj, a)
+    elif lenh == "bang":
+        w = h = dur = None
+        if a.video:
+            w, h, dur = kich_thuoc(a.video)
+        _, canh, _ = kiem(proj, a.cps, bo_cuc(w, h)[1] if w else 42, dur)
+        lenh_bang(proj, a, canh)
 
 
 if __name__ == "__main__":

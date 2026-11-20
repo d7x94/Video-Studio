@@ -2,6 +2,20 @@
 
 Quy ước số phiên bản `MAJOR.MINOR.PATCH`, ghi ở `video-studio/VERSION` và dòng "Phiên bản skill" trong `video-studio/SKILL.md` (hai nơi phải khớp, CI kiểm tra khi đóng gói). Thêm kiểu hình hoặc tính năng thì tăng MINOR; sửa lỗi thì tăng PATCH; đổi lớn làm hỏng cách dùng cũ thì tăng MAJOR. Mỗi lần gộp PR thay đổi skill: tăng số, sửa hai nơi trên và thêm mục mới ở đầu file này.
 
+## [1.23.0] - 2026-11-20
+
+Chế độ dịch: rà lại khâu dịch và phụ đề bằng chạy thật trên hai clip, sửa ba lỗi và gọn quy trình. Không đổi quy tắc kiểm chứng, bản quyền, khóa nhân vật, không tự đăng.
+
+- Lỗi đã sửa:
+  - Chỗ chọn ở cổng duyệt bản chép không có cách ghi lại, nên lời gốc trong `ban-dich.json` vẫn sai và phụ đề song ngữ hiện "Bend the day...", "port panini". Thêm `phu_de_dich.py sua` (`--thay CU=MOI`, `--goc`), lưu lời Whisper cũ ở `goc_whisper`.
+  - Lời FireRed nghe được ở khoảng trống ("here's some asmr typing") không thêm được thành đoạn. Thêm `phu_de_dich.py them` (chặn chồng đoạn).
+  - Gợi ý gộp của `kiem` bỏ qua người nói (clip Trung: gợi ý gộp câu của mẹ vào câu của bé). Nay chỉ gợi ý gộp khi cùng người nói (hoặc chưa gán), kèm lệnh `gop`.
+- Quy trình mới: `duyet-chep` gộp cờ Whisper, `KHÁC` của FireRed, chỗ khác chữ trên hình, lời trong khoảng trống thành một bảng `dich/duyet-chep.md` kèm lệnh áp sẵn từng lựa chọn (bỏ phụ đề chữ Hán khi lời gốc không phải chữ Hán), tạo `ban-dich.json`; `nguoi` gán người nói theo khoảng mã; `goi-y-gop` (gộp mảnh câu trước khi dịch, giới hạn theo thời gian đọc hai dòng của khổ hình) và `gop` (chặn khác người nói, không liền nhau); `nhap` nạp bản dịch từ file `ID<TAB>dịch`; `bang` tạo `dich/ban-dich.md` cho cổng duyệt bản dịch. Lượt kiểm dịch ghi `dich/kiem-dich.md` theo mẫu cố định, trọng tài chỉ nhận dòng bất đồng. `chu_tren_hinh.py` in `[TIEP]` lệnh `duyet-chep`. Giao `ban-dich.md` thay `chep-goc.md`.
+- `references/che-do-dich.md` (bước 2 đến 7, phân vai, số đo; bỏ dòng "Bản này (1.14.0)" đã cũ), `profiles/dich.md`, `SKILL.md`. `tools/smoke_test.sh`: ca cho từng lệnh mới, cập nhật ca gợi ý gộp. Đã đạt; `ruff F,E9` sạch.
+- Đã chạy thử đầu cuối (2026-11-20, 2 lõi CPU): vlog Anh 143 giây 1280x720: `duyet-chep` 6 chỗ cần chọn, 1 khoảng trống có lời; áp 4 `sua`, 1 `them`; `goi-y-gop` 10 gợi ý, 29 đoạn còn 19; `kiem` 0 cảnh báo (bản cũ 8); `ghi --song-ngu --che-day 0.2` 48 giây, dòng gốc đã sửa. Hội thoại Trung 27,6 giây 1080x1920, hai người nói: 19 đoạn còn 14, cảnh báo 18 xuống 3, không gộp lẫn người nói; `ghi` 20 giây.
+- Giới hạn: ngưỡng gộp (1,2 giây, cách 0,3 giây, 6 giây) chỉnh trên hai clip; lời tiếng Trung của Whisper không có dấu câu nên chỉ gộp theo độ ngắn. Bản dịch trong lần thử do điều phối viết, chưa có người biết tiếng Trung kiểm.
+- Chưa chạy: `tts.py`, `new_project.sh`, `inject.py`, `hyperframes check`, `render.sh`, `check_output.py` (không chạm các bước này).
+
 ## [1.22.0] - 2026-11-20
 
 Chế độ dịch: đọc chữ trên hình (phụ đề cứng, thực đơn, biển hiệu) để đối chiếu bản chép, bắt lỗi hai mô hình cùng nghe sai mà kiểm chéo bỏ lọt (vlog thử: Whisper và FireRed cùng nghe "port panini", phụ đề cứng ghi "pork panini"). Không đổi quy tắc kiểm chứng, bản quyền, khóa nhân vật.
