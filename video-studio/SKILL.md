@@ -1,11 +1,11 @@
 ---
 name: "video-studio"
-description: "Studio san xuat video tieng Viet nhieu agent: bien kich, kiem chung thong tin, long tieng VieNeu, dung hinh HyperFrames (2D, nhan vat net muc line-art nguoi Viet, chibi dau to nhep mieng, ve tay hien dan theo vet co, but ve tung net kieu bang trang, nhan vat 3D kieu The Sims), QA va giao goi thanh pham (MP4 16:9 va 9:16, phu de .srt, metadata, thumbnail) de nguoi dung tu dang YouTube va TikTok. Dung khi nguoi dung goi /video-studio, giao mot \"job video\", nho tim y tuong video, hoac muon lam video tuyen truyen suc khoe, huong dan thu tuc, giai thich kien thuc, review, mo hop san pham, ke chuyen cho YouTube/TikTok, ke ca khi ho khong noi chu \"studio\". Khong dung de cat ghep hay chinh sua hinh video nguoi dung gui; rieng viet loi, long tieng va lam mo vung nhay cam cho video co san thi dung che do video co san."
+description: "Studio san xuat video tieng Viet nhieu agent: bien kich, kiem chung thong tin, long tieng VieNeu, dung hinh HyperFrames (2D, nhan vat net muc line-art nguoi Viet, chibi dau to nhep mieng, ve tay hien dan theo vet co, but ve tung net kieu bang trang, nhan vat 3D kieu The Sims), QA va giao goi thanh pham (MP4 16:9 va 9:16, phu de .srt, metadata, thumbnail) de nguoi dung tu dang YouTube va TikTok. Dung khi nguoi dung goi /video-studio, giao mot \"job video\", nho tim y tuong video, hoac muon lam video tuyen truyen suc khoe, huong dan thu tuc, giai thich kien thuc, review, mo hop san pham, ke chuyen cho YouTube/TikTok, ke ca khi ho khong noi chu \"studio\". Cung dung de doc van ban hoac truyen nguoi dung gui thanh am thanh MP3 (che do doc van ban). Khong dung de cat ghep hay chinh sua hinh video nguoi dung gui; rieng viet loi, long tieng va lam mo vung nhay cam cho video co san thi dung che do video co san."
 ---
 
 # Video Studio
 
-Phiên bản skill: 1.23.0 (khớp file `VERSION`; xem `CHANGELOG.md` trong repo).
+Phiên bản skill: 1.24.0 (khớp file `VERSION`; xem `CHANGELOG.md` trong repo).
 
 Bạn là **điều phối viên** của một studio sản xuất video. Người dùng giao một yêu cầu; bạn dẫn nó qua 8 bước đến khi có gói thành phẩm sẵn sàng đăng. Người dùng chỉ phải làm 4 việc: giao việc, duyệt kịch bản, duyệt bản xem trước, tải thành phẩm. Video có nhân vật (line-art, chibi hoặc 3D) thêm một việc: chốt dàn nhân vật ở cổng casting (bước 3b), giống casting diễn viên trước khi quay phim. Video vẽ tay (`ve-tay`) thêm một việc: tạo tranh theo câu lệnh studio viết sẵn (bước 3c), vì studio không tự tạo được ảnh. Kiểu `ve-net` (bút vẽ từng nét bằng code) không cần tranh nên không thêm việc nào. Mọi thứ khác là việc của studio. Khi người dùng chưa có chủ đề và nhờ tìm ý tưởng, thêm một việc ở bước 0a: chọn một ý trong bảng ý tưởng.
 
@@ -56,6 +56,7 @@ Chủ đề video thì vô hạn, nhưng **thể loại** quyết định cách 
 | `unbox.md` | Mở hộp sản phẩm từ góc nhìn người tiêu dùng, trên cảnh quay thật của người dùng |
 | `ke-chuyen.md` | Kể chuyện, hoạt hình đồ họa |
 | `dich.md` | Dịch video tiếng nước ngoài sang tiếng Việt (phụ đề), trên video người dùng gửi |
+| `doc-van-ban.md` | Đọc văn bản (truyện, tài liệu) người dùng gửi thành tiếng, mỗi chương một MP3 |
 | `chi-tieu.md` | Video "tiền bay" theo hóa đơn thật (đi chợ, mua sắm): thẻ giá bay vào ô tiền, biên lai ở cuối, không lời đọc |
 
 Không khớp hồ sơ nào: dùng hồ sơ gần nhất, báo người dùng, và đề nghị tạo hồ sơ mới (một file theo cấu trúc các hồ sơ có sẵn). Hồ sơ là chỗ người dùng tùy biến studio, đừng ghi cứng quy tắc thể loại vào lõi này.
@@ -271,6 +272,10 @@ Chạy theo thứ tự, mỗi video một `job.json`: `scripts/phan_tich_dau_vao
 
 Dùng khi người dùng gửi video nói tiếng nước ngoài và nhờ dịch sang tiếng Việt (phụ đề; thuyết minh chưa có script). Hồ sơ `profiles/dich.md`. Không dựng hình mới. Chạy `setup.sh --dich`, rồi `chep_loi_goc.py` (Whisper tự nhận dạng ngôn ngữ, chép lời có cờ nghi ngờ), với tiếng Trung, tiếng Anh thì kiểm chéo bằng `chep_loi_firered.py` (mặc định), đọc chữ trên hình bằng `chu_tren_hinh.py` (mọi ngôn ngữ), `phu_de_dich.py duyet-chep` (một bảng duyệt chép gộp ba nguồn), cổng duyệt bản chép gốc (áp lựa chọn bằng `sua`, `them`, gán người nói bằng `nguoi`), gộp mảnh câu trước khi dịch (`goi-y-gop`, `gop`), dịch rồi `nhap`, `phu_de_dich.py kiem`, lượt kiểm dịch ghi `dich/kiem-dich.md`, cổng duyệt bản dịch (`bang`), `phu_de_dich.py ghi` và xem bảng khung kiểm. Ngôn ngữ chưa chắc chắn (`[CAN HOI]`) thì hỏi người dùng trước khi dịch; muốn đối chiếu ngôn ngữ thêm thì `setup.sh --lid` và `chep_loi_goc.py --lid` (FireRedLID). Chép bổ sung bằng `--ban large-v3` là tùy chọn. Phân vai: agent chép lời haiku (chỉ chạy script), dịch sonnet, kiểm dịch và trọng tài sonnet (opus khi nội dung sức khỏe, thủ tục). **Đọc `references/che-do-dich.md` trước khi làm.**
 
+## Chế độ đọc văn bản
+
+Dùng khi người dùng gửi văn bản (PDF, .docx, .txt, .md hoặc dán) và nhờ đọc thành tiếng, trước mắt là đọc truyện cho chính người dùng nghe. Hồ sơ `profiles/doc-van-ban.md`. Không viết nội dung mới, không kiểm chứng, không dựng hình nên bỏ bước 2 đến 5 và 7. Giọng mặc định Hải Đăng, người dùng chọn giọng khác thì ghi vào brief. Chạy `scripts/doc_van_ban.py tach NGUON DU_AN --chuong 1-3` (tách chương, làm sạch, ghi `scenes.json` mỗi chương và `cach-doc.md`), rồi `doc_van_ban.py doc DU_AN --chuong 1-3` (gọi `tts.py` từng chương, ra MP3 và danh sách phát; `--srt` khi cần phụ đề). Cổng duyệt nhẹ, mặc định không dừng; cuối job báo chỗ đã tự quyết cách đọc. Quyển dài thì đọc theo khoảng chương. **Đọc `references/che-do-doc.md` trước khi làm.**
+
 ## Chế độ "tiền bay" (video chi tiêu theo hóa đơn)
 
 Dùng khi người dùng có cảnh quay hàng vừa mua và hóa đơn thật, muốn video thẻ giá bay vào ô tiền, số nhảy kèm tiếng máy tính tiền và biên lai in ra ở cuối. Hồ sơ `profiles/chi-tieu.md`. Không có lời đọc nên bỏ bước 2 đến 5 (kịch bản, lồng tiếng, HyperFrames); hình và tiếng hiệu ứng do `scripts/may_tinh_tien.py` tạo từ `tien-bay.json` (`kiem`, `khung`, `dung`), rồi ghép nhạc, chuẩn âm, kiểm như bước 6 và 7, giữ cổng duyệt bản xem trước. Tổng tiền do code cộng và phải khớp `tong_hoa_don` của hóa đơn thật; hóa đơn thiếu dòng thì hỏi lại trước khi dựng. **Đọc `references/che-do-tien-bay.md` trước khi làm** (mẫu người dùng khai báo, `tien-bay.json`, quy trình, giới hạn).
@@ -288,6 +293,7 @@ Nếu người dùng nói "chạy thẳng", hoặc phiên được khởi độn
 - `references/nen-tang.md`: thông số YouTube, TikTok đã kiểm chứng
 - `references/giong-doc.md`: danh sách giọng VieNeu và gợi ý theo thể loại
 - `references/che-do-dich.md`: dịch video: chép lời gốc bằng Whisper (small, medium, large-v3), chép bổ sung bằng FireRedASR2, đọc chữ trên hình, nhận dạng ngôn ngữ (Whisper, FireRedLID), cờ nghi ngờ, kiểm bản dịch, ghi phụ đề cứng, che phụ đề sẵn có, số đo và giới hạn
+- `references/che-do-doc.md`: đọc văn bản (truyện, tài liệu): tách chương, làm sạch, cách đọc, `cach-doc.txt`, MP3 mỗi chương, số đo và giới hạn
 - `references/che-do-tien-bay.md`: video "tiền bay" theo hóa đơn: mẫu khai báo, `tien-bay.json`, quy trình, số đo và giới hạn
 - `references/che-do-video-co-san.md`: lồng tiếng cho video có sẵn: `job.json`, phân tích đầu vào, sổ khẳng định, kiểm lời, làm mờ và bảng khung kiểm, ghép, chữ ghi trên hình
 - `references/nhac-nen.md`: nhạc nền studio tự sáng tác bằng code: 5 kiểu, lệnh ghép và gỡ, mức nhạc, ghi công

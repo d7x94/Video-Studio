@@ -2,6 +2,19 @@
 
 Quy ước số phiên bản `MAJOR.MINOR.PATCH`, ghi ở `video-studio/VERSION` và dòng "Phiên bản skill" trong `video-studio/SKILL.md` (hai nơi phải khớp, CI kiểm tra khi đóng gói). Thêm kiểu hình hoặc tính năng thì tăng MINOR; sửa lỗi thì tăng PATCH; đổi lớn làm hỏng cách dùng cũ thì tăng MAJOR. Mỗi lần gộp PR thay đổi skill: tăng số, sửa hai nơi trên và thêm mục mới ở đầu file này.
 
+## [1.24.0] - 2026-11-20
+
+Chế độ đọc văn bản: người dùng gửi văn bản (trước mắt là truyện, nghe riêng), studio tách chương, làm sạch, lồng tiếng VieNeu và giao MP3 mỗi chương. Loại job riêng trong cùng skill (hồ sơ `doc-van-ban.md`). Không đổi quy tắc kiểm chứng, bản quyền, khóa nhân vật, không tự đăng.
+
+- `scripts/doc_van_ban.py` (mới), hai lệnh. `tach`: trích văn bản (PDF qua `pdftotext`, `.docx`, `.txt`, `.md`), bỏ dòng quảng cáo ngắn, `***`, ký hiệu trang trí, đường kẻ; tìm tiêu đề `Chương N` (tiêu đề có thân dưới 200 ký tự coi là mục lục); nối dòng ngắt cứng thành đoạn; gom đoạn thành cảnh tối đa 700 ký tự; ghi `chuong-NNNN/scenes.json`, `van-ban.txt`, `muc-luc.json`, `cach-doc.md` (đã bỏ gì, chỗ chưa chắc cách đọc), áp `cach-doc.txt` (`chữ => cách đọc`) chỉ vào `scenes.json`. `doc`: chạy `tts.py` từng chương (giữ vân tay: chạy lại chỉ đọc cảnh đã đổi), MP3 mono 96 kbps `loudnorm` -16 LUFS, `danh-sach.m3u`, `--srt` tùy chọn (mốc ước lượng theo số ký tự).
+- Giọng mặc định Hải Đăng (quyết định 2026-11-14); `--giong` đổi giọng.
+- `profiles/doc-van-ban.md`, `references/che-do-doc.md`, `SKILL.md` (bảng hồ sơ, mục chế độ, tham khảo, mô tả đầu file). `tools/smoke_test.sh`: ca `doc_van_ban.py tach`.
+- Không tự chuẩn hóa số, ngày, đơn vị, viết tắt: VieNeu 3.8.4 đã làm (đo trên `normalize_to_chunks_v3_with_gaps`). Riêng `***` VieNeu đọc "sao sao sao" nên script bỏ.
+- Đã chạy thử (2026-11-20, 2 lõi CPU, VieNeu int8, giọng Hải Đăng, tốc độ 1.0): PDF 8939 trang (truyện dài), `tach` toàn quyển 10 giây tìm 2094 tiêu đề chương; chương 1 (15 695 ký tự, 28 cảnh): `tts.py` và MP3 mất 9 phút 24 giây cho 13 phút 19 giây âm thanh (khoảng 0,70 giây máy cho 1 giây âm thanh, gồm tải mô hình), MP3 9,6 MB, `.srt` 25 KB. Chưa nghe bằng tai.
+- Giới hạn: nhiều giọng theo nhân vật và video chữ chạy theo lời chưa làm; quyển dài phải đọc theo khoảng chương; ngưỡng nối đoạn (dòng ngắn hơn 0,8 độ dài dòng dài nhất, tính theo phân vị 90) chỉnh trên một quyển truyện, chưa thử `.docx` thật và văn bản không ngắt dòng cứng; `cach-doc.md` chỉ liệt kê chỗ nghi ngờ, không tự sửa.
+- Chưa chạy: `new_project.sh`, `inject.py`, `hyperframes check`, `render.sh`, `check_output.py` (không chạm các bước này).
+- `tools/smoke_test.sh`: sửa lỗi có sẵn trên `main` làm ca `goi-y-gop` dừng sớm. Nguyên nhân: `lệnh | grep -q` cho `grep` thoát ngay khi khớp, Python in tiếp vào ống đã đóng nên báo `BrokenPipeError`, `pipefail` biến cả dòng thành lỗi. Sáu dòng cùng kiểu (`liet-ke`, hai dòng `goi-y-gop`, `ap_sua_srt`, `kiem_loi_doc`, `check_output --help`) nay lấy hết đầu ra vào biến rồi mới `grep`; dòng `goi-y-gop ... d005` trước đây `grep -q ... && loi` có thể lọt im lặng, nay là `! grep -q`. Chạy cả bộ: `Tat ca dat.`
+
 ## [1.23.0] - 2026-11-20
 
 Chế độ dịch: rà lại khâu dịch và phụ đề bằng chạy thật trên hai clip, sửa ba lỗi và gọn quy trình. Không đổi quy tắc kiểm chứng, bản quyền, khóa nhân vật, không tự đăng.
