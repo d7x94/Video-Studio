@@ -183,11 +183,73 @@ doan = [{"id": "d001", "start": 0.0, "end": 2.0, "goc": "你知道吗", "dich": 
 (proj / "dich" / "ban-dich.json").write_text(json.dumps({"phien_ban": 1, "doan": doan}, ensure_ascii=False), encoding="utf-8")
 loi, canh, _ = m.kiem(proj, 15.0)
 assert not loi, loi
-assert any("goi y gop vao d003" in c for c in canh), "thieu goi y gop doan ngan"
+assert any("gop PROJECT d002 d003" in c for c in canh), "thieu goi y gop doan ngan"
 assert any("thieu nguoi_noi o d002" in c for c in canh), "thieu canh bao nguoi_noi gan mot phan"
 assert not any(c.startswith("d001") and "goi y gop" in c for c in canh), "goi y gop cho doan khong ngan"
 PY
 pass "phu_de_dich.py goi y gop doan ngan, canh bao nguoi_noi"
+
+# 5b. phu_de_dich: bang duyet chep, sua goc, them doan, gan nguoi noi, goi y gop va gop (khong gop khac nguoi noi), nhap, bang
+D="$P/dich-quy-trinh"; mkdir -p "$D/dich"
+cat > "$D/dich/chep-goc.json" <<'EOF2'
+{"phien_ban": 1, "video": "v.mp4", "ban": "medium", "ngon_ngu": {"chon": "en"}, "khoang_trong": [[9.0, 14.0]], "doan": [
+ {"id": "d001", "start": 0.0, "end": 2.0, "goc": "Bend the day at the library with me.", "co": []},
+ {"id": "d002", "start": 3.0, "end": 4.0, "goc": "Before going there,", "co": []},
+ {"id": "d003", "start": 4.1, "end": 6.0, "goc": "my friend ordered a port panini.", "co": []},
+ {"id": "d004", "start": 6.1, "end": 6.8, "goc": "Really?", "co": []},
+ {"id": "d005", "start": 6.9, "end": 8.0, "goc": "Yes.", "co": []}]}
+EOF2
+cat > "$D/dich/chep-firered.json" <<'EOF2'
+{"doan": [{"id": "d001", "khac": true, "cho_khac": ["bend / spend"]}], "khoang_trong": [{"start": 9.0, "end": 11.0, "text": "ASMR TYPING"}]}
+EOF2
+cat > "$D/dich/chu-tren-hinh.json" <<'EOF2'
+{"co_chu": true, "doan": [{"id": "d003", "cho_khac": [["port", "pork"]]}], "chu": [{"t": 1.0, "text": "Pork Panini"}, {"t": 2.0, "text": "猪肉帕尼尼"}]}
+EOF2
+X="python3 $S/phu_de_dich.py"
+$X duyet-chep "$D" >/dev/null || loi "duyet-chep le ra dat"
+[ -f "$D/dich/ban-dich.json" ] || loi "duyet-chep khong tao ban-dich.json"
+grep -q 'sua d001 --thay "bend=spend"' "$D/dich/duyet-chep.md" || loi "duyet-chep thieu lenh sua theo FireRed"
+grep -q 'sua d003 --thay "port=pork"' "$D/dich/duyet-chep.md" || loi "duyet-chep thieu lenh sua theo chu tren hinh"
+grep -q 'them 9.0 11.0' "$D/dich/duyet-chep.md" || loi "duyet-chep thieu lenh them khoang trong"
+grep -q '猪肉' "$D/dich/duyet-chep.md" && loi "duyet-chep giu phu de chu Han khi loi goc tieng Anh"
+$X sua "$D" d001 --thay "bend=spend" >/dev/null
+$X sua "$D" d003 --thay "port=pork" >/dev/null
+expect_fail $X sua "$D" d003 --thay "beef=pork"
+$X them "$D" 9.0 11.0 "Here's some ASMR typing." >/dev/null
+expect_fail $X them "$D" 5.0 7.0 "chong"
+$X nguoi "$D" d001-d004=a d005=b >/dev/null
+$X goi-y-gop "$D" | grep -q "gop .* d002 d003 d004" || loi "goi-y-gop khong goi y gop manh cau cung nguoi noi"
+$X goi-y-gop "$D" | grep -q "d005" && loi "goi-y-gop gop sang nguoi noi khac"
+expect_fail $X gop "$D" d004 d005
+$X gop "$D" d002 d003 >/dev/null
+printf 'd001\tCùng mình dành cả ngày ở thư viện nhé.\nd002 | Trước khi đến đó, bạn mình gọi panini thịt heo.\nd004\tThật á?\nd005\tỪ.\nd006\tCòn đây là âm thanh gõ phím ASMR.\n' > "$D/dich.tsv"
+$X nhap "$D" "$D/dich.tsv" >/dev/null || loi "nhap le ra dat"
+printf 'd003\tx\n' > "$D/sai.tsv"; expect_fail $X nhap "$D" "$D/sai.tsv"
+$X kiem "$D" >/dev/null || loi "kiem sau quy trinh le ra dat"
+$X bang "$D" >/dev/null
+python3 -I - "$D" <<'PY'
+import json, sys
+from pathlib import Path
+d = Path(sys.argv[1]) / "dich"
+bd = {x["id"]: x for x in json.loads((d / "ban-dich.json").read_text(encoding="utf-8"))["doan"]}
+assert bd["d001"]["goc"] == "Spend the day at the library with me." and bd["d001"]["goc_whisper"].startswith("Bend"), bd["d001"]
+assert bd["d002"]["goc"] == "Before going there, my friend ordered a pork panini." and bd["d002"]["end"] == 6.0, bd["d002"]
+assert bd["d003"]["bo"] and bd["d003"]["gop_vao"] == "d002" and bd["d002"]["gop_tu"] == ["d002", "d003"]
+assert bd["d006"]["them"] and bd["d006"]["goc"] == "Here's some ASMR typing."
+assert list(bd) == ["d001", "d002", "d003", "d004", "d005", "d006"]
+md = (d / "ban-dich.md").read_text(encoding="utf-8")
+assert "Whisper: Bend the day" in md and "gộp d002, d003" in md and "đoạn thêm tay" in md and "| d003 |" not in md
+PY
+python3 -I - "$S/phu_de_dich.py" <<'PY'
+import importlib.util, sys
+spec = importlib.util.spec_from_file_location("pdd", sys.argv[1]); m = importlib.util.module_from_spec(spec); spec.loader.exec_module(m)
+assert m.thay_tu("Bend the day", "bend", "spend") == "Spend the day"
+assert m.thay_tu("a portable port", "port", "pork") == "a portable pork"
+assert m.thay_tu("美女也吹个兜巴吧", "兜巴", "头发") == "美女也吹个头发吧"
+assert m.noi_loi("你回家了", "你要") == "你回家了你要" and m.noi_loi("Before,", "my") == "Before, my"
+# kiem: goi y gop co lenh, khong goi y gop sang nguoi noi khac
+PY
+pass "phu_de_dich.py duyet-chep, sua, them, nguoi, goi-y-gop, gop (chan khac nguoi noi), nhap, bang"
 
 # 5b. chep_loi_firered: doan chi khac tro tu cuoi cau khong bao KHAC (can opencc; khong co thi bo qua)
 if python3 -c "import opencc, numpy" 2>/dev/null; then

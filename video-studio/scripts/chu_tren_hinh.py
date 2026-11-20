@@ -159,6 +159,7 @@ def main():
             (out / "chu-tren-hinh.json").write_text(json.dumps(kq, ensure_ascii=False, indent=1), encoding="utf-8")
             ghi_md(out / "chu-tren-hinh.md", kq)
             print(f"[OK] dich/chu-tren-hinh.md: khong thay chu tren hinh ({len(cache)} khung tham do)")
+            print(f"[TIEP] Bang duyet chep: python3 {SCRIPTS / 'phu_de_dich.py'} duyet-chep {proj}")
             return
         tu = [tach(d["goc"]) for d in doan]
         dong_khop = [[] for _ in doan]
@@ -198,6 +199,7 @@ def main():
     m = sum(1 for d in kq["doan"] if d["cho_khac"])
     print(f"[OK] dich/chu-tren-hinh.md: {kq['so_khung']} khung, {n}/{len(doan)} doan co dong chu khop, "
           f"{m} doan khac chu tren hinh, {len(kq['chu'])} dong chu khong khop doan nao")
+    print(f"[TIEP] Bang duyet chep: python3 {SCRIPTS / 'phu_de_dich.py'} duyet-chep {proj}")
 
 
 if __name__ == "__main__":

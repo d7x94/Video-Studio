@@ -32,8 +32,8 @@ Agent chép lời (haiku) chỉ chạy script và báo lại; dịch (sonnet); k
 
 ## Cổng duyệt
 
-1. Bản chép lời gốc (ngôn ngữ, cờ nghi ngờ, khoảng không có lời) kèm bảng kiểm chéo FireRed (chỗ `KHÁC`, lời trong khoảng trống) và bảng chữ trên hình (chỗ khác phụ đề cứng, thực đơn, biển hiệu).
-2. Bản dịch (bảng gốc và dịch).
+1. Bản chép lời gốc: một bảng `dich/duyet-chep.md` (`phu_de_dich.py duyet-chep`) gộp cờ Whisper, chỗ `KHÁC` của FireRed, chỗ khác chữ trên hình, lời trong khoảng trống; hỏi người nói. Áp lựa chọn bằng `sua`, `them`, `nguoi`, rồi gộp mảnh câu (`goi-y-gop`, `gop`) trước khi dịch.
+2. Bản dịch: bảng `dich/ban-dich.md` (`phu_de_dich.py bang`) kèm tóm tắt lượt kiểm dịch `dich/kiem-dich.md`.
 3. Bảng khung kiểm phụ đề trước khi giao.
 
 ## Metadata

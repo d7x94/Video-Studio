@@ -2,7 +2,7 @@
 
 Tài liệu tham khảo của `SKILL.md`. Dùng khi người dùng gửi một video nói tiếng nước ngoài và nhờ dịch sang tiếng Việt: làm phụ đề, hoặc thuyết minh. Hồ sơ thể loại: `profiles/dich.md`. Không dựng hình mới.
 
-Bản này (1.14.0) làm trọn được **phụ đề**. Thuyết minh (lồng tiếng Việt theo mốc, giữ tiếng gốc nhỏ lại) chưa có script: nếu brief cần thuyết minh, báo người dùng và chỉ làm phụ đề, hoặc dùng `ghep_loi_video_co_san.py` của chế độ video có sẵn với lời Việt đã dịch (tiếng gốc khi đó bị thay hẳn, chưa giữ nhỏ lại được).
+Bản hiện tại làm trọn được **phụ đề**. Thuyết minh (lồng tiếng Việt theo mốc, giữ tiếng gốc nhỏ lại) chưa có script: nếu brief cần thuyết minh, báo người dùng và chỉ làm phụ đề, hoặc dùng `ghep_loi_video_co_san.py` của chế độ video có sẵn với lời Việt đã dịch (tiếng gốc khi đó bị thay hẳn, chưa giữ nhỏ lại được).
 
 ## Đầu vào
 
@@ -22,27 +22,35 @@ Bản này (1.14.0) làm trọn được **phụ đề**. Thuyết minh (lồng 
    - Mốc đoạn lấy theo mốc từ đầu và từ cuối (cộng 0,4 giây), vì mốc đoạn gốc của Whisper có thể trùm cả khoảng nhạc sau câu.
 1b. **Kiểm chéo bằng FireRedASR2** (mặc định khi ngôn ngữ là `zh` hoặc `en`; `chep_loi_goc.py` in sẵn lệnh ở dòng `[TIEP]`): `python3 SKILL/scripts/chep_loi_firered.py goc.mp4 PROJECT`. Ra `dich/chep-firered.md`: dòng `KHÁC` kèm đúng chữ hai bên nghe khác nhau, và lời FireRed nghe được ở khoảng Whisper không có đoạn nào. Xem mục "Kiểm chéo bằng FireRedASR2". Ngôn ngữ khác thì bỏ bước này (FireRedASR2 chỉ chép tiếng Trung, tiếng Anh).
 1c. **Đọc chữ trên hình** (mọi ngôn ngữ; sau bước 1b nếu có, để bảng ghi kèm chỗ `KHÁC` của FireRed): `python3 SKILL/scripts/chu_tren_hinh.py goc.mp4 PROJECT`. Ra `dich/chu-tren-hinh.md`: đoạn Whisper khác phụ đề cứng cùng ngôn ngữ, và các dòng chữ khác (thực đơn, biển hiệu, tên riêng). Bắt được lỗi hai mô hình cùng nghe sai mà kiểm chéo bỏ lọt. Video không có chữ thì script dừng sau 5 khung thăm dò. Xem mục "Đọc chữ trên hình".
-2. **Cổng duyệt bản chép gốc** (dừng chờ người dùng): gửi `chep-goc.md`, kèm `chep-firered.md` khi có bước 1b và `chu-tren-hinh.md` khi có chữ (nêu từng chỗ `KHÁC`, lời trong khoảng trống, chỗ khác chữ trên hình; người dùng chọn bên nào, không tự sửa). Nêu rõ các cờ, các khoảng không có lời, và những từ nghi chép sai (tên riêng, món ăn, từ hiếm). Người dùng sửa lời gốc, gán người nói nếu có nhiều người.
-   - **Luôn hỏi người nói ở cổng này**, kể cả khi bước 0 đã bỏ qua câu hỏi của hồ sơ: video có mấy người, ai nói câu nào, ai nói với ai. Xưng hô trong bản dịch phụ thuộc vào đây, Whisper và FireRed đều không tách người nói. Người chỉ nghe tiếng ngoài khung hình (người quay) cũng là một người nói. Ghi câu trả lời vào trường `nguoi_noi` của `ban-dich.json` ở bước 3 để lượt kiểm dịch đọc được, không chỉ để trong chat.
-   - `nghi-bia`: câu Whisper hay tự thêm ở đoạn không có lời ("Thanks for watching", lặp chữ, xác suất không có lời cao).
+2. **Cổng duyệt bản chép gốc** (dừng chờ người dùng): `python3 SKILL/scripts/phu_de_dich.py duyet-chep PROJECT`. Script gộp ba bảng (Whisper có cờ, `KHÁC` của FireRed, chỗ khác chữ trên hình) thành **một** bảng `dich/duyet-chep.md` chỉ gồm chỗ cần xem, mỗi chỗ kèm lệnh áp sẵn; thêm lời FireRed nghe được ở khoảng trống (kèm lệnh `them`), khoảng không có lời, chữ khác trên hình (bỏ phụ đề chữ Hán khi lời gốc không phải chữ Hán), và tạo `dich/ban-dich.json` nếu chưa có. Gửi bảng này (không gửi ba bảng riêng); `chep-goc.md`, `chep-firered.md`, `chu-tren-hinh.md` vẫn còn để xem chi tiết khi cần.
+   - Người dùng chọn bên nào ở từng chỗ; điều phối áp đúng lựa chọn đó, không tự chọn:
+     - `phu_de_dich.py sua PROJECT d002 --thay "bend=spend"` (thay theo cả từ, không phân biệt hoa thường, giữ chữ hoa đầu từ; chữ Hán thay chuỗi; lặp `--thay` được; `--thay "也="` để xóa) hoặc `--goc "cả câu mới"`. Lời Whisper cũ lưu ở `goc_whisper`, `chep-goc.json` giữ nguyên.
+     - `phu_de_dich.py them PROJECT 112.9 114.9 "Here's some ASMR typing."`: thêm đoạn Whisper bỏ sót (chặn khi chồng đoạn khác; mốc lấy theo bảng, sửa cho sát câu nếu nghe được).
+   - Không áp thì lời gốc sai vẫn vào phụ đề song ngữ và bản giao (đã gặp: phụ đề song ngữ hiện "Bend the day...", "port panini" dù bản dịch đúng).
+   - **Luôn hỏi người nói ở cổng này**, kể cả khi bước 0 đã bỏ qua câu hỏi của hồ sơ: video có mấy người, ai nói câu nào, ai nói với ai. Xưng hô trong bản dịch phụ thuộc vào đây, Whisper và FireRed đều không tách người nói. Người chỉ nghe tiếng ngoài khung hình (người quay) cũng là một người nói. Gán bằng `phu_de_dich.py nguoi PROJECT d001-d003=be d004-d007=me` (mã ngắn; video một người nói thì bỏ qua) để lượt kiểm dịch đọc được, không chỉ để trong chat.
+   - `nghi-bia`: câu Whisper hay tự thêm ở đoạn không có lời ("Thanks for watching", lặp chữ, xác suất không có lời cao). Câu bịa thì ghi `"bo": true` (hoặc `sua --goc` nếu nghe được lời thật).
    - `tin-thap`: nghe chưa chắc (avg_logprob dưới -0,7).
    - Khoảng không có lời dài hơn 2 giây: VAD có thể đã bỏ câu nói nhỏ trên nền nhạc hay tiếng gõ phím; nhắc người dùng nghe lại.
-   - Đối chiếu hình: `chu-tren-hinh.md` (bước 1c) liệt kê chữ trên hình (thực đơn, biển, phụ đề sẵn có) giúp sửa từ chép sai; vẫn nhìn khung hình khi một chỗ còn ngờ.
-3. **Dịch**: `python3 SKILL/scripts/phu_de_dich.py khoi PROJECT` tạo `dich/ban-dich.json`, rồi điền trường `dich` từng đoạn (điều phối tự dịch, hoặc agent biên kịch, model sonnet).
+3. **Gộp mảnh câu, rồi dịch**:
+   - `python3 SKILL/scripts/phu_de_dich.py goi-y-gop PROJECT goc.mp4` in lệnh `gop` cho các chuỗi mảnh liền nhau (cách dưới 0,3 giây), cùng người nói, có mảnh dưới 1,2 giây hoặc câu chưa kết thúc (lời có dấu câu), tổng tối đa 6 giây và không quá thời gian đọc hết hai dòng phụ đề (khổ dọc 1080 rộng: khoảng 3,6 giây). Đọc lại từng gợi ý, chỉ chạy lệnh gộp những mảnh cùng một câu hoặc một ý. `gop` chặn khi khác người nói (trừ `--khac-nguoi-noi`) hoặc không liền nhau. **Gộp trước khi dịch**: Whisper cắt câu thành mảnh (clip Trung 27,6 giây: 19 đoạn, 9 đoạn dưới 1 giây), dịch từng mảnh rồi mới gộp thì phải dịch lại. Đo 2026-11-20: vlog Anh 29 đoạn còn 19, cảnh báo của `kiem` từ 8 xuống 0; clip Trung 19 đoạn còn 14, cảnh báo từ 18 xuống 3, và không còn gợi ý gộp câu của mẹ vào câu của bé như bản cũ.
+   - Dịch (điều phối, hoặc agent biên kịch, model sonnet) vào một file văn bản, mỗi dòng `ID<TAB>bản dịch` (hoặc `ID | bản dịch`; dòng bắt đầu `#` bỏ qua), rồi `phu_de_dich.py nhap PROJECT dich.tsv`. Không sửa JSON tay. `nhap` chặn mã không có hoặc đã gộp vào đoạn khác, in các đoạn còn thiếu.
    - Dịch ý, giữ đúng số, tên riêng, phủ định, ai nói với ai. Xưng hô theo quan hệ người nói (vlog một người: "mình"; cha mẹ nói với con: "bố/mẹ" và "con").
-   - Đoạn bị Whisper cắt giữa câu thì gộp: sửa `end` của đoạn đầu, nối `goc`, ghi `"bo": true` và `"gop_vao"` cho đoạn sau. Không để đoạn chồng nhau.
    - Tên riêng viết theo cách người Việt quen đọc ("Đại học Melbourne", không "uni melb"). Tên người Trung Quốc viết theo âm Hán Việt (胡一天: "Hồ Nhất Thiên").
-   - Điền `nguoi_noi` (mã ngắn, ví dụ `chi`, `be-trai`) cho mọi đoạn khi video có từ hai người nói; `kiem` cảnh báo khi chỉ gán một phần. Video một người nói thì để trống.
    - Hồ sơ sức khỏe, thủ tục: số liệu, khuyến cáo trong lời gốc vẫn kiểm chứng nguồn ngoài như quy trình thường. Hồ sơ khác: chỉ kiểm dịch trung thực, ghi "theo lời người nói" khi cần.
 4. **Kiểm bản dịch**: `python3 SKILL/scripts/phu_de_dich.py kiem PROJECT goc.mp4`. Lỗi chặn: thiếu bản dịch, đoạn chồng nhau, vượt thời lượng, chữ số trong lời gốc mất ở bản dịch (3.5 và 3,5 coi là một số; 1,000 và 1.000 coi là một nghìn), quá 2 dòng, chữ chưa NFC. Cảnh báo: đọc nhanh hơn `--cps` (mặc định 15 ký tự mỗi giây, không tính khoảng trắng, lấy theo `doc_chu.py`, chưa đo riêng cho phụ đề tiếng Việt), đoạn hiện dưới 1 giây, đoạn gốc có cờ.
-   - Đoạn đọc nhanh tự được kéo dài thời gian hiện vào khoảng trống phía sau, tối đa `--keo-dai` giây (mặc định 1,5), cách đoạn sau 0,1 giây. Vẫn nhanh thì rút gọn bản dịch hoặc gộp với đoạn kế.
-   - Đoạn ngắn nằm sát đoạn sau (cách dưới 0,2 giây) thì không còn chỗ kéo dài; `kiem` in gợi ý gộp kèm cách sửa. Gặp nhiều nhất ở hội thoại hỏi đáp nhanh: một câu đáp "不知道" dài 0,48 giây, ngay sau đó là câu tiếp theo; dịch gọn nhất ("Không biết.") vẫn 20,8 ký tự mỗi giây. Hỏi người dùng giữ riêng hay gộp ở cổng duyệt bản dịch.
-   - Sau khi dịch xong, một lượt kiểm dịch độc lập (agent khác, không phải người dịch) đọc song song `goc` và `dich`: sai nghĩa, sót ý, sai số, sai người nói. **Không bỏ lượt này kể cả với clip ngắn** (đã có job 6 đoạn bị bỏ qua); clip ngắn thì lượt kiểm cũng ngắn. Ghi kết quả lượt kiểm vào tin nhắn ở cổng duyệt bản dịch.
-5. **Cổng duyệt bản dịch** (dừng chờ người dùng): gửi bảng gốc và dịch. Duyệt xong thì không đổi nội dung nữa.
+   - Đoạn đọc nhanh tự được kéo dài thời gian hiện vào khoảng trống phía sau, tối đa `--keo-dai` giây (mặc định 1,5), cách đoạn sau 0,1 giây. Vẫn nhanh thì rút gọn bản dịch hoặc gộp.
+   - Đoạn ngắn nằm sát đoạn sau (cách dưới 0,2 giây): cùng người nói thì `kiem` in sẵn lệnh `gop`; khác người nói thì chỉ báo rút gọn (không gộp lời hai người vào một dòng). Hỏi đáp nhanh kiểu "不知道" 0,48 giây: dịch gọn nhất ("Không biết.") vẫn 20,8 ký tự mỗi giây; hỏi người dùng giữ riêng hay rút ở cổng duyệt bản dịch.
+   - **Lượt kiểm dịch độc lập** (agent khác người dịch, sonnet; opus với sức khỏe, thủ tục) đọc `dich/ban-dich.md` (tạo ở bước 5) hoặc `ban-dich.json`: sai nghĩa, sót ý, sai số, sai người nói, xưng hô. **Không bỏ lượt này kể cả với clip ngắn** (đã có job 6 đoạn bị bỏ qua). Ghi kết quả vào `dich/kiem-dich.md` theo mẫu cố định, để trọng tài chỉ nhận các dòng bất đồng:
+
+     | Mã | Loại (nghĩa, sót, số, người nói, xưng hô, văn) | Bản dịch hiện tại | Đề xuất | Người dịch đồng ý? |
+     |---|---|---|---|---|
+
+     Người dịch trả lời cột cuối; dòng "không" mới gửi trọng tài. Áp đề xuất được chấp nhận bằng `nhap` (file chỉ chứa các dòng sửa).
+5. **Cổng duyệt bản dịch** (dừng chờ người dùng): `python3 SKILL/scripts/phu_de_dich.py bang PROJECT goc.mp4` tạo `dich/ban-dich.md` (mã, giây, người nói, gốc, dịch, ghi chú: lời gốc đã sửa kèm lời Whisper cũ, đoạn thêm tay, đoạn gộp, cảnh báo của `kiem`). Gửi bảng này kèm tóm tắt `kiem-dich.md`. Duyệt xong thì không đổi nội dung nữa.
 6. **Ghi phụ đề**: `python3 SKILL/scripts/phu_de_dich.py ghi PROJECT goc.mp4`. Ra `output/phu-de-vi.srt`, `output/<tên>-phu-de-vi.mp4` (giữ độ phân giải, chép nguyên tiếng gốc) và bảng khung kiểm `dich/qa-phu-de.png`.
    - Xem bảng khung kiểm trước khi giao. Video gốc đã có phụ đề cứng (ví dụ song ngữ Trung Anh ở đáy) thì chữ dịch chồng lên: chạy lại với `--che-day 0.2` (làm mờ dải đáy cao 20% khung rồi ghi phụ đề dịch lên đó) hoặc `--vi-tri tren`.
-   - `--song-ngu`: dòng gốc nhỏ dưới dòng dịch (để học ngoại ngữ). Dòng gốc dài được ngắt dòng riêng (cỡ chữ 0,7 lần bản dịch) và dòng dịch tự đẩy lên theo số dòng gốc; vẫn xem bảng khung kiểm.
-7. **Giao**: video có phụ đề, `phu-de-vi.srt`, `chep-goc.md`. Nêu chỗ đã sửa lời gốc, câu chưa chắc nghĩa, đoạn VAD bỏ mà chưa ai nghe lại.
+   - `--song-ngu`: dòng gốc nhỏ dưới dòng dịch (để học ngoại ngữ). Dòng gốc lấy từ `ban-dich.json` (đã sửa ở bước 2). Dòng gốc dài được ngắt dòng riêng (cỡ chữ 0,7 lần bản dịch) và dòng dịch tự đẩy lên theo số dòng gốc; vẫn xem bảng khung kiểm.
+7. **Giao**: video có phụ đề, `phu-de-vi.srt`, `ban-dich.md` (bảng gốc đã sửa và dịch, thay cho `chep-goc.md` vốn là bản Whisper chưa sửa). Nêu chỗ đã sửa lời gốc (cột Ghi chú), câu chưa chắc nghĩa, đoạn VAD bỏ mà chưa ai nghe lại.
 
 ## Kiểm chéo bằng FireRedASR2 (mặc định với tiếng Trung, tiếng Anh) và chép bổ sung
 
@@ -101,10 +109,11 @@ Kiểm chéo hai mô hình không bắt được chỗ cả hai cùng nghe sai (
 
 | Việc | Ai làm | Model |
 |---|---|---|
-| Chạy `chep_loi_goc.py`, `chep_loi_firered.py`, `chu_tren_hinh.py`, báo số đoạn có cờ, số chỗ `KHÁC`, số chỗ khác chữ trên hình | agent chép lời | haiku |
+| Chạy `chep_loi_goc.py`, `chep_loi_firered.py`, `chu_tren_hinh.py`, `phu_de_dich.py duyet-chep`, báo số chỗ cần chọn | agent chép lời | haiku |
+| Áp lựa chọn của người dùng (`sua`, `them`, `nguoi`), duyệt gợi ý gộp (`goi-y-gop`, `gop`) | điều phối | sonnet |
 | Dịch (`ban-dich.json`) | điều phối hoặc agent biên kịch | sonnet |
-| Kiểm dịch độc lập (bước 4) | agent khác người dịch | sonnet; opus khi nội dung sức khỏe, thủ tục |
-| Trọng tài: chỉ những câu người dịch và người kiểm dịch không thống nhất | agent thứ ba, chỉ nhận các câu đó | sonnet; opus khi nội dung sức khỏe, thủ tục |
+| Kiểm dịch độc lập (bước 4), ghi `dich/kiem-dich.md` theo mẫu | agent khác người dịch | sonnet; opus khi nội dung sức khỏe, thủ tục |
+| Trọng tài: chỉ các dòng `kiem-dich.md` người dịch trả lời "không" | agent thứ ba, chỉ nhận các dòng đó | sonnet; opus khi nội dung sức khỏe, thủ tục |
 
 - Agent chép lời chỉ chạy script và báo lại. Không tự sửa bản chép, không tự chọn giữa Whisper và FireRed: chọn chữ nào cần hiểu ngữ cảnh, có khi phải nhìn chữ trên hình, nên để điều phối và người dùng quyết ở cổng duyệt. Script lỗi (thiếu mô hình, lỗi gói) thì báo lên, không tự sửa môi trường.
 - Câu trọng tài vẫn không chắc thì đánh dấu và hỏi người dùng ở cổng duyệt bản dịch.
@@ -119,7 +128,7 @@ Kiểm chéo hai mô hình không bắt được chỗ cả hai cùng nghe sai (
 
 - `chep_loi_goc.py` trên vlog 143 giây (medium, VAD, đã có mô hình): khoảng 42 giây với `--ngon-ngu en`. Lần chạy đầu tự nhận dạng mất khoảng 68 giây, gồm cả tải mô hình medium từ GitHub Release.
 - Không bật VAD, medium bịa "Thanks for watching!" ở giây 140 trên đoạn chỉ có tiếng gõ phím; bật VAD thì hết, nhưng mất câu "Here's some ASMR typing." nói nhỏ trên nền gõ phím.
-- `phu_de_dich.py ghi` 143 giây 1280x720: khoảng 34 giây (thêm `--che-day`: khoảng 42 giây).
+- `phu_de_dich.py ghi` 143 giây 1280x720: khoảng 34 giây (thêm `--che-day`: khoảng 42 giây; đo lại 2026-11-20 với `--song-ngu --che-day 0.2`: 48 giây). Clip 27,7 giây 1080x1920: 20 giây.
 
 ## Giới hạn đã biết
 
