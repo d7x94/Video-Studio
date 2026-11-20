@@ -102,7 +102,8 @@ pass "inject.py --tung-tu voi dong chi co dau cau"
 # 3. Ma khang dinh va bang kiem chung
 python3 "$S/ma_khang_dinh.py" gan "$P" >/dev/null
 python3 "$S/ma_khang_dinh.py" gan "$P" >/dev/null   # chay lai khong doi gi
-python3 "$S/ma_khang_dinh.py" liet-ke "$P" | grep -q "k01" || loi "liet-ke thieu k01"
+OUT=$(python3 "$S/ma_khang_dinh.py" liet-ke "$P" || true)
+grep -q "k01" <<<"$OUT" || loi "liet-ke thieu k01"
 cat > "$P/kiem-chung.md" <<'EOF'
 | Mã | Cảnh | Thông tin | Kết luận | Nguồn | Trích đoạn | Đề xuất |
 |---|---|---|---|---|---|---|
@@ -218,8 +219,9 @@ expect_fail $X sua "$D" d003 --thay "beef=pork"
 $X them "$D" 9.0 11.0 "Here's some ASMR typing." >/dev/null
 expect_fail $X them "$D" 5.0 7.0 "chong"
 $X nguoi "$D" d001-d004=a d005=b >/dev/null
-$X goi-y-gop "$D" | grep -q "gop .* d002 d003 d004" || loi "goi-y-gop khong goi y gop manh cau cung nguoi noi"
-$X goi-y-gop "$D" | grep -q "d005" && loi "goi-y-gop gop sang nguoi noi khac"
+OUT=$($X goi-y-gop "$D" || true)      # lay het dau ra roi moi grep: grep -q thoat som lam Python bao BrokenPipeError
+grep -q "gop .* d002 d003 d004" <<<"$OUT" || loi "goi-y-gop khong goi y gop manh cau cung nguoi noi"
+! grep -q "d005" <<<"$OUT" || loi "goi-y-gop gop sang nguoi noi khac"
 expect_fail $X gop "$D" d004 d005
 $X gop "$D" d002 d003 >/dev/null
 printf 'd001\tCùng mình dành cả ngày ở thư viện nhé.\nd002 | Trước khi đến đó, bạn mình gọi panini thịt heo.\nd004\tThật á?\nd005\tỪ.\nd006\tCòn đây là âm thanh gõ phím ASMR.\n' > "$D/dich.tsv"
@@ -367,9 +369,11 @@ assert (p / "scenes.truoc-sua.json").exists()
 PY
 expect_fail python3 "$S/so_khang_dinh.py" kiem "$V"
 printf '1\n00:00:09,000 --> 00:00:10,000\nSai moc\n' > "$V/lech.srt"
-python3 "$S/ap_sua_srt.py" "$V" "$V/lech.srt" 2>&1 | grep -q "lech moc canh" || loi "ap_sua_srt khong bao srt lech moc"
+OUT=$(python3 "$S/ap_sua_srt.py" "$V" "$V/lech.srt" 2>&1 || true)
+grep -q "lech moc canh" <<<"$OUT" || loi "ap_sua_srt khong bao srt lech moc"
 touch -d "2000-01-01" "$V/timeline_ghep.json"
-python3 "$S/kiem_loi_doc.py" "$V" 2>&1 | grep -q "timeline_ghep.json cu hon" || loi "kiem_loi_doc khong bao timeline_ghep.json cu"
+OUT=$(python3 "$S/kiem_loi_doc.py" "$V" 2>&1 || true)
+grep -q "timeline_ghep.json cu hon" <<<"$OUT" || loi "kiem_loi_doc khong bao timeline_ghep.json cu"
 # scenes.json khac thu tu thoi gian: khoi srt ghep theo moc; cau giu nguyen chu giu muc; canh chua co trong so duoc them muc
 V3="$P/vct3"; mkdir -p "$V3"
 cat > "$V3/scenes.json" <<'EOF'
@@ -464,7 +468,8 @@ grep -q "anh_tinh_khong_loi" "$V6/kq.txt" || { cat "$V6/kq.txt"; loi "kiem_loi_d
 echo '{"video_goc": "v.mp4", "anh_tinh": [{"tu": 5.0, "den": 9.0}], "anh_tinh_khong_loi": true, "canh": {"s01": {"cue": 0.5}}}' > "$V6/job.json"
 PATH="$V6/bin:$PATH" python3 "$S/kiem_loi_doc.py" "$V6" > "$V6/kq.txt" 2>&1 || { cat "$V6/kq.txt"; loi "kiem_loi_doc loi bat ngo (loi truoc anh tinh)"; }
 if grep -q "anh_tinh_khong_loi" "$V6/kq.txt"; then loi "kiem_loi_doc canh bao nham loi ket thuc truoc doan anh tinh"; fi
-python3 "$S/check_output.py" --help | grep -q -- "--co-san" || loi "check_output thieu --co-san"
+OUT=$(python3 "$S/check_output.py" --help || true)
+grep -q -- "--co-san" <<<"$OUT" || loi "check_output thieu --co-san"
 pass "phu_de_tung_tu.py (moc ghep, kiem dinh dang), ap_sua_srt.py (xem truoc, ap, dong bo so khang dinh, srt lech, thu tu theo moc, cau doi chu), phu de khong chong, kiem_loi_doc timeline cu, giu hinh lien tiep, cue sau giu_hinh va loi vuot cuoi video, anh_tinh_khong_loi"
 
 # so_khang_dinh.py dong-bo: sua loi thi giu muc cu cua cau khong doi, cau doi chu ve chua-phan-loai, ban sao truoc khi dong bo
